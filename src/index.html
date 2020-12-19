@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Electron Auto Update Example</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+    <!-- css  -->
+    <link rel="stylesheet" href="./css/style.css" />
+
+</head>
+
+<body>
+    <!-- main body content -->
+    <h1>Electron Auto Update Example</h1>
+    <p id="version"></p>
+
+    <!-- auto update popup -->
+    <div id="notification" class="hidden">
+        <p id="message"></p>
+        <button id="close-button" onClick="closeNotification()">
+          Close
+        </button>
+        <button id="restart-button" onClick="restartApp()" class="hidden">
+          Restart
+        </button>
+      </div>
+
+    <script src="./js/index.js"></script>
+</body>

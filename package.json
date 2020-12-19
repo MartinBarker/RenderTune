@@ -1,0 +1,30 @@
+{
+  "name": "digify",
+  "version": "0.0.1",
+  "description": "combine audio and image files to create video files",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/[MartinBarker/digify.git"
+  },
+  "keywords": [
+    "ffmpeg"
+  ],
+  "author": "Martin Barker <martinbarker99@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MartinBarker/digify/issues"
+  },
+  "homepage": "https://github.com/MartinBarker/digify#readme",
+  "devDependencies": {
+    "electron": "^11.1.0",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "electron-updater": "^4.3.5"
+  }
+}
