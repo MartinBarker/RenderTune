@@ -1,20 +1,51 @@
 {
   "name": "digify",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder build --linux --mac --win --publish never",
+    "deploy": "electron-builder build --linux --mac --win --publish always"
+  },
+  "build": {
+    "appId": "digify",
+    "afterSign": "scripts/notarize.js",
+    "mac": {
+      "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "dmg": {
+      "sign": false
+    },
+    "linux": {
+      "category": "TODO: fill here the category of your app",
+      "icon": "build/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.png"
+    }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/[MartinBarker/digify.git"
+    "url": "https://github.com/MartinBarker/digify.git"
   },
   "keywords": [
     "ffmpeg"
   ],
   "author": "Martin Barker <martinbarker99@gmail.com>",
-  "license": "MIT",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/MartinBarker/digify/issues"
   },
@@ -25,6 +56,7 @@
   },
   "dependencies": {
     "dotenv": "^8.2.0",
+    "electron-notarize": "^1.0.0",
     "electron-updater": "^4.3.5"
   }
 }
