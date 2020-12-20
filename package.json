@@ -1,6 +1,6 @@
 {
   "name": "digify",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -60,6 +60,9 @@
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
+    "bootstrap": "^4.5.3",
+    "datatables.net-dt": "^1.10.21",
+    "datatables.net-rowreorder-dt": "^1.2.7",
     "dotenv": "^8.2.0",
     "electron-notarize": "^1.0.0",
     "electron-updater": "^4.3.5",
@@ -67,6 +70,10 @@
     "ffmpeg-static-electron": "^2.0.1",
     "ffprobe-static": "^3.0.0",
     "ffprobe-static-electron": "^2.0.0",
-    "fluent-ffmpeg": "^2.1.2"
+    "fluent-ffmpeg": "^2.1.2",
+    "image-size": "^0.9.3",
+    "jquery": "^3.5.1",
+    "music-metadata": "^7.5.2",
+    "popper.js": "^1.16.1"
   }
 }
