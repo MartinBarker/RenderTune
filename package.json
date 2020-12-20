@@ -1,6 +1,6 @@
 {
   "name": "digify",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -9,6 +9,11 @@
     "deploy": "electron-builder build --linux --mac --win --publish always"
   },
   "build": {
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/bin/${os}/${arch}/ffmpeg",
+      "node_modules/ffmpeg-static/index.js",
+      "node_modules/ffmpeg-static/package.json"
+    ],
     "appId": "digify",
     "afterSign": "scripts/notarize.js",
     "mac": {
@@ -57,6 +62,11 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "electron-notarize": "^1.0.0",
-    "electron-updater": "^4.3.5"
+    "electron-updater": "^4.3.5",
+    "ffmpeg-static": "^4.2.7",
+    "ffmpeg-static-electron": "^2.0.1",
+    "ffprobe-static": "^3.0.0",
+    "ffprobe-static-electron": "^2.0.0",
+    "fluent-ffmpeg": "^2.1.2"
   }
 }
