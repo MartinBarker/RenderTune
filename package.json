@@ -1,12 +1,13 @@
 {
   "name": "digify",
-  "version": "0.0.9",
+  "version": "0.1.2",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder build --linux --mac --win --publish never",
-    "deploy": "electron-builder build --linux --mac --win --publish always"
+    "deploy": "electron-builder build --linux --mac --win --publish always",
+    "deploy-snap": "electron-builder build --linux --publish always"
   },
   "build": {
     "asarUnpack": [
@@ -31,11 +32,12 @@
       "sign": false
     },
     "linux": {
-      "category": "TODO: fill here the category of your app",
+      "category": "ffmpeg",
       "icon": "build/icon.png",
       "target": [
         "AppImage",
-        "deb"
+        "deb",
+        "snap"
       ]
     },
     "win": {
