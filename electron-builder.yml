@@ -1,4 +1,4 @@
-appId: com.example.digify
+appId: com.martinbarker.digify
 publish:
   provider: github
   token: process.env.GH_TOKEN
