@@ -1,10 +1,11 @@
 {
   "name": "digify",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "build-win":"electron-builder build --win --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always"
   },
