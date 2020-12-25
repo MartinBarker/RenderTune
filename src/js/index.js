@@ -73,11 +73,14 @@ $('#deleteModal').on('shown.bs.modal', function (e) {
 
 
 //open url in user's default browser
-async function openUrl(type) {
+async function openUrl(url) {
     var open = require("open");
-    if (type = 'github') {
-        open("https://github.com/MartinBarker/audio-archiver/");
+    if(url=="martinbarkerDotMe"){
+        open(`https://martinbarker.me/digify`);
+    }else if(url=='digifyGithub'){
+        open(`https://github.com/MartinBarker/digify`);
     }
+    
 
 }
 
