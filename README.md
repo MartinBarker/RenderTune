@@ -16,3 +16,9 @@ Note: When running this command, make sure the filename is correct.
 Developing for this app:
 - need a .env file
 - run `npm run deploy` and publish the release
+
+
+Mac MAS commands:
+sudo rm -rf dist/
+electron-builder build --mac
+sudo codesign --deep --force --verbose --sign "C~~~~~~3" dist/mas/Digify-mac.app

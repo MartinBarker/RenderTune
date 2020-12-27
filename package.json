@@ -1,31 +1,36 @@
 {
   "name": "digify",
+  "productName": "Digify",
   "version": "0.1.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build-win": "electron-builder build --win --publish never",
+    "build-mac": "electron-builder build --mac --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always"
   },
   "build": {
     "asarUnpack": [
+      "**/*.node",
       "node_modules/ffmpeg-static/bin/${os}/${arch}/ffmpeg",
       "node_modules/ffmpeg-static/index.js",
       "node_modules/ffmpeg-static/package.json"
     ],
-    "appId": "digify",
+    "appId": "com.martinbarker.digify",
+    "productName":"Digify-mac",
+    "buildVersion":"1",
+    "copyright": "Copyright © 2020 Martin Barker/company", 
     "afterSign": "scripts/notarize.js",
     "mac": {
-      "icon": "build/icon.png",
+      "icon": "build/icon.icns",
       "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "entitlements": "build/entitlements.mas.plist",
+      "type":"distribution",
+      "provisioningProfile": "embedded.provisionprofile",
       "target": [
-        "dmg",
-        "zip"
+        "mas"
       ]
     },
     "dmg": {
@@ -57,7 +62,7 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron": "^11.1.0",
+    "electron": "^11.1.1",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
