@@ -19,7 +19,7 @@ function createWindow() {
     });
 
     // Open the DevTools. 
-    mainWindow.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
 
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {

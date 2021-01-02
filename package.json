@@ -74,7 +74,8 @@
     "fluent-ffmpeg": "^2.1.2",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",
-    "music-metadata": "^7.5.3",
+    "music-metadata": "^7.5.2",
+    "open": "^7.2.1",
     "popper.js": "^1.16.1"
   }
 }
