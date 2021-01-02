@@ -13,7 +13,7 @@ require('datatables.net-rowreorder-dt')();
 //if new upload navbar button is clicked
 $("#newUploadFileSelection").change(async function (e) {
     var files = e.currentTarget.files;
-    //console.log('newUploadFileSelection: ', files);
+    console.log('newUploadFileSelection: ', files);
 
     let event = { "dataTransfer": { "files": files } }
     newUploadFileDropEvent(event, false)
@@ -83,33 +83,42 @@ async function openUrl(type) {
 
 //new upload
 async function addNewUpload(uploadTitle) {
-    //console.log('addNewUpload() newUploadFiles = ', newUploadFiles)
+    console.log('addNewUpload() newUploadFiles = ', newUploadFiles)
 
-    //get unique uploadNumber
-    let uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-    let uploadNumber = 1
-    if (uploadList != null) {
-        //while upload already exists with that key
-        while (uploadList[`upload-${uploadNumber}`]) {
-            uploadNumber++
+    //check if there is an image to use:
+    if(newUploadFiles.images.length == 0){
+        console.log('length = 0')
+        document.getElementById('newUploadAlert').style.display = "block";
+    }else{
+        document.getElementById('newUploadAlert').style.display = "none";
+        console.log('length != 0')
+        $('#uploadModal').modal('hide');
+        //get unique uploadNumber
+        let uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+        let uploadNumber = 1
+        if (uploadList != null) {
+            //while upload already exists with that key
+            while (uploadList[`upload-${uploadNumber}`]) {
+                uploadNumber++
+            }
         }
-        //uploadNumber = (Object.keys(uploadList).length)+1;
+
+        //if title is null, set to default
+        if (uploadTitle.length < 1) {
+            uploadTitle = `upload-${uploadNumber}`
+        }
+
+        let uploadKey = `upload-${uploadNumber}`
+        let uploadObj = { 'title': uploadTitle, 'files': newUploadFiles }
+        newUploadFiles = {}
+
+        //add to uploadList obj
+        await addToUploadList(uploadKey, uploadObj, uploadNumber)
+
+        //update uploadListDisplay
+        updateUploadListDisplay()
     }
 
-    //if title is null, set to default
-    if (uploadTitle.length < 1) {
-        uploadTitle = `upload-${uploadNumber}`
-    }
-
-    let uploadKey = `upload-${uploadNumber}`
-    let uploadObj = { 'title': uploadTitle, 'files': newUploadFiles }
-    newUploadFiles = {}
-
-    //console.log("+ addNewUpload() uploadKey = ", uploadKey, ", uploadObj = ", uploadObj, ", uploadNumber = ", uploadNumber)
-    //add to uploadList obj
-    await addToUploadList(uploadKey, uploadObj, uploadNumber)
-    //update uploadListDisplay
-    updateUploadListDisplay()
 }
 
 async function removeUploadFromUploadList(uploadId) {
@@ -227,7 +236,7 @@ function setAllVidFormats(uploadNum, rowNum, choice) {
 
 //create new upload, add datatable and event-listeners
 async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
-    //console.log('createNewUploadCard() uploadFiles = ', uploadFiles)
+    console.log('createNewUploadCard() uploadFiles = ', uploadFiles)
     return new Promise(async function (resolve, reject) {
 
 
@@ -958,6 +967,7 @@ function calculateResolution(oldWidth, oldHeight, newWidth){
 
 async function getResolutionOptions(images){
     return new Promise(async function (resolve, reject) {
+        console.log('images = ', images)
         let returnVar = {};
         
         for(var x = 0; x < images.length; x++){
@@ -1232,7 +1242,7 @@ async function updateUploadListDisplay() {
     //get uploadList from localstorage
     var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
 
-    //console.log('~ updateUploadListDisplay() uploadList = ', uploadList)
+    console.log('~ updateUploadListDisplay() uploadList = ', uploadList)
 
     //if uploadList exists
     if (uploadList != null) {
@@ -1304,7 +1314,9 @@ async function addToUploadList(uploadKey, uploadValue) {
 }
 
 //when files are dragged into upload drag&drop space
+let fileList = null;
 async function newUploadFileDropEvent(event, preventDefault) {
+    let haveNewFilesBeenAdded = false;
     //reveal loading spinner
     document.getElementById('loadingFilesSpinner').style.display = "block";
 
@@ -1312,68 +1324,81 @@ async function newUploadFileDropEvent(event, preventDefault) {
         event.preventDefault();
         event.stopPropagation();
     }
+    
+    //create fileList if it doesn't exist
+    if(!fileList){
+        fileList = { 'images': [], 'audio': [] }
+    }
+    
     //sort all files into audio / images 
-    var fileList = { 'images': [], 'audio': [] }
     for (const f of event.dataTransfer.files) {
-        //console.log('newUploadFileDropEvent() f.type= ', f.type, ', f.path =', f.path)
         // Using the path attribute to get absolute file path 
         if ((f.type).includes('image')) {
-            //console.log('newUploadFileDropEvent() f.type includes image')
-            fileList.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+            //if image filepath does not already exist in newUploadTempFiles:
+            if(fileList.images.filter(e => e.path === `${f.path}`).length == 0){
+                fileList.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+                haveNewFilesBeenAdded=true;
+            }
 
         } else if ((f.type).includes('audio')) {
-            //console.log('newUploadFileDropEvent() f.type includes audio')
+            let audioFileInfo = {};
+            console.log('audioFileInfo = ', audioFileInfo)
+            //get audio file format
             var splitType = (f.type).split('/')
-            //console.log('newUploadFileDropEvent() splitType = ', splitType)
             var audioFormat = splitType[1]
-            //console.log('newUploadFileDropEvent() audioFormat = ', audioFormat)
-
-            //get metadata
+            audioFileInfo.format = audioFormat;
+            
+            //get tracknum
             let trackNumRet = await getTrackNum(f.path)
-            //console.log('newUploadFileDropEvent() trackNum = ', trackNumRet)
-
+            audioFileInfo.trackNum = trackNumRet;
+            console.log('audioFileInfo = ', audioFileInfo)
             //get audiolength
-            //console.log('newUploadFileDropEvent() get audioLength ')
             let audioLength = 0
             try {
+                console.log('newUploadFileDropEvent() begin get file duration')
                 audioLength = await getDuration(f.path)
-                //console.log('newUploadFileDropEvent() audioLength1 = ', audioLength)
+                console.log('newUploadFileDropEvent() audioLength = ', audioLength)
                 audioLength = new Date(audioLength * 1000).toISOString().substr(11, 8)
+                audioFileInfo.length = audioLength;
             } catch (err) {
-                //console.log('err getting audio length: ', err)
+                console.log('err getting audio length: ', err)
             }
-            //console.log('newUploadFileDropEvent() audioLength = ', audioLength)
 
-            //push results
-            fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioLength, 'trackNum': trackNumRet })
+            //push results if that file isnt alread inside .audio
+            if(fileList.audio.filter(e => e.path === `${f.path}`).length == 0){
+                fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioLength, 'trackNum': trackNumRet })
+                haveNewFilesBeenAdded=true;
+            }
         }
     }
-    newUploadFiles = fileList
-    //console.log('newUploadFileDropEvent() newUploadFiles = ', newUploadFiles)
+    console.log('newUploadFileDropEvent() fileList = ', fileList)
+    newUploadFiles = fileList;
+    console.log('newUploadFileDropEvent() newUploadFiles = ', newUploadFiles)
 
-    //display files in UI
-    var imageFilesHtml = ''
-    var audioFilesHtml = ''
-    for (const [key, value] of Object.entries(newUploadFiles)) {
-        //console.log('DISPLAY IN UI: key = ', key, ', value = ', value)
-        if (key == 'images') {
-            for (var i = 0; i < value.length; i++) {
-                imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`
-            }
+    //if new files have been added, update UI
+    if(haveNewFilesBeenAdded){
+        var imageFilesHtml = ''
+        var audioFilesHtml = ''
+        for (const [key, value] of Object.entries(fileList)) {
+            //console.log('DISPLAY IN UI: key = ', key, ', value = ', value)
+            if (key == 'images') {
+                for (var i = 0; i < value.length; i++) {
+                    imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`
+                }
 
-        } else if (key == 'audio') {
-            //for (const [audioFormat, audioFiles] of Object.entries(newUploadFiles['audio'])) {
-            for (var x = 0; x < value.length; x++) {
-                //console.log('f = ', audioFiles[x]['name'])
-                audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`
+            } else if (key == 'audio') {
+                //for (const [audioFormat, audioFiles] of Object.entries(newUploadFiles['audio'])) {
+                for (var x = 0; x < value.length; x++) {
+                    //console.log('f = ', audioFiles[x]['name'])
+                    audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`
+                }
+                //}
             }
-            //}
         }
+
+        document.getElementById('newUploadImageFileList').innerHTML = imageFilesHtml
+        document.getElementById('newUploadAudioFileList').innerHTML = audioFilesHtml
     }
-
-    document.getElementById('newUploadImageFileList').innerHTML = imageFilesHtml
-    document.getElementById('newUploadAudioFileList').innerHTML = audioFilesHtml
-
     //hide loading spinner
     document.getElementById('loadingFilesSpinner').style.display = "none";
 }
@@ -1406,30 +1431,30 @@ function getDuration(src) {
             })
             .catch(err => {
                 console.error('err = ', err.message);
+                reject(err)
             });
     });
 }
 
 //get track num from audio file metadata
 function getTrackNum(src) {
-    //console.log("getTrackNum() src = ", src)
+    console.log("getTrackNum() src = ", src)
     return new Promise(function (resolve) {
 
-        //console.log('getTrackNum() init requirerments called')
+        console.log('getTrackNum() init requirerments called')
         try {
-            //console.log('getTrackNum() mm = ', mm)
-            mm.parseFile(src)
-                .then(metadata => {
-                    //console.log('getTrackNum() TRACK NUMBER = ', metadata.common.track.no)
+            console.log('getTrackNum() mm = ', mm)
+            mm.parseFile(src).then(metadata => {
+                    console.log('getTrackNum() metadata = ', metadata)
                     resolve(metadata.common.track.no)
                 })
                 .catch(err => {
-                    //console.error('getTrackNum() err = ', err.message);
+                    console.error('getTrackNum() err = ', err.message);
                     resolve(null)
                 });
 
         } catch (err) {
-            //console.log('getTrackNum() err caught = ', err)
+            console.log('getTrackNum() err caught = ', err)
         }
 
         //console.log('getTrackNum() end')

@@ -56,8 +56,8 @@
     /* padding: 20px; */
     height:100%;
     z-index:10;
-    /* background: rgb(119,136,112); */
-    padding-top: 32px;
+    /* background: rgb(119,136,112); 
+    padding-top: 32px; */
     overflow-y: auto;
   }
 
