@@ -1438,32 +1438,21 @@ function getDuration(src) {
 }
 
 //get track num from audio file metadata
-function getTrackNum(src) {
-    console.log("getTrackNum() src = ", src)
+async function getTrackNum(src) {
     return new Promise(function (resolve) {
-
+        console.log("getTrackNum() src = ", src)
+  
         console.log('getTrackNum() init requirerments called')
-        try {
-            console.log('getTrackNum() mm = ', mm)
-            mm.parseFile(src).then(metadata => {
-                    console.log('getTrackNum() metadata = ', metadata)
-                    resolve(metadata.common.track.no)
-                })
-                .catch(err => {
-                    console.error('getTrackNum() err = ', err.message);
-                    resolve(null)
-                });
-
-        } catch (err) {
-            console.log('getTrackNum() err caught = ', err)
-        }
-
-        //console.log('getTrackNum() end')
-        //resolve(null)
-
-    });
-}
-
+        console.log('getTrackNum() mm = ', mm)
+        return mm.parseFile(src).then(metadata => {
+          console.log('We got all metadata', metadata)
+          resolve(metadata.common.track.no)
+        }, err => {
+          console.error('For some weird reason we could not get the metadata', err.message);
+          resolve(err)
+        });
+    })
+  }
 
 
 //datatables natural sort plugin code below:
