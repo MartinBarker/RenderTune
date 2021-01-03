@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const musicMetadata = require('music-metadata');
 require('dotenv').config();
 
 let mainWindow;
@@ -52,6 +53,13 @@ ipcMain.on('app_version', (event) => {
 //auto-update quiet and install
 ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle('get-audio-metadata', async (event, filename) => {
+    console.log(`Loading metadata from ${filename}...`);
+    const metadata = await musicMetadata.parseFile(filename, {duration: true});
+    console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
+    return metadata;
 });
 
 //handle auto-update events

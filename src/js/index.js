@@ -1,3 +1,5 @@
+const { ipcRenderer } = window.require('electron');
+
 //let server = require('./app');
 var newUploadFiles = {}
 
@@ -1349,25 +1351,13 @@ async function newUploadFileDropEvent(event, preventDefault) {
             var audioFormat = splitType[1]
             audioFileInfo.format = audioFormat;
             
-            //get tracknum
-            let trackNumRet = await getTrackNum(f.path)
-            audioFileInfo.trackNum = trackNumRet;
-            console.log('audioFileInfo = ', audioFileInfo)
-            //get audiolength
-            let audioLength = 0
-            try {
-                console.log('newUploadFileDropEvent() begin get file duration')
-                audioLength = await getDuration(f.path)
-                console.log('newUploadFileDropEvent() audioLength = ', audioLength)
-                audioLength = new Date(audioLength * 1000).toISOString().substr(11, 8)
-                audioFileInfo.length = audioLength;
-            } catch (err) {
-                console.log('err getting audio length: ', err)
-            }
+            const metadata = await getMetadata(f.path);
+            audioFileInfo.trackNum = metadata.common.track.no;
+            audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
 
             //push results if that file isnt alread inside .audio
             if(fileList.audio.filter(e => e.path === `${f.path}`).length == 0){
-                fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioLength, 'trackNum': trackNumRet })
+                fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioFileInfo.length, 'trackNum': audioFileInfo.trackNum })
                 haveNewFilesBeenAdded=true;
             }
         }
@@ -1420,40 +1410,11 @@ function sum(date1, date2) {
     return result.map(r => String(r).padStart(2, "0")).join(":");
 }
 
-//get duration of audio file
-const mm = require('music-metadata');
-const util = require('util');
-
-function getDuration(src) {
-    return new Promise(function (resolve) {
-        mm.parseFile(src)
-            .then(metadata => {
-                resolve(metadata.format.duration)
-            })
-            .catch(err => {
-                console.error('err = ', err.message);
-                reject(err)
-            });
-    });
+async function getMetadata(filename) {
+    const metadata = await ipcRenderer.invoke('get-audio-metadata', filename);
+    console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
+    return metadata;
 }
-
-//get track num from audio file metadata
-async function getTrackNum(src) {
-    return new Promise(function (resolve) {
-        console.log("getTrackNum() src = ", src)
-  
-        console.log('getTrackNum() init requirerments called')
-        console.log('getTrackNum() mm = ', mm)
-        return mm.parseFile(src).then(metadata => {
-          console.log('We got all metadata', metadata)
-          resolve(metadata.common.track.no)
-        }, err => {
-          console.error('For some weird reason we could not get the metadata', err.message);
-          resolve(err)
-        });
-    })
-  }
-
 
 //datatables natural sort plugin code below:
 (function () {
