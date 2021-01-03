@@ -110,7 +110,8 @@ async function addNewUpload(uploadTitle) {
 
         let uploadKey = `upload-${uploadNumber}`
         let uploadObj = { 'title': uploadTitle, 'files': newUploadFiles }
-        newUploadFiles = {}
+        newUploadFiles = {};
+        fileList = fileList = { 'images': [], 'audio': [] };
 
         //add to uploadList obj
         await addToUploadList(uploadKey, uploadObj, uploadNumber)
