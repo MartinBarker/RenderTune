@@ -73,7 +73,6 @@ $('#deleteModal').on('shown.bs.modal', function (e) {
     })
 })
 
-
 //open url in user's default browser
 async function openUrl(type) {
     var open = require("open");
@@ -239,7 +238,7 @@ function setAllVidFormats(uploadNum, rowNum, choice) {
 
 //create new upload, add datatable and event-listeners
 async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
-    console.log('createNewUploadCard() uploadFiles = ', uploadFiles)
+    console.log('createNewUploadCard() uploadTitle = ', uploadTitle, ', uploadNumber= ', uploadNumber, ', uploadFiles = ', uploadFiles)
     return new Promise(async function (resolve, reject) {
 
 
@@ -441,6 +440,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
 
         //generate resolutions for each image
         let uploadImageResolutions = await getResolutionOptions(uploadFiles.images);
+        console.log('uploadImageResolutions = ', uploadImageResolutions)
         //create div of resolutions based off the default selected image name
         let resOptions = generateResolutionOptions(uploadImageResolutions, uploadFiles.images[0].name);
         //add full album resolution selection to upload_${uploadNumber}_fullAlbumResolutionChoiceDiv
@@ -970,33 +970,34 @@ function calculateResolution(oldWidth, oldHeight, newWidth){
 
 async function getResolutionOptions(images){
     return new Promise(async function (resolve, reject) {
-        console.log('images = ', images)
-        let returnVar = {};
-        
-        for(var x = 0; x < images.length; x++){
-            //get width and height for image 
-            let [width, height] = await getResolution(images[x].path);
-            let resolutions = []; 
-            resolutions.push(`${width}x${height}`)
-            //calculate 640wx480h SD
-            let [res1_width, res1_height] = calculateResolution(width, height, 640);
-            resolutions.push(`${res1_width}x${res1_height}`)
-            //calculate 1280x720 HD
-            let [res2_width, res2_height] = calculateResolution(width, height, 1280);
-            resolutions.push(`${res2_width}x${res2_height}`)
-            //calculate 1920x1080 HD
-            let [res3_width, res3_height] = calculateResolution(width, height, 1920);
-            resolutions.push(`${res3_width}x${res3_height}`)
-            //calculate 2560x1440 HD
-            let [res4_width, res4_height] = calculateResolution(width, height, 2560);
-            resolutions.push(`${res4_width}x${res4_height}`)
+        try{
+            let returnVar = {};
+            for(var x = 0; x < images.length; x++){
+                let [width, height] = await ipcRenderer.invoke('get-image-resolution', images[x].path); //await getResolution(images[x].path);
+                let resolutions = []; 
+                resolutions.push(`${width}x${height}`)
+                //calculate 640wx480h SD
+                let [res1_width, res1_height] = calculateResolution(width, height, 640);
+                resolutions.push(`${res1_width}x${res1_height}`)
+                //calculate 1280x720 HD
+                let [res2_width, res2_height] = calculateResolution(width, height, 1280);
+                resolutions.push(`${res2_width}x${res2_height}`)
+                //calculate 1920x1080 HD
+                let [res3_width, res3_height] = calculateResolution(width, height, 1920);
+                resolutions.push(`${res3_width}x${res3_height}`)
+                //calculate 2560x1440 HD
+                let [res4_width, res4_height] = calculateResolution(width, height, 2560);
+                resolutions.push(`${res4_width}x${res4_height}`)
 
-            let temp = {
-                'resolutions':resolutions
+                let temp = {
+                    'resolutions':resolutions
+                }
+                returnVar[images[x].name] = temp;
             }
-            returnVar[images[x].name] = temp;
+            resolve(returnVar)
+        }catch(err){
+            console.log('getResolutionOptions() err = ', err)
         }
-        resolve(returnVar)
     });
 }
 
@@ -1256,16 +1257,16 @@ async function updateUploadListDisplay() {
             let uploadTitle = value.title
             let uploadFiles = value.files
             uploadNumber = key.split('-')[1]
-            //console.log('~ updateDisplay() uploadNumber = ', uploadNumber)
+            console.log('~ updateDisplay() uploadNumber = ', uploadNumber)
             //if div with id = upload-${uploadNumber} does not exist:
-            var uploadObj = document.getElementById(`upload-${uploadNumber}`)
-            //console.log("~ updateUploadListDisplay() uploadObj = ", uploadObj)
-            if (uploadObj == null) {
+            var uploadObj = uploadList[uploadId];//document.getElementById(`upload-${uploadNumber}`)
+            console.log("~ updateUploadListDisplay() uploadObj = ", uploadObj)
+            //if (uploadObj == null) {
                 //console.log('~ updateUploadListDisplay() add to display: ', key, ', ', value)
                 await createNewUploadCard(uploadTitle, uploadNumber, uploadFiles)
-            } else {
+            //} else {
                 //console.log('~ updateUploadListDisplay() dont add already visible: ', key, ', ', value)
-            }
+            //}
 
 
 
