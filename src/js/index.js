@@ -1,3 +1,5 @@
+const { Console } = require('console');
+
 const { ipcRenderer } = window.require('electron');
 
 //let server = require('./app');
@@ -813,7 +815,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
 
 //render individual videos for an upload
 async function renderIndividual(uploadNumber) {
-    //console.log('renderIndividual() uploadNumber = ', uploadNumber)
+    console.log('renderIndividual()')
     //get table
     var table = $(`#upload_${uploadNumber}_table`).DataTable()
     //get upload from uploadList
@@ -821,42 +823,44 @@ async function renderIndividual(uploadNumber) {
     var upload = uploadList[`upload-${uploadNumber}`]
     //get all selected rows
     var selectedRows = table.rows('.selected').data()
-    //get dir
+    //get output filepath
     var path = require('path');
     var outputDir = path.dirname(selectedRows[0].audioFilepath)
-
-    //get padding
+    /*
+        Get video options
+    */
+    //get padding value
     let padding = ($(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).val()).trim();
-    //get resolution
+    //get resolution value
     let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text();
     resolution = (resolution.split(" ")[0]).trim()
-    //get img input
-    var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-    var upload = uploadList[`upload-${uploadNumber}`]
+    //get input img filepath 
     let imgChoice = document.getElementById(`upload_${uploadNumber}_fullAlbumImgChoice`).value
     let imgInput = upload.files.images[imgChoice].path
 
-    //for each individual render
+    //for each selected row
     for (var i = 0; i < selectedRows.length; i++) {
         //get song number:
         let songNum = (selectedRows[i].sequence) - 1
+        
         //get img selection
         //let imgChoice = document.getElementById(`upload_${uploadNumber}_table-audio-${songNum}-img_choice`).value
         //let imgInput = upload.files.images[imgChoice].path
-        //get filetype selection
-        //get audio filename without file extension/type at end
-        let songName = selectedRows[i].audio.substr(0, selectedRows[i].audio.lastIndexOf("."));
-        //get filepath for audio
-        let audioFilepath = selectedRows[i].audioFilepath
-        let last4chars = audioFilepath.substr(audioFilepath.length - 4);
-        console.log(`i=${i}, audioFilepath=${i}, last4chars=${last4chars}`)
-        //if filetype = flac or m4a
-        if (last4chars == 'flac' || last4chars == '.m4a') {
 
-            console.log('i = ', i, ', combine mp3 , audioFilepath= ', audioFilepath)
-            //convert to HQ mp3
+        //get input audio filename without file extension/type at end
+        let songName = selectedRows[i].audio.substr(0, selectedRows[i].audio.lastIndexOf("."));
+        let audioFilepath = selectedRows[i].audioFilepath
+        //get fileType
+        let fileType = selectedRows[i].audio.substr(selectedRows[i].audio.lastIndexOf(".")+1, selectedRows[i].audio.length);
+        console.log('fileType = ', fileType)
+        //if filetype = flac or m4a
+        if (fileType == 'flac' || fileType == 'm4a') {
+            //convert to mp3
             var timestamp = new Date().getUTCMilliseconds();
-            audioFilepath = `${outputDir}${path.sep}${songName}-convertedAudio.mp3`
+            audioFilepath = `${outputDir}${path.sep}${songName}-convertedAudio.mp3`;
+            /*
+            
+            */
             await combineMp3FilesOrig([selectedRows[i]], audioFilepath, '320k', timestamp, uploadNumber, 'IndividualRender');
         }
 
@@ -872,7 +876,7 @@ async function renderIndividual(uploadNumber) {
         document.getElementById(updateInfoLocation).innerHTML = ''
         await generateVid(audioFilepath, imgInput, vidOutput, updateInfoLocation, resolution, padding)
 
-        if (last4chars == 'flac' || last4chars == '.m4a') {
+        if (fileType == 'flac' || fileType == '.m4a') {
 
             //delete converted mp3 file
             deleteFile(audioFilepath)
@@ -882,6 +886,18 @@ async function renderIndividual(uploadNumber) {
 
     //get upload from upload-list
     //get all selected rows
+}
+
+async function runFfmpegCommand(ffmpegArgs, cutDuration){
+    return new Promise(async function (resolve, reject) {
+        const getFfmpegPath = () => getFfPath('ffmpeg');
+        const getFfprobePath = () => getFfPath('ffprobe');
+        const ffmpegPath = getFfmpegPath();
+        const process = execa(ffmpegPath, ffmpegArgs);
+        handleProgress(process, cutDuration);
+        const result = await process;
+        resolve(result);
+    })
 }
 
 //render a full album upload
@@ -897,25 +913,45 @@ async function fullAlbum(uploadName, uploadNumber, resolution, padding) {
     //create outputfile
     var timestamp = new Date().getUTCMilliseconds();
     let outputFilepath = `${outputDir}${path.sep}output-${timestamp}.mp3`
-    //create concat audio file
-    await combineMp3FilesOrig(selectedRows, outputFilepath, '320k', timestamp, uploadNumber);
 
-    //get img input
+    let concatCmdInfo = await createFfmpegCmd(
+        "concatMp3",
+        {
+          selectedRows:selectedRows,
+          outputFilepath:outputFilepath
+        }
+    );
+    let concatMp3Length = concatCmdInfo.duration;
+    //run command 
+    console.log('BEGIN FFMPEG AUDIO CONCAT COMMAND')
+    let runFfmpegCommandResp = await runFfmpegCommand(concatCmdInfo.args, concatMp3Length);
+    console.log('END FFMPEG AUDIO CONCAT COMMAND. runFfmpegCommandResp = ', runFfmpegCommandResp)
+
+    //get img input filepath
     var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
     var upload = uploadList[`upload-${uploadNumber}`]
     let imgChoice = document.getElementById(`upload_${uploadNumber}_fullAlbumImgChoice`).value
     let imgInput = upload.files.images[imgChoice].path
-
+    //create vid output filepath
     let vidOutput = `${outputDir}${path.sep}fullAlbum-${timestamp}.mp4`
-    let updateInfoLocation = `upload_${uploadNumber}_fullAlbumStatus`
-    await generateVid(outputFilepath, imgInput, vidOutput, updateInfoLocation, resolution, padding)
-    //await generateVid(selectedRows[0].audioFilepath, imgInput, vidOutput, uploadNumber)
-
-    console.log('fullAlbum() deleting temp fullalbumaudio file')
-    //console.log('deleting file')
+    //create command to generate vid
+    let vidCmdInfo = await createFfmpegCmd(
+        "vid",
+        {
+          inputAudio:outputFilepath,
+          inputImg:imgInput,
+          outputFilepath:vidOutput,
+          resolution:resolution,
+          padding:padding, 
+        }
+    )
+    //run command 
+    console.log('BEGIN FFMPEG VID GENERATE COMMAND')
+    runFfmpegCommandResp = await runFfmpegCommand(vidCmdInfo.args, concatMp3Length);
+    console.log('END FFMPEGVID GENERATE COMMAND. runFfmpegCommandResp = ', runFfmpegCommandResp)
     //delete audio file
     deleteFile(outputFilepath)
-
+    
     //console.log('after caclling deleting file')
 }
 
@@ -1011,7 +1047,7 @@ function getFfPath(cmd) {
     const isDev = window.require('electron-is-dev');
     const os = window.require('os');
     const platform = os.platform();
-  
+    console.log("getFfPath() platform = ", platform)
     if (platform === 'darwin') {
       return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
     }
@@ -1020,9 +1056,7 @@ function getFfPath(cmd) {
     return isDev
       ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
       : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
-  }
-
-
+}
 
 async function runFfprobe(args) {
     const ffprobePath = getFfprobePath();
@@ -1037,6 +1071,138 @@ function runFfmpeg(args) {
     return execa(ffmpegPath, args);
 }
 
+async function createFfmpegCmd(type, inputArgs){
+    return new Promise(async function (resolve, reject) {
+        let cmdArr = [];
+        let outputDuration = 0;
+        try{
+            if(type=="concatMp3"){
+                let selectedRows = inputArgs.selectedRows;
+                let outputFilepath = inputArgs.outputFilepath;
+                //add inputs
+                let inputs = '';
+                outputDuration = 0;
+                for (var i = 0; i < selectedRows.length; i++) {
+                    cmdArr.push('-i')
+                    cmdArr.push(`${selectedRows[i].audioFilepath}`)
+                    console.log('selectedRows[i] = ', selectedRows[i])
+                    inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `
+
+                    //calculate total time
+                    var lengthSplit = selectedRows[i].length.split(':'); // split it at the colons
+                    // minutes are worth 60 seconds. Hours are worth 60 minutes.
+                    var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]); 
+                    outputDuration = outputDuration + seconds
+                }
+
+                //add concat options
+                cmdArr.push("-y");
+                cmdArr.push("-filter_complex")
+                cmdArr.push(`concat=n=${i}:v=0:a=1`)
+                //add audio codec and quality 
+                cmdArr.push("-b:a")
+                cmdArr.push("320k")
+                //set output 
+                cmdArr.push(outputFilepath);
+
+            }else if(type=="vid"){
+                /* INPUTS=
+          inputAudio:outputFilepath,
+          inputImg:imgInput,
+          outputFilepath:vidOutput,
+          resolution:resolution,
+          padding:padding, 
+                */
+               console.log('inputArgs = ', inputArgs)
+                cmdArr.push('-loop') 
+                cmdArr.push('1')
+                cmdArr.push('-framerate') 
+                cmdArr.push('2')
+                cmdArr.push('-i')
+                cmdArr.push(`${inputArgs.inputImg}`)
+                cmdArr.push('-i')
+                cmdArr.push(`${inputArgs.inputAudio}`)
+                cmdArr.push('-y')
+                cmdArr.push('-acodec') 
+                cmdArr.push('copy') 
+                cmdArr.push('-b:a') 
+                cmdArr.push('320k') 
+                cmdArr.push('-vcodec') 
+                cmdArr.push('libx264') 
+                cmdArr.push('-b:v') 
+                cmdArr.push('8000k') 
+                cmdArr.push('-maxrate') 
+                cmdArr.push('8000k') 
+                cmdArr.push('-minrate') 
+                cmdArr.push('8000k') 
+                cmdArr.push('-bufsize') 
+                cmdArr.push('3M') 
+                cmdArr.push('-filter:v') 
+                cmdArr.push(`scale=w=${inputArgs.resolution.split('x')[0]}:h=${inputArgs.resolution.split('x')[1]}`) 
+                cmdArr.push('-preset') 
+                cmdArr.push('medium') 
+                cmdArr.push('-tune') 
+                cmdArr.push('stillimage') 
+                cmdArr.push('-crf') 
+                cmdArr.push('18') 
+                cmdArr.push('-pix_fmt') 
+                cmdArr.push('yuv420p') 
+                cmdArr.push('-shortest') 
+                cmdArr.push(`${inputArgs.outputFilepath}`)
+                /* no padding
+ffmpeg 
+-loop 1 
+-framerate 2 
+-i C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\front.jpg 
+-i C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\output-655.mp3 
+-y -acodec copy 
+-b:a 320k 
+-vcodec libx264 
+-b:v 8000k 
+-maxrate 8000k 
+-minrate 8000k 
+-bufsize 3M 
+-filter:v 
+scale=w=1920:h=1910 
+-preset medium 
+-tune stillimage 
+-crf 18 
+-pix_fmt yuv420p 
+-shortest 
+C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\fullAlbum-655.mp4
+                */
+                               /* yes padding
+
+                ffmpeg 
+                -loop 1 
+                -framerate 2 
+                -i C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\front.jpg 
+                -i C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\output-675.mp3 
+                -y -acodec copy 
+                -b:a 320k -vcodec libx264 
+                -b:v 8000k 
+                -maxrate 8000k 
+                -minrate 8000k 
+                -bufsize 3M -filter:v 
+                scale=w='if(gt(a,1.7777777777777777),1920,trunc(1080*a/2)*2)':h='if(lt(a,1.7777777777777777),1080,trunc(1920/a/2)*2)',pad=w=1920:h=1080:x='if(gt(a,1.7777777777777777),0,(1920-iw)/2)':y='if(lt(a,1.7777777777777777),0,(1080-ih)/2)':color=white 
+                -preset medium 
+                -tune stillimage -crf 18 -pix_fmt yuv420p -shortest C:\Users\marti\Documents\martinradio\uploads\Andy Cole Outstanding\fullAlbum-675.mp4
+                */
+
+            }
+            //create respObj
+            let respObj = {
+                args:cmdArr, 
+                duration:outputDuration
+            }
+            //return respObj
+            resolve(respObj)
+        }catch(err){
+            console.log("createFfmpegCmd() err = ", err)
+            reject(err)
+        }
+    });
+}
 
 const moment = window.require("moment");
 const readline = window.require('readline');
