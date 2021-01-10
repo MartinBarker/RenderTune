@@ -87,10 +87,10 @@ async function addNewUpload(uploadTitle) {
     console.log('addNewUpload() newUploadFiles = ', newUploadFiles)
 
     //check if there is an image to use:
-    if(newUploadFiles.images.length == 0){
+    if (newUploadFiles.images.length == 0) {
         console.log('length = 0')
         document.getElementById('newUploadAlert').style.display = "block";
-    }else{
+    } else {
         document.getElementById('newUploadAlert').style.display = "none";
         console.log('length != 0')
         $('#uploadModal').modal('hide');
@@ -383,7 +383,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
                 rowImg.setAttribute('style', `width:150px; text-align: left;`)
                 //img preview
                 rowImg.setAttribute("data-class", "avatar")
-                
+
                 rowImg.innerHTML = `${uploadFiles.images[x].name}`
                 fullAlbumImageSelectionColHeader.appendChild(rowImg)
             }
@@ -396,10 +396,10 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
         //    event.preventDefault()
         //});
 
-        function generateResolutionOptions(uploadImageResolutions, imageName){
-            if(uploadImageResolutions == null && imageName == null){
+        function generateResolutionOptions(uploadImageResolutions, imageName) {
+            if (uploadImageResolutions == null && imageName == null) {
                 console.log('both null')
-                uploadImageResolutions = {'staticResolutions':{resolutions:['640x480', '1280x720', '1920x1080', '2560x1440', '2560x1600']}}
+                uploadImageResolutions = { 'staticResolutions': { resolutions: ['640x480', '1280x720', '1920x1080', '2560x1440', '2560x1600'] } }
                 imageName = 'staticResolutions';
             }
             var fullAlbumResolutionSelectionColHeader = document.createElement('select')
@@ -414,9 +414,9 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
                 resOption.setAttribute('style', `width:150px; text-align: left;`)
                 //create display text
                 let definition = "";
-                if(width > 1){
+                if (width > 1) {
                     definition = 'SD';
-                    if(width > 1280){
+                    if (width > 1280) {
                         definition = '<a class="red_color">HD</a>';
 
                     }
@@ -425,8 +425,8 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
                 resOption.innerHTML = displayText//'<div style="color:red">bungis</div>'//displayText
                 fullAlbumResolutionSelectionColHeader.appendChild(resOption)
                 //select 1920 hd result by default
-                if(width >= 1920 && !minAlreadySelected){
-                    minAlreadySelected=true;
+                if (width >= 1920 && !minAlreadySelected) {
+                    minAlreadySelected = true;
                     resOption.setAttribute('selected', 'selected');
                 }
             }
@@ -447,8 +447,8 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
         document.getElementById(`upload_${uploadNumber}_fullAlbumResolutionChoiceDiv`).appendChild(resOptions)
 
         //if padding option changes, update resolution options
-        $(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).on('change', function() {
-            let paddingChoice =  $(this).val();
+        $(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).on('change', function () {
+            let paddingChoice = $(this).val();
             console.log('paddingChoice = ', paddingChoice)
             //get image choice
             let imageChoiceNum = $(`#upload_${uploadNumber}_fullAlbumImgChoice`).val();
@@ -465,18 +465,18 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
         });
 
         //if image selection changes, update resolution options
-        $(`#upload_${uploadNumber}_fullAlbumImgChoice`).on('change', function() {
+        $(`#upload_${uploadNumber}_fullAlbumImgChoice`).on('change', function () {
             //get image info
-            let newImageNum =  $(this).val();
+            let newImageNum = $(this).val();
             let newImageName = uploadFiles.images[newImageNum].name;
             //get padding info
-            let paddingChoice =  $(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).val();
+            let paddingChoice = $(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).val();
             console.log('img changed paddingChoice = ', paddingChoice)
             //if padding is not 'none', generate dropdown with static resolutions
             let newResOptions;
-            if(!paddingChoice.includes('none')){
+            if (!paddingChoice.includes('none')) {
                 newResOptions = generateResolutionOptions(null, null);
-            }else{
+            } else {
                 newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
             }
             //create new resolution div
@@ -486,7 +486,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
             //append resolution options
             document.getElementById(`upload_${uploadNumber}_fullAlbumResolutionChoiceDiv`).appendChild(newResOptions)
 
-          
+
         });
 
         //create dataset
@@ -621,7 +621,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
           */
 
         $(`#upload_${uploadNumber}_fullAlbumButton`).on('click', async function (e) {
-            let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text(); 
+            let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text();
             resolution = (resolution.split(" ")[0]).trim()
             let padding = ($(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).val()).trim();
             fullAlbum(`upload-${uploadNumber}`, uploadNumber, resolution, padding)
@@ -828,7 +828,7 @@ async function renderIndividual(uploadNumber) {
     //get padding
     let padding = ($(`#upload_${uploadNumber}_fullAlbumPaddingChoices`).val()).trim();
     //get resolution
-    let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text(); 
+    let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text();
     resolution = (resolution.split(" ")[0]).trim()
     //get img input
     var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
@@ -852,7 +852,7 @@ async function renderIndividual(uploadNumber) {
         console.log(`i=${i}, audioFilepath=${i}, last4chars=${last4chars}`)
         //if filetype = flac or m4a
         if (last4chars == 'flac' || last4chars == '.m4a') {
-            
+
             console.log('i = ', i, ', combine mp3 , audioFilepath= ', audioFilepath)
             //convert to HQ mp3
             var timestamp = new Date().getUTCMilliseconds();
@@ -940,41 +940,41 @@ async function apiRouteTest() {
     console.log('api route')
 }
 
-async function getResolution(imagePath){
+async function getResolution(imagePath) {
     return new Promise(async function (resolve, reject) {
-        try{
+        try {
             var sizeOf = require('image-size');
 
             sizeOf(imagePath, function (err, dimensions) {
-                if(!err){
-                    width=dimensions.width;
-                    height=dimensions.height
+                if (!err) {
+                    width = dimensions.width;
+                    height = dimensions.height
                     resolve([width, height]);
-                }else{
+                } else {
                     console.log('err getting img dimmensions:', err)
                     reject(err)
                 }
             });
-        }catch(err){
+        } catch (err) {
             console.log('err getting dimmensions:', err)
             reject(err)
         }
     });
 }
 
-function calculateResolution(oldWidth, oldHeight, newWidth){
-    let aspectRatio = oldWidth/oldHeight;
-    let newHeight = newWidth/aspectRatio
-    return([Math.round(newWidth), Math.round(newHeight)])
+function calculateResolution(oldWidth, oldHeight, newWidth) {
+    let aspectRatio = oldWidth / oldHeight;
+    let newHeight = newWidth / aspectRatio
+    return ([Math.round(newWidth), Math.round(newHeight)])
 }
 
-async function getResolutionOptions(images){
+async function getResolutionOptions(images) {
     return new Promise(async function (resolve, reject) {
-        try{
+        try {
             let returnVar = {};
-            for(var x = 0; x < images.length; x++){
+            for (var x = 0; x < images.length; x++) {
                 let [width, height] = await ipcRenderer.invoke('get-image-resolution', images[x].path); //await getResolution(images[x].path);
-                let resolutions = []; 
+                let resolutions = [];
                 resolutions.push(`${width}x${height}`)
                 //calculate 640wx480h SD
                 let [res1_width, res1_height] = calculateResolution(width, height, 640);
@@ -990,21 +990,105 @@ async function getResolutionOptions(images){
                 resolutions.push(`${res4_width}x${res4_height}`)
 
                 let temp = {
-                    'resolutions':resolutions
+                    'resolutions': resolutions
                 }
                 returnVar[images[x].name] = temp;
             }
             resolve(returnVar)
-        }catch(err){
+        } catch (err) {
             console.log('getResolutionOptions() err = ', err)
         }
     });
 }
 
+//new ffmpeg functions:
+function getFfCommandLine(cmd, args) {
+    const mapArg = arg => (/[^0-9a-zA-Z-_]/.test(arg) ? `'${arg}'` : arg);
+    return `${cmd} ${args.map(mapArg).join(' ')}`;
+}
+
+function getFfPath(cmd) {
+    const isDev = window.require('electron-is-dev');
+    const os = window.require('os');
+    const platform = os.platform();
+  
+    if (platform === 'darwin') {
+      return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+    }
+  
+    const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
+    return isDev
+      ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
+      : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+  }
+
+
+
+async function runFfprobe(args) {
+    const ffprobePath = getFfprobePath();
+    console.log(getFfCommandLine('ffprobe', args));
+    return execa(ffprobePath, args);
+}
+
+function runFfmpeg(args) {
+    console.log('runFfmpeg() args = ', args)
+    const ffmpegPath = getFfmpegPath();
+    console.log(getFfCommandLine('ffmpeg', args));
+    return execa(ffmpegPath, args);
+}
+
+
+const moment = window.require("moment");
+const readline = window.require('readline');
+function handleProgress(process, cutDuration) {
+    //onProgress(0);
+  
+    const rl = readline.createInterface({ input: process.stderr });
+    rl.on('line', (line) => {
+        console.log('progress', line);
+  
+      try {
+        let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+        // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
+        if (!match) match = line.match(/(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+        if (!match) return;
+  
+        const str = match[1];
+        console.log(str);
+        const progressTime = Math.max(0, moment.duration(str).asSeconds());
+        console.log(progressTime);
+        const progress = cutDuration ? progressTime / cutDuration : 0;
+        console.log('progress = ', progress)
+        //onProgress(progress);
+      } catch (err) {
+        console.log('Failed to parse ffmpeg progress line', err);
+      }
+    });
+  }
+const execa = window.require('execa');
 //generate video using image and audio
 async function generateVid(audioPath, imgPath, vidOutput, updateInfoLocation, resolution, padding) {
     return new Promise(async function (resolve, reject) {
         console.log('generateVid \n audioPath = ', audioPath, ' \n \n imgPath = ', imgPath, ' \n \n vidOutput = ', vidOutput, `, \n \n resolution = [${resolution}], \n \n padding=${padding}`)
+
+        let ffmpegCmdString = '["-hide_banner","-i","/Users/martinbarker/Documents/testfiles/The Hard Workers – Hola! Hola!/fullAlbum-577.mp4","-c","copy","-map","0:0","-map_metadata","0","-movflags","+faststart","-ignore_unknown","-f","mp4","-y","/Users/martinbarker/Documents/testfiles/NEWWOWIEfullAlbum-577-00.00.00.000-00.05.06.500-seg1.mp4"]';
+        let tempffmpegArgs = JSON.parse(ffmpegCmdString);
+
+        const ffmpegCommandLine = getFfCommandLine('ffmpeg', tempffmpegArgs);
+        console.log('ffmpegCommandLine=', ffmpegCommandLine)
+
+        //cutDuration = length in seconds of video (float)
+        cutDuration=306.13
+
+        const getFfmpegPath = () => getFfPath('ffmpeg');
+        const getFfprobePath = () => getFfPath('ffprobe');
+        const ffmpegPath = getFfmpegPath();
+        const process = execa(ffmpegPath, tempffmpegArgs);
+        handleProgress(process, cutDuration);
+        const result = await process;
+        console.log(result.stdout);
+
+        /*
         if (updateInfoLocation) {
             console.log('updateInfoLocation found')
             document.getElementById(updateInfoLocation).innerText = `Generating Video: 0%`
@@ -1125,7 +1209,7 @@ async function generateVid(audioPath, imgPath, vidOutput, updateInfoLocation, re
             })
             .output(vidOutput).run()
         }
-
+        */
 
 
     })
@@ -1262,10 +1346,10 @@ async function updateUploadListDisplay() {
             var uploadObj = uploadList[uploadId];//document.getElementById(`upload-${uploadNumber}`)
             console.log("~ updateUploadListDisplay() uploadObj = ", uploadObj)
             //if (uploadObj == null) {
-                //console.log('~ updateUploadListDisplay() add to display: ', key, ', ', value)
-                await createNewUploadCard(uploadTitle, uploadNumber, uploadFiles)
+            //console.log('~ updateUploadListDisplay() add to display: ', key, ', ', value)
+            await createNewUploadCard(uploadTitle, uploadNumber, uploadFiles)
             //} else {
-                //console.log('~ updateUploadListDisplay() dont add already visible: ', key, ', ', value)
+            //console.log('~ updateUploadListDisplay() dont add already visible: ', key, ', ', value)
             //}
 
 
@@ -1328,20 +1412,20 @@ async function newUploadFileDropEvent(event, preventDefault) {
         event.preventDefault();
         event.stopPropagation();
     }
-    
+
     //create fileList if it doesn't exist
-    if(!fileList){
+    if (!fileList) {
         fileList = { 'images': [], 'audio': [] }
     }
-    
+
     //sort all files into audio / images 
     for (const f of event.dataTransfer.files) {
         // Using the path attribute to get absolute file path 
         if ((f.type).includes('image')) {
             //if image filepath does not already exist in newUploadTempFiles:
-            if(fileList.images.filter(e => e.path === `${f.path}`).length == 0){
+            if (fileList.images.filter(e => e.path === `${f.path}`).length == 0) {
                 fileList.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
-                haveNewFilesBeenAdded=true;
+                haveNewFilesBeenAdded = true;
             }
 
         } else if ((f.type).includes('audio')) {
@@ -1351,15 +1435,15 @@ async function newUploadFileDropEvent(event, preventDefault) {
             var splitType = (f.type).split('/')
             var audioFormat = splitType[1]
             audioFileInfo.format = audioFormat;
-            
+
             const metadata = await getMetadata(f.path);
             audioFileInfo.trackNum = metadata.common.track.no;
             audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
 
             //push results if that file isnt alread inside .audio
-            if(fileList.audio.filter(e => e.path === `${f.path}`).length == 0){
+            if (fileList.audio.filter(e => e.path === `${f.path}`).length == 0) {
                 fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioFileInfo.length, 'trackNum': audioFileInfo.trackNum })
-                haveNewFilesBeenAdded=true;
+                haveNewFilesBeenAdded = true;
             }
         }
     }
@@ -1368,7 +1452,7 @@ async function newUploadFileDropEvent(event, preventDefault) {
     console.log('newUploadFileDropEvent() newUploadFiles = ', newUploadFiles)
 
     //if new files have been added, update UI
-    if(haveNewFilesBeenAdded){
+    if (haveNewFilesBeenAdded) {
         var imageFilesHtml = ''
         var audioFilesHtml = ''
         for (const [key, value] of Object.entries(fileList)) {
