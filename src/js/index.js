@@ -893,6 +893,7 @@ async function runFfmpegCommand(ffmpegArgs, cutDuration){
         const getFfmpegPath = () => getFfPath('ffmpeg');
         const getFfprobePath = () => getFfPath('ffprobe');
         const ffmpegPath = getFfmpegPath();
+        console.log('runFfmpegCommand() ffmpegPath = ', ffmpegPath)
         const process = execa(ffmpegPath, ffmpegArgs);
         handleProgress(process, cutDuration);
         const result = await process;
@@ -1037,6 +1038,8 @@ async function getResolutionOptions(images) {
     });
 }
 
+
+const { join, extname } = window.require('path');
 //new ffmpeg functions:
 function getFfCommandLine(cmd, args) {
     const mapArg = arg => (/[^0-9a-zA-Z-_]/.test(arg) ? `'${arg}'` : arg);
@@ -1044,18 +1047,24 @@ function getFfCommandLine(cmd, args) {
 }
 
 function getFfPath(cmd) {
-    const isDev = window.require('electron-is-dev');
-    const os = window.require('os');
-    const platform = os.platform();
-    console.log("getFfPath() platform = ", platform)
-    if (platform === 'darwin') {
-      return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+    try{
+        const isDev = window.require('electron-is-dev');
+        const os = window.require('os');
+        const platform = os.platform();
+        console.log("getFfPath() platform = ", platform)
+        if (platform === 'darwin') {
+          return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+        }
+      
+        const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
+        return isDev
+          ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
+          : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+    }catch(err){
+        console.log('getFfPath cmd=', cmd, '. err = ', err)
+        return("")
     }
-  
-    const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
-    return isDev
-      ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
-      : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+
 }
 
 async function runFfprobe(args) {
@@ -1100,6 +1109,8 @@ async function createFfmpegCmd(type, inputArgs){
                 cmdArr.push("-filter_complex")
                 cmdArr.push(`concat=n=${i}:v=0:a=1`)
                 //add audio codec and quality 
+                cmdArr.push("-c:a")
+                cmdArr.push("libmp3lame")
                 cmdArr.push("-b:a")
                 cmdArr.push("320k")
                 //set output 
@@ -1249,6 +1260,7 @@ async function generateVid(audioPath, imgPath, vidOutput, updateInfoLocation, re
         const getFfmpegPath = () => getFfPath('ffmpeg');
         const getFfprobePath = () => getFfPath('ffprobe');
         const ffmpegPath = getFfmpegPath();
+        console.log('ffmpegPath = ', ffmpegPath)
         const process = execa(ffmpegPath, tempffmpegArgs);
         handleProgress(process, cutDuration);
         const result = await process;
