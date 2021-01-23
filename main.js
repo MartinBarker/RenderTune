@@ -15,8 +15,13 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false,
         },
+        //framless
+        frame: false,
+        backgroundColor: '#FFF',
     });
-    mainWindow.loadFile('./src/index.html');
+    mainWindow.loadFile('./src/newindex.html'); //digify mas-attempt-2
+    //mainWindow.loadFile('./src/index.html'); //digify mas-attempt-2
+    
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
