@@ -5,11 +5,10 @@
   width: 160px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; /* Stay on top */
-  top: 0; /* Stay at the top */
+  top: 40px; /* Stay at the top */
   left: 0;
   background-color: #111; /* Black */
   overflow-x: hidden; /* Disable horizontal scroll */
-  padding-top: 30px;
 }
 
 /* The navigation menu links */
@@ -34,8 +33,10 @@
 
 /* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
 @media screen and (max-height: 450px) {
+  /*
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
+  */
 }
 
 /* Framless CSS: */
@@ -53,15 +54,16 @@ h1 {margin: 0 0 10px 0; font-weight: 600; line-height: 1.2;}
 p {margin-top: 10px; color: rgba(255,255,255,0.4);}
 
 body {
-    border: 1px solid #48545c;
+    /* border: 1px solid red; */ /* #48545c; */
     overflow-y: hidden;
   }
   
   #titlebar {
+      top:0px;
     display: block;
     position: fixed;
-    height: 32px;
-    width: calc(100% - 2px); /*Compensate for body 1px border*/
+    height: 40px;
+    width: calc(100%); /*Compensate for body 1px border*/
     background: #254053;
   }
   

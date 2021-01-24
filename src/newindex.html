@@ -28,10 +28,12 @@
 
     <!-- frameless window titlebar -->
     <header style="z-index: 2;" id="titlebar">
-        <div id="drag-region">
-
-            <div id="window-title">
-                <span>Digify <span id="version"></span></span>   <br>
+       <div id="drag-region">
+        <div style="z-index: 2; position:absolute; top:0px; left:0px; height:40px; background:#7762ca; width:50px;"></div>
+        
+            <div id="window-title"> 
+                <img style="z-index: 3; height:30px; " src="../build/icon-white.png">
+                <span style="margin-left:30px;">Digify <span id="version"></span></span>   <br>
             </div>
 
             <div id="window-controls">
@@ -74,6 +76,11 @@
     <div style="z-index: 0;" id="main" class="container-fluid">
        <!-- Side navigation -->
         <div class="sidenav">
+            <!-- left-side icons -->
+            <div style="background:red; height:100%; width:50px; position: absolute;">
+                X
+            </div>
+
             <a href="#">About</a>
             <a href="#">Services</a>
             <a href="#">Clients</a>
