@@ -13,10 +13,10 @@
     <!-- bootstrap -->
     <script>require('bootstrap');</script>
 
-    <!-- Bootstrap CSS 
+    <!-- Bootstrap CSS  -->
   <link rel="stylesheet" href="./static/bootstrap/css/bootstrap.min.css" />
   <link rel="stylesheet" href="./static/font-awesome/css/font-awesome.min.css">
-  -->
+  
 
     <!-- row reorder css 
   <link rel="stylesheet" href="./static/datatables/rowReorder.dataTables.min.css">
@@ -26,7 +26,8 @@
 
 <body>
 
-    <header id="titlebar">
+    <!-- frameless window titlebar -->
+    <header style="z-index: 2;" id="titlebar">
         <div id="drag-region">
 
             <div id="window-title">
@@ -63,9 +64,27 @@
         </div>
     </header>
 
+    <!-- page main content 
     <div id="main">
         <h1>Hello World!</h1>
         <p>Lorem ipsum dolor sit amet...</p>
+    </div>
+    -->
+   
+    <div style="z-index: 0;" id="main" class="container-fluid">
+       <!-- Side navigation -->
+        <div class="sidenav">
+            <a href="#">About</a>
+            <a href="#">Services</a>
+            <a href="#">Clients</a>
+            <a href="#">Contact</a>
+        </div>
+        
+        <!-- Page content -->
+        <div class="main">
+            <h1>Hello World!</h1>
+            <p>Lorem ipsum dolor sit amet...</p>
+        </div>
     </div>
 
     <script>
