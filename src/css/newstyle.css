@@ -1,3 +1,14 @@
+/* modal */
+.modal-dialog{
+  overflow-y: initial !important
+}
+.modal-body{
+  height: 80vh;
+  overflow-y: auto;
+}
+.modal-open .modal{
+  overflow-y: hidden !important;
+}
 /* custom icon hover color */
 .custom-svg:hover g{
   fill:white;
@@ -95,43 +106,17 @@
   background: none;
 }
 
-/*
-@media(min-width:768px) {
-  #wrapper {
-    padding-left: 250px;
-  }
-  #wrapper.toggled {
-    padding-left: 0;
-  }
-  #sidebar-wrapper {
-    width: 250px;
-    left:300px;
-    top:40px;
-  }
-  #wrapper.toggled #sidebar-wrapper {
-    width: 0;
-  }
-  #page-content-wrapper {
-    padding: 20px;
-    position: relative;
-  }
-  #wrapper.toggled #page-content-wrapper {
-    position: relative;
-    margin-right: 0;
-  }
-}
-*/
-/* --------------------------------------------------------- */
 
 /* sidebar css: */
 /* The sidebar menu */
 .sidenav {
   height: 100%; /* Full-height: remove this if you want "auto" height */
-  width: 160px; /* Set the width of the sidebar */
+  width: 50px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   /* z-index: 1;  Stay on top */
   top: 40px; /* Stay at the top */
   left: 0;
+  z-index:2000;
   /* background-color: #111;  Black */
   overflow-x: hidden; /* Disable horizontal scroll */
 }

@@ -89,41 +89,8 @@ $("#menu-toggle").click(function (e) {
 });
 
 $(document).ready(function () {
-  /*
-  //on page load, if page is wide enough: expand sidebar
-  if ($(window).width() > 768) {
-    $("#wrapper").toggleClass("toggled");
-    $("#menu-toggle").toggleClass("svg-selected");
-  }
 
-  //when page gets resized
-  $( window ).resize(function() {
-    if ($(window).width() < 768) {
-      console.log('Less than 768');
-      if ($( "#wrapper" ).hasClass( "toggled" )){ 
-        console.log('contains toggled')
-        $("#wrapper").toggleClass("toggled");
-        $("#menu-toggle").toggleClass("svg-selected");
-      }else{
-        console.log('does not contain toggled')
-      }
-      
-  
-    }else {
-      console.log('More than 768');
-      if ($( "#wrapper" ).hasClass( "toggled" )){ 
-        console.log('contains toggled')
-      }else{
-        console.log('does not contain toggled')
-        $("#wrapper").toggleClass("toggled");
-        $("#menu-toggle").toggleClass("svg-selected");
-      }
-    }
-  });
-  */
-
-
-
+  init();
 
   $("#wrapper").on('change', 'input', function () {
     console.log(" .change() called.");
@@ -143,3 +110,18 @@ $(document).ready(function () {
   });
 
 });
+
+async function init(){
+  var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+  if(!uploadList){
+    console.log('localstorage uploadList not exist', uploadList)
+    setLocalStorage('uploadList', {})
+  }else{
+    console.log('localstorage uploadList do exist: ', uploadList)
+  }
+}
+
+//clear uploadList
+async function setLocalStorage(itemName, itemValue){
+  let result = await localStorage.setItem(itemName, JSON.stringify(itemValue))
+}
