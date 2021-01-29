@@ -1,6 +1,17 @@
-#deleteAllBox {
 
-  /* background-color: rgb(223, 74, 74); */
+
+.sidebarUploadImg{
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+}
+
+.sidebar-selected{
+  background:white!important;
+  color:black!important;
+}.sidebar-selected:hover{
+  background:white!important;
+  color:black!important;
 }
 
 #deleteAllBox:hover {
@@ -114,7 +125,7 @@
 }
 .sidebar-nav li :hover {
   text-decoration: none;
-  color: #fff !important;
+  color: #fff ;
   background: rgba(255, 255, 255, 0.2);
 }
 .sidebar-nav li a:active,
