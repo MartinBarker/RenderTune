@@ -65,33 +65,23 @@ $("#newUploadButton").click(function (e) {
   }
 });
 
-//if newUpload modal is closed:
-$('#new-upload-modal').on('hide.bs.modal', function () {
-
-  console.log("'#new-upload-modal').on('hidden.bs.modal',")
-
-    if ($("#newUploadButton").hasClass("page-selected")) {
-      console.log('toggle new upload button on')
-      $("#newUploadButton").toggleClass("page-selected");
-    } 
-  
-      
-})
-
 //when you click the Uploads list button
 $("#menu-toggle").click(function (e) {
   e.preventDefault();
   $("#wrapper").toggleClass("toggled");
 
+  //if uploads-list is already open
   if ($("#menu-toggle").hasClass("svg-selected")) {
-    console.log('toggle Uploads button off')
+
     //go back to home
     $("#homeButton").toggleClass("page-selected");
     $("#new-upload-html").hide();
     $("#default-home-html").show();
     $("#upload-selection-html").hide();
+  
+  //else if uploads-list is not currently open when we click it
   } else {
-    console.log('toggle Uploads button on')
+    
     $("#new-upload-html").hide();
     $("#default-home-html").hide();
     $("#upload-selection-html").show();
@@ -108,45 +98,44 @@ $("#menu-toggle").click(function (e) {
   $("#menu-toggle").toggleClass("svg-selected");
 });
 
+//if newUpload modal is closed:
+$('#new-upload-modal').on('hide.bs.modal', function () {
+  console.log("'#new-upload-modal').on('hidden.bs.modal',")
+    if ($("#newUploadButton").hasClass("page-selected")) {
+      console.log('toggle new upload button on')
+      $("#newUploadButton").toggleClass("page-selected");
+    }     
+})
+
+//when document window is ready call init function
 $(document).ready(function () {
-
+  //call init function
   init();
-
-  $("#wrapper").on('change', 'input', function () {
-    console.log(" .change() called.");
-  });
-
-  $('#wrapper').on('classChange', function () {
-    console.log(" class changed");
-  });
-
-  $("#sidebar-toggle").on('hidden.bs.collapse', function () {
-    console.log("Handler for .change() called.");
-  });
-
-
-  $("#sidebar-nav").on('hidden.bs.collapse', function () {
-    console.log("Handler for .change() called.");
-  });
-
 });
 
+//init: get uploadList and display it
 async function init(){
+  //ensure uploadList exists
   var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
   if(!uploadList){
     console.log('localstorage uploadList not exist', uploadList)
     setLocalStorage('uploadList', {})
   }else{
-    console.log('localstorage uploadList do exist: ', uploadList)
+    //console.log('localstorage uploadList do exist: ', uploadList)
   }
+  //display uploads
+  updateUploadListDisplay();
 }
 
-//cupdate localstorage
+//update localstorage
 async function setLocalStorage(itemName, itemValue){
   let result = await localStorage.setItem(itemName, JSON.stringify(itemValue))
 }
 
-
+async function deleteAllUploads() {
+  await localStorage.setItem('uploadList', JSON.stringify({}))
+  updateUploadListDisplay();
+}
 
 /*
     NEW UPLOAD MODAL EVENT HANDLING:
@@ -160,6 +149,7 @@ $("#newUploadFileSelection").change(async function (e) {
   let event = { "dataTransfer": { "files": files } }
   newUploadFileDropEvent(event, false)
 });
+
 //get new upload drag&drop box
 var newUploadBox = document.getElementById('newUploadFilesInput')
 //add event listener when files get dropped into it
@@ -204,11 +194,7 @@ $('#new-upload-modal').on('shown.bs.modal', function (e) {
   $('input:text:visible:first', this).focus();
 })
 
-/*
-    FUNCTION FOR WHEN NEW FILES ARE ADDED TO NEW-UPLOAD-MODAL
-    
-*/
-//when files are dragged into upload drag&drop space
+//when files are added to popup modal either by drag&drop or file selection
 let fileList = null;
 async function newUploadFileDropEvent(event, preventDefault) {
     let haveNewFilesBeenAdded = false;
@@ -289,6 +275,126 @@ async function newUploadFileDropEvent(event, preventDefault) {
 //call electron main.js to get audio metadata 
 async function getMetadata(filename) {
   const metadata = await ipcRenderer.invoke('get-audio-metadata', filename);
-  //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
   return metadata;
+}
+
+//when you click 'create' in the new upload modal
+async function addNewUpload(uploadTitle) {
+
+  //if there are no images:
+  if (fileList.images.length == 0) {
+      document.getElementById('newUploadAlert').style.display = "block";
+
+  //else if there are images:
+  } else {
+      document.getElementById('newUploadAlert').style.display = "none";
+      $('#uploadModal').modal('hide');
+      //get unique uploadNumber
+      let uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+      let uploadNumber = 1
+      if (uploadList != null) {
+          //while upload already exists with that key
+          while (uploadList[`upload-${uploadNumber}`]) {
+              uploadNumber++
+          }
+      }
+
+      //if title is null, set to default
+      if (uploadTitle.length < 1) {
+          uploadTitle = `upload-${uploadNumber}`
+      }
+
+      let uploadKey = `upload-${uploadNumber}`
+      let uploadObj = { 'title': uploadTitle, 'files': fileList }
+      fileList = null;
+
+      //add to uploadList obj
+      await addToUploadList(uploadKey, uploadObj)
+
+      //close modal
+      $('#new-upload-modal').modal('toggle');
+
+      //update uploadListDisplay
+      updateUploadListDisplay()
+  }
+
+}
+
+//add new upload to uploadList
+async function addToUploadList(uploadKey, uploadValue) {
+  return new Promise(async function (resolve, reject) {
+      //get uploadList from localstorage
+      var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+
+      //if uploadList does not exists
+      if (uploadList == null) {
+          //create new uploadList object
+          let newUploadListObj = {}
+          //set uploadList in localstorage
+          await localStorage.setItem('uploadList', JSON.stringify(newUploadListObj))
+          uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+      }
+
+      //if uploadKey does not exist
+      if (uploadList[uploadKey] == null) {
+          //console.log(`setting ${uploadKey} in uploadList to be = `, uploadValue)
+          uploadList[uploadKey] = uploadValue
+          uploadList[uploadKey]['audio'] = uploadValue['audio']
+      } else {
+          //console.log(`${uploadKey} does exist in uploadList, so update pre-existing obj`)
+      }
+
+      //console.log("++ addToUploadList() done uploadList = ", uploadList)
+      let result = await localStorage.setItem('uploadList', JSON.stringify(uploadList))
+      //console.log('result = ', result)
+
+      var tempuploadList = await JSON.parse(localStorage.getItem('uploadList'))
+      //console.log('tempuploadList = ', tempuploadList)
+      resolve()
+  })
+}
+
+//upload where we display all the uploads
+async function updateUploadListDisplay() {
+  //reset
+  document.getElementById('sidebar-uploads').innerHTML = "";
+  //get uploadList from localstorage
+  var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+
+  console.log('~ updateUploadListDisplay() uploadList = ', uploadList)
+
+  //if uploadList exists
+  if (uploadList != null) {
+      //update numberOfUploads display
+      document.getElementById('numberOfUploads').innerText = Object.keys(uploadList).length;
+      //for each object in uploadList
+      for (const [key, value] of Object.entries(uploadList)) {
+          let uploadId = key
+          let uploadTitle = value.title
+          let uploadFiles = value.files
+          uploadNumber = key.split('-')[1];
+
+          $("#sidebar-uploads").prepend(`
+            <li>
+                <a href="#">${uploadTitle}</a>
+            </li>
+          `);
+          //var liElement = document.createElement("li");
+          //var aElement = document.createElement("a");
+          //para.appendChild(node);
+
+          //console.log('~ updateUploadListDisplay() uploadNumber = ', uploadNumber)
+          //if div with id = upload-${uploadNumber} does not exist:
+          //var uploadObj = uploadList[uploadId];
+          //console.log("~ updateUploadListDisplay() uploadObj = ", uploadObj)
+          //if (uploadObj == null) {
+          //console.log('~ updateUploadListDisplay() add to display: ', key, ', ', value)
+          //await createNewUploadCard(uploadTitle, uploadNumber, uploadFiles)
+          //console.log('updateUploadListDisplay() newUploadCard = ', newUploadCard)
+          //uploadListDisplay.appendChild(newUploadCard);
+          //console.log(`    ${key}: ${value}`);
+          //uploadListDisplay.innerHTML = uploadListDisplay.innerHTML + `[${key}]-${JSON.stringify(value)}]<br><hr>`
+      }
+  }
+
 }

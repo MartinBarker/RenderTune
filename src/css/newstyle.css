@@ -1,7 +1,35 @@
+#deleteAllBox {
+
+  /* background-color: rgb(223, 74, 74); */
+}
+
+#deleteAllBox:hover {
+  color: rgb(204, 29, 29);
+}
+
 /* modal */
 .modal-dialog{
+  min-width: 200px !important; 
+  max-width: 500px !important;
+  margin: 1.75rem auto !important;
+  position:absolute;
+  right:10px!important;
+  left:60px!important;
+  height:100%;
   overflow-y: initial !important
 }
+
+.modal-content{
+
+  min-width: 200px !important; 
+  max-width: 500px !important;
+  margin: 1.75rem auto !important;
+  position:absolute;
+  right:10px!important;
+  left:0px!important;
+  height:85%;
+}
+
 .modal-body{
   height: 80vh;
   overflow-y: auto;

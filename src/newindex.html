@@ -74,45 +74,32 @@
 
         <!-- page wrapper -->
         <div id="wrapper" class="">
-
+            
             <!-- Sidebar -->
             <div id="sidebar-wrapper">
-                <ul class="sidebar-nav">
+
+                <div style='
+                    position:sticky;
+                    height:43px;
+                    background:#7762ca;
+                    z-index:2000;
+                    text-indent: 20px;
+                    line-height: 43.9px;
+                    color: white;
+                ' class="sidebar-nav">
+                    Uploads: (<a id='numberOfUploads'>0</a>)
+                
+                    <div id='deleteAllBox' style='float:right; padding-right:30px; cursor: pointer; display: inline;'  data-toggle='modal' data-target="#deleteAllModal">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <ul style='padding-bottom: 50px; padding-top:43px;' class="sidebar-nav" >
+                    <div id='sidebar-uploads'></div>
+
                     
-                    <li>
-                        <a href="#">Dashboard</a>
-                    </li>
-                    <li>
-                        <a href="#">Shortcuts</a>
-                    </li>
-                    <li>
-                        <a href="#">Overview</a>
-                    </li>
-                    <li>
-                        <a href="#">Events</a>
-                    </li>
-                    <li>
-                        <a href="#">About</a>
-                    </li>
-                    <li>
-                        <a href="#">Services</a>
-                    </li>
-                    <li>
-                        <a href="#">Contact</a>
-                    </li>
-                    <li>
-                        <a href="#">Events</a>
-                    </li>
-                    <li>
-                        <a href="#">About</a>
-                    </li>
-                    <li>
-                        <a href="#">Services</a>
-                    </li>
-                    <li>
-                        <a href="#">Contact</a>
-                    </li>
                 </ul>
+
             </div>
             <!-- /#sidebar-wrapper -->
 
@@ -120,22 +107,11 @@
             <div id="page-content-wrapper">
                 <div class="container-fluid">
 
-                    <!-- new upload moadl (hidden by default)-->
+                    <!-- new upload modal -->
                     <div id="new-upload-modal" class="modal fade" data-backdrop="true">
-                        <div class="modal-dialog" style="
-                            min-width: 200px !important; 
-                            max-width: 500px !important;
-                            margin: 1.75rem auto !important;
-                            position:absolute;
-                            right:10px!important;
-                            left:60px!important;
-                            height:100%;
-                            ">
-                            
-                           
+                        <div class="modal-dialog" style=" min-width: 200px !important; max-width: 500px !important; margin: 1.75rem auto !important; position:absolute;right:10px!important;left:60px!important;height:100%;">
 
-
-                            <div style="min-width: 200px !important; max-width: 500px !important;margin: 1.75rem auto !important;position:absolute;right:10px!important;left:60px!important;height:85%;" class="modal-content" id='newUploadFilesInput'>
+                            <div style="min-width: 200px !important; max-width: 500px !important;margin: 1.75rem auto !important;position:absolute;right:10px!important;left:0px!important;height:85%;" class="modal-content" id='newUploadFilesInput'>
 
                                 <!-- Modal Header -->
                                 <div class="modal-header ">
@@ -159,7 +135,7 @@
                                     <br>
                                     <strong>Audio Files: </strong>
                                     <div id='newUploadAudioFileList'></div>
-                                    
+
                                   </div>
                                 </div>
                       
@@ -173,17 +149,47 @@
                                     <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
                                     Loading Files...
                                   </h6>
-                      
-                                  <button style='display:inline' id='createUploadButton' type="button" class="float-left btn btn-primary"
-                                    
-                                    onclick="addNewUpload(document.getElementById('modalUploadTitleInput').value)">Create</button>
+                                
+                                  <!-- cancel button -->
+                                  <button style='display:inline' type="button" class="float-right btn btn-light" data-dismiss="modal">Cancel</button>
+
+                                  <!-- create upload button -->
+                                  <button style='display:inline' id='createUploadButton' type="button" class="float-left btn btn-success" onclick="addNewUpload(document.getElementById('modalUploadTitleInput').value)">Create</button>
                       
                                 </div>
                       
-                              </div>
+                             </div>
 
                         </div>
                     </div>
+
+                        <!-- delete all modal -->
+                        <div id='deleteAllModal' class='modal fade' data-backdrop="true">
+                            <div class="modal-dialog" style=" min-width: 200px !important; max-width: 500px !important; margin: 1.75rem auto !important; position:absolute;right:10px!important;left:60px!important;height:100%;">
+                                <div style="min-width: 200px !important; max-width: 500px !important;margin: 1.75rem auto !important;position:absolute;right:10px!important;left:0px!important;height:85%;" class="modal-content">
+                        
+                                    <!-- Modal Header -->
+                                    <div class="modal-header ">
+                                    <h4 class="modal-title">Delete All</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    </div>
+                        
+                                    <!-- Modal body -->
+                                    <div class="modal-body">
+                                    Are you sure you want to delete all uploads? (No files on your computer will be deleted)
+                                    </div>
+                        
+                                    <!-- Modal footer -->
+                                    <div class="modal-footer">
+                                        <!-- cancel button -->
+                                        <button style='display:inline' type="button" class="float-right btn btn-light" data-dismiss="modal">Cancel</button>
+                                        <!-- delete button -->
+                                        <button style='display:inline' type="button" class="float-left btn btn-danger" data-dismiss="modal" onclick="deleteAllUploads()">Delete</button>
+                                    </div>
+                        
+                                </div>
+                            </div>
+                        </div>
                     
                     <!-- default home html content -->
                     <div id='default-home-html' style="display:visible;" class="row">
@@ -240,9 +246,11 @@
             <div style="background: #1A2933; height:100%; width:50px; position: absolute; ">
 
                 <!-- home button -->
+                <!--
                 <a id='homeButton' class="page-selected" href="#">
                     <i class="fa fa-home" aria-hidden="true" class="page-selected"></i>
                 </a>
+                -->
 
                 <!-- new upload button -->
                 <a data-toggle="modal" data-target="#new-upload-modal" id='newUploadButton' href="#">
