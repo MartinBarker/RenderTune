@@ -30,10 +30,12 @@ $("#homeButton").click(function (e) {
       $("#newUploadButton").toggleClass("page-selected");
     }
     //untoggle UploadsList button if needed 
+    /*
     if ($("#menu-toggle").hasClass('svg-selected')) {
       $("#menu-toggle").toggleClass("svg-selected");
       $("#wrapper").toggleClass("toggled");
     }
+    */
   }
 });
 
@@ -73,7 +75,15 @@ $("#newUploadButton").click(function (e) {
 $("#menu-toggle").click(function (e) {
   e.preventDefault();
   $("#wrapper").toggleClass("toggled");
-
+  //if there is no upload in the sidebar with the 'selected tag' 
+  var noUploadSelected = !document.querySelector(".sidebar-selected");
+  console.log('noUploadSelected = ', noUploadSelected)
+  if(noUploadSelected){
+    //toggle home icon as on if it is off
+    console.log('status = ', $("#homeButton").hasClass("page-selected"))
+    //$("#homeButton").toggleClass("page-selected");
+    console.log('status = ', $("#homeButton").hasClass("page-selected"))
+  }
   //if uploads-list is already open
   if ($("#menu-toggle").hasClass("svg-selected")) {
 
@@ -90,9 +100,11 @@ $("#menu-toggle").click(function (e) {
     //$("#default-home-html").hide();
     //$("#upload-pages-container").show();
     //if 'selected' is on for homeButton, toggle it off
+    /*
     if ($("#homeButton").hasClass('page-selected')) {
       $("#homeButton").toggleClass("page-selected");
     }
+    */
     //if 'selected' is on for newUploadButton, toggle it off
     if ($("#newUploadButton").hasClass('page-selected')) {
       $("#newUploadButton").toggleClass("page-selected");
@@ -413,6 +425,10 @@ async function updateUploadListDisplay() {
 
 //display an upload to the user
 async function displayUpload(uploadId) {
+  //if home icon is selected, unselect it
+  if($("#homeButton").hasClass("page-selected")){
+    $("#homeButton").toggleClass("page-selected");
+  }
   //unselect all uploads
   unselectAllUploads()
   //make sidebar upload look selected
@@ -453,11 +469,16 @@ async function createUploadPage(upload){
     <div class="col-lg-12 upload">
       <h1>${upload.title}</h1>
 
+      <h2># Image Files:</h2>
       
+      <h2># Audio Files:</h2>
 
-      <!--
+      <h2>Render:</h2>
+      
+      <p>${upload}</p>
+     
       <p>${JSON.stringify(upload)}</p>
-      -->
+   
     </div>
     `);
 }
