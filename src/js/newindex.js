@@ -202,14 +202,20 @@ $('#new-upload-modal').on('hidden.bs.modal', function (e) {
     .end();
 })
 
-//when new upload modal is shown, click input field
-$('#new-upload-modal').on('shown.bs.modal', function (e) {
-  //if enter key is pressed, click confirm
-  $(document).keypress(function (e) {
-    if (e.which == 13) {
+//if enter key is pressed and newUpload modal is open; click 'create'
+$(document).keypress(function (e) {
+  if (e.which == 13) {
+    var isModalShown = ($("#new-upload-modal").data('bs.modal') || {})._isShown;
+    console.log('enter clicked, isModalShown = ', isModalShown)
+    if(isModalShown){
+      //click 'create' button
       document.getElementById('createUploadButton').click()
     }
-  })
+  }
+})
+
+//when new upload modal is shown:
+$('#new-upload-modal').on('shown.bs.modal', function (e) {
   //make input field focused
   $('input:text:visible:first', this).focus();
 })
@@ -300,54 +306,57 @@ async function getMetadata(filename) {
 
 //when you click 'create' in the new upload modal
 async function addNewUpload(uploadTitle) {
+  console.log('addNewUpload() uploadTitle=', uploadTitle, '. fileList=', fileList)
+  //if fileList exists:
+  if(fileList){
+    //if there are no images:
+    if (fileList.images.length == 0) {
+      document.getElementById('newUploadAlert').style.display = "block";
 
-  //if there are no images:
-  if (fileList.images.length == 0) {
-    document.getElementById('newUploadAlert').style.display = "block";
-
-    //else if there are images:
-  } else {
-    document.getElementById('newUploadAlert').style.display = "none";
-    $('#uploadModal').modal('hide');
-    //get unique uploadNumber
-    let uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-    let uploadNumber = 1
-    if (uploadList != null) {
-      //while upload already exists with that key
-      while (uploadList[`upload-${uploadNumber}`]) {
-        uploadNumber++
+      //else if there are images:
+    } else {
+      document.getElementById('newUploadAlert').style.display = "none";
+      $('#uploadModal').modal('hide');
+      //get unique uploadNumber
+      let uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+      let uploadNumber = 1
+      if (uploadList != null) {
+        //while upload already exists with that key
+        while (uploadList[`upload-${uploadNumber}`]) {
+          uploadNumber++
+        }
       }
+
+      //if title is null, set to default
+      if (uploadTitle.length < 1) {
+        uploadTitle = `upload-${uploadNumber}`
+      }
+
+      let uploadKey = `upload-${uploadNumber}`
+      let uploadObj = { 'title': uploadTitle, 'files': fileList }
+      fileList = null;
+
+      //add to uploadList obj
+      await addToUploadList(uploadKey, uploadObj)
+
+      //close modal
+      $('#new-upload-modal').modal('toggle');
+
+      //update uploadListDisplay
+      await updateUploadListDisplay()
+
+      //unselect all uploads
+      unselectAllUploads()
+
+      //open uploads list sidebar if not already open
+      if (!$("#menu-toggle").hasClass("svg-selected")) {
+        $("#menu-toggle").toggleClass("svg-selected");
+        $("#wrapper").toggleClass("toggled");
+      }
+
+      //click new upload so it is displayed to the user
+      document.getElementById(`${uploadKey}-sidebar`).click()
     }
-
-    //if title is null, set to default
-    if (uploadTitle.length < 1) {
-      uploadTitle = `upload-${uploadNumber}`
-    }
-
-    let uploadKey = `upload-${uploadNumber}`
-    let uploadObj = { 'title': uploadTitle, 'files': fileList }
-    fileList = null;
-
-    //add to uploadList obj
-    await addToUploadList(uploadKey, uploadObj)
-
-    //close modal
-    $('#new-upload-modal').modal('toggle');
-
-    //update uploadListDisplay
-    await updateUploadListDisplay()
-
-    //unselect all uploads
-    unselectAllUploads()
-
-    //open uploads list sidebar if not already open
-    if (!$("#menu-toggle").hasClass("svg-selected")) {
-      $("#menu-toggle").toggleClass("svg-selected");
-      $("#wrapper").toggleClass("toggled");
-    }
-
-    //click new upload so it is displayed to the user
-    document.getElementById(`${uploadKey}-sidebar`).click()
   }
 
 }
@@ -656,7 +665,7 @@ async function createDatatable(upload, uploadId) {
     <form class="form-inline">
       <div class="form-group">
         <label>Img:⠀</label>
-          <select id='${uploadId}-imageOptionsCol' class="form-control" style="height:35px;">`;
+          <select id='${uploadId}-imageOptionsCol' class="form-control" style="height:40px;">`;
   imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
       </div>
     </form>`
@@ -824,7 +833,7 @@ async function createDataset(uploadFiles, uploadId) {
         <form class="form-inline">
           <div class="form-group">
             <label>Img:⠀</label>
-              <select id='${uploadId}_table-audio-${x}-img_choice' class="form-control" style="height:35px;">`;
+              <select id='${uploadId}_table-audio-${x}-img_choice' class="form-control" style="height:40px;">`;
 
         imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
         </div>
