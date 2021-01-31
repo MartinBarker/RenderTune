@@ -480,10 +480,15 @@ async function createUploadPage(upload, uploadId) {
     <div class="col-lg-12 upload">
       <h1>${upload.title}</h1>
 
+      <button type="button" class="btn btn-primary">Render x individual videos </button>
+      <br><br>
+      <button type="button" class="btn btn-primary">Combine x songs into one video</button>
+
+      <br> <br>
+
+
       <!-- files table -->
       <div class='scroll'>
-      
-        
         <table id="${uploadId}_table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
                 <tr>
@@ -533,7 +538,7 @@ async function createUploadPage(upload, uploadId) {
 
 async function createDatatable(upload, uploadId) {
   //create dataset
-  let data = await createDataset(upload.files, uploadId)
+  let data = await createDataset(upload.files, uploadId, upload)
 
   //setup table
   var reorder = false;
@@ -650,30 +655,12 @@ async function createDatatable(upload, uploadId) {
   //draw table
   table.draw();
 
-
   //create image dropdown selection column header
-
-  /////////
-  //create img selection part of <select> form for each image
-  var imageSelectionOptions = ``
-  for (var x = 0; x < upload.files.images.length; x++) {
-    var imageFilename = `${upload.files.images[x].name}`
-    imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
-  }
-  //create img selection form
-  var imgSelectionSelect = `
-    <form class="form-inline">
-      <div class="form-group">
-        <label>Img:⠀</label>
-          <select id='${uploadId}-imageOptionsCol' class="form-control" style="height:40px;">`;
-  imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
-      </div>
-    </form>`
+  let imgSelectionHeader = await createImgSelect(upload, `${uploadId}-imageOptionsCol`, true)
 
   //add image dropdown selection to table html
-  document.getElementById(`${uploadId}_table-image-col`).innerHTML = imgSelectionSelect;
+  document.getElementById(`${uploadId}_table-image-col`).innerHTML = imgSelectionHeader
 
-  ////////////////////////////////
   //if image selection col header is changed
   $(`#${uploadId}-imageOptionsCol`).change(function (event) {
     let indexValueImgChoice = $(`#${uploadId}-imageOptionsCol`).val()
@@ -805,10 +792,38 @@ async function createDatatable(upload, uploadId) {
   /////////////////////////////////
 }
 
+//create select div with an option for each image
+async function createImgSelect(upload, selectId, includeLabel){
+  return new Promise(async function (resolve, reject) {
+    //include label if we want to 
+    let label = "";
+    if(includeLabel){
+      label="<label>Img:⠀</label>"
+    }
+
+    var imageSelectionOptions = ``
+    for (var x = 0; x < upload.files.images.length; x++) {
+      var imageFilename = `${upload.files.images[x].name}`
+      imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
+    }
+    //create img selection form
+    var imgSelectionSelect = `
+      <form class="form-inline">
+        <div class="form-group">
+            ${label}
+            <select id='${selectId}' class="form-control" style="height:40px;max-width: 150px;">`;
+    imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
+        </div>
+      </form>`
+      resolve(imgSelectionSelect)
+  })
+}
+
 //create dataset for the table in an upload
-async function createDataset(uploadFiles, uploadId) {
+async function createDataset(uploadFiles, uploadId, upload) {
   return new Promise(async function (resolve, reject) {
     //create img selection part of form
+    /*
     var imageSelectionOptions = ``
     try {
       //for each image
@@ -819,6 +834,7 @@ async function createDataset(uploadFiles, uploadId) {
     } catch (err) {
 
     }
+    */
 
     //create dataset
     let dataSet = []
@@ -829,15 +845,7 @@ async function createDataset(uploadFiles, uploadId) {
         var audioObj = uploadFiles['audio'][x]
 
         //create img selection form
-        var imgSelectionSelect = `
-        <form class="form-inline">
-          <div class="form-group">
-            <label>Img:⠀</label>
-              <select id='${uploadId}_table-audio-${x}-img_choice' class="form-control" style="height:40px;">`;
-
-        imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
-        </div>
-      </form>`
+        let imgSelectionSelect = await createImgSelect(upload, `${uploadId}_table-audio-${x}-img_choice`, false)
 
         //create vid output selection
         var videoOutputSelection = `

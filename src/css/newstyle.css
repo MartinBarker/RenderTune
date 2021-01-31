@@ -100,7 +100,7 @@ select.form-control{
   height: 100%;
   margin-left: -250px;
   overflow-y: auto;
-  background: #000;
+  background: #2C1C35;
   -webkit-transition: all 0.5s ease;
   -moz-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
@@ -212,7 +212,7 @@ html, body {height: 100%; margin: 0;}
 
 body {
   font-family: "Segoe UI", sans-serif;
-  background: #1A2933;
+  background: #254053;
   color: #FFF;
 }
 h1 {margin: 0 0 10px 0; font-weight: 600; line-height: 1.2;}
