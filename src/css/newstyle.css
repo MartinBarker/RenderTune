@@ -1,4 +1,10 @@
+.left-align-col{
+  padding-left: 10px !important;
+}
 
+select.form-control{
+  display:inline-block
+}
 
 .sidebarUploadImg{
   border-radius: 50%;

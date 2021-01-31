@@ -78,7 +78,7 @@ $("#menu-toggle").click(function (e) {
   //if there is no upload in the sidebar with the 'selected tag' 
   var noUploadSelected = !document.querySelector(".sidebar-selected");
   console.log('noUploadSelected = ', noUploadSelected)
-  if(noUploadSelected){
+  if (noUploadSelected) {
     //toggle home icon as on if it is off
     console.log('status = ', $("#homeButton").hasClass("page-selected"))
     //$("#homeButton").toggleClass("page-selected");
@@ -425,7 +425,7 @@ async function updateUploadListDisplay() {
 //display an upload to the user
 async function displayUpload(uploadId) {
   //if home icon is selected, unselect it
-  if($("#homeButton").hasClass("page-selected")){
+  if ($("#homeButton").hasClass("page-selected")) {
     $("#homeButton").toggleClass("page-selected");
   }
   //unselect all uploads
@@ -448,18 +448,18 @@ async function displayUpload(uploadId) {
 }
 
 //unselect all uploads in sidebar
-async function unselectAllUploads(){
+async function unselectAllUploads() {
   //get any elements currently selected and unselect them
   var selectedSidebarElems = document.getElementsByClassName('sidebar-selected')
-  for(var q = 0; q < selectedSidebarElems.length; q++){
+  for (var q = 0; q < selectedSidebarElems.length; q++) {
     selectedSidebarElems[q].classList.remove("sidebar-selected");
   }
 }
 
-async function createUploadPage(upload, uploadId){
+async function createUploadPage(upload, uploadId) {
   //create image gallery container
   let images = [];
-  for(var z = 0; z < upload.files.images.length; z++){
+  for (var z = 0; z < upload.files.images.length; z++) {
     let img = upload.files.images[z]
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
@@ -473,20 +473,15 @@ async function createUploadPage(upload, uploadId){
       <div class='scroll'>
       
         
-        <table id="${uploadId}_table" class="scroll display filesTable" cellspacing="2" width="100%">
+        <table id="${uploadId}_table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
                 <tr>
                     <th>sequence</th>
                     <th style='min-width: 25px;'>#</th>
                     <th style="min-width: 20px;"><input id='${uploadId}_table-selectAll' type="checkbox"></th>
-                    <th>Audio</th>
-                    <th style='max-width:58px'>Length</th>
-                    <!-- <th style='max-width:200px'>
-                        <div>
-                            <label>Img:</label>
-                            <div id='${uploadId}_table-image-col'></div>
-                        </div>
-                    </th>
+                    <th class='left-align-col' >Audio</th>
+                    <th class='left-align-col' style='max-width:58px'>Length</th>
+                    <!-- 
                     <th style='width:150px'>
                         Video Format: 
                         <div>
@@ -497,7 +492,13 @@ async function createUploadPage(upload, uploadId){
                         </div>
                     </th> -->
                     <th>audioFilepath</th>
-                    <th>Track Num</th>
+                    <th class='left-align-col' style='width:83px'>Track Num</th>
+                    <th class='left-align-col' style='width:300px'>
+                        <div id='${uploadId}_table-image-col'>
+                            <label>Img:</label>
+                        </div>
+                    </th>
+
                     <!--
                     <th>Video Output Folder: 
                         <div >
@@ -519,181 +520,247 @@ async function createUploadPage(upload, uploadId){
   createDatatable(upload, uploadId)
 }
 
-async function createDatatable(upload, uploadId){
-          //create dataset
-          let data = await createDataset(upload.files, uploadId)
+async function createDatatable(upload, uploadId) {
+  //create dataset
+  let data = await createDataset(upload.files, uploadId)
 
-          var reorder = false;
-          var searched = false;
-          var origIndexes = [];
-          var origSeq = [];
-          var origNim = [];
+  //setup table
+  var reorder = false;
+  var searched = false;
+  var origIndexes = [];
+  var origSeq = [];
+  var origNim = [];
 
-          let tableId = `#${uploadId}_table`;
-          console.log('tableId = ', tableId, ' = ', document.querySelector(tableId) )
+  let tableId = `#${uploadId}_table`;
+  //create table
+  var table = $(tableId).DataTable({
+    "pageLength": 5000,
+    select: {
+      style: 'multi',
+      selector: 'td:nth-child(2)'
+    },
+    columns: [
+      { "data": "sequence" },
+      { "data": "#" },
+      { "data": "selectAll" },
+      { "data": "audio" },
+      //{ "data": "format" },
+      { "data": "length" },
+      //{ "data": "outputFormat" },
+      { "data": "audioFilepath" },
+      { "data": "trackNum" },
+      { "data": "imgSelection" },
+    ],
+    columnDefs: [
+      { //invisible sequence num
+        searchable: false,
+        orderable: false,
+        visible: false,
+        targets: 0,
+      },
+      { //visible sequence num
+        searchable: false,
+        orderable: false,
+        targets: 1,
 
-          var table = $(tableId).DataTable({
-              "pageLength": 5000,
-              select: {
-                  style: 'multi',
-                  selector: 'td:nth-child(2)'
-              },
-              columns: [
-                  { "data": "sequence" },
-                  { "data": "#" },
-                  { "data": "selectAll" },
-                  { "data": "audio" },
-                  //{ "data": "format" },
-                  { "data": "length" },
-                  //{ "data": "imgSelection" },
-                  //{ "data": "outputFormat" },
-                  { "data": "audioFilepath" },
-                  { "data": "trackNum" }
-              ],
-              columnDefs: [
-                  { //invisible sequence num
-                      searchable: false,
-                      orderable: false,
-                      visible: false,
-                      targets: 0,
-                  },
-                  { //visible sequence num
-                      searchable: false,
-                      orderable: false,
-                      targets: 1,
+      },
+      {//select all checkbox
+        "className": 'selectall-checkbox',
+        "className": "text-center",
+        searchable: false,
+        orderable: false,
+        targets: 2,
+      },
+      {//audio filename 
+        targets: 3,
+        type: "natural"
+      },
+      /*
+      {//audio format
+          targets: 4,
+          type: "string"
+      },
+      */
+      { //audio file length
+        targets: 4,
+        type: "string"
+      },
+      /*
+      
+      { //video output format
+          targets: 6,
+          type: "string",
+          orderable: false
+      },
+      */
+      {//audioFilepath
+        targets: 5,
+        visible: false,
+      },
+      {//trackNum
+        targets: 6,
+        visible: true,
+      },
+      { //image selection
+        targets: 7,
+        type: "string",
+        orderable: false,
+        className: 'text-left'
+      },
+    ],
+    "language": {
+      "emptyTable": "No files in this upload"
+    },
+    dom: 'rt',
+    rowReorder: {
+      dataSrc: 'sequence',
+    },
+
+  });
+
+  //add dataset to table
+  var count = 1;
+  data.forEach(function (i) {
+    table.row.add({
+      "sequence": i.itemId,
+      "#": `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${count}</div>`,
+      "selectAll": '<input type="checkbox">',
+      "audio": i.audio,
+      //"format": 'adasd',//i.format,
+      "length": i.length,
+      //"outputFormat": i.vidFormatSelection,
+      //"outputLocation": "temp output location",
+      "audioFilepath": i.audioFilepath,
+      "trackNum": i.trackNum,
+      "imgSelection": i.imgSelection,
+    }).node().id = 'rowBrowseId' + i.sampleItemId;
+    count++;
+  });
+  //draw table
+  table.draw();
+
   
-                  },
-                  {//select all checkbox
-                      "className": 'selectall-checkbox',
-                      "className": "text-center",
-                      searchable: false,
-                      orderable: false,
-                      targets: 2,
-                  },
-                  {//audio filename 
-                      targets: 3,
-                      type: "natural"
-                  },
-                  /*
-                  {//audio format
-                      targets: 4,
-                      type: "string"
-                  },
-                  */
-                  { //audio file length
-                      targets: 4,
-                      type: "string"
-                  },
-                  /*
-                  { //image selection
-                      targets: 5,
-                      type: "string",
-                      orderable: false,
-                      className: 'text-left'
-                  },
-                  { //video output format
-                      targets: 6,
-                      type: "string",
-                      orderable: false
-                  },
-                  */
-                  {//audioFilepath
-                      targets: 5,
-                      visible: false,
-                  },
-                  {//trackNum
-                      targets: 6,
-                      visible: true,
-                  }
-              ],
-              "language": {
-                  "emptyTable": "No files in this upload"
-              },
-              dom: 'rt',
-              rowReorder: {
-                  dataSrc: 'sequence',
-              },
+  //create image dropdown selection column header
+
+  /////////
+    //create img selection part of <select> form for each image
+    var imageSelectionOptions = ``
+    for (var x = 0; x < upload.files.images.length; x++) {
+      var imageFilename = `${upload.files.images[x].name}`
+      imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
+    }
+    //create img selection form
+    var imgSelectionSelect = `
+    <form class="form-inline">
+      <div class="form-group">
+        <label>Img:⠀</label>
+          <select id='${uploadId}-imageOptionsCol' class="form-control" style="height:35px;">`;
+    imgSelectionSelect=`${imgSelectionSelect} ${imageSelectionOptions} </select> 
+      </div>
+    </form>`
+
+  //add image dropdown selection to table html
+  document.getElementById(`${uploadId}_table-image-col`).innerHTML = imgSelectionSelect;
+
+
+  /*
+  var uploadImageSelectionColHeader = document.createElement('select')
+  uploadImageSelectionColHeader.setAttribute('id', `${uploadId}-imageOptionsCol`)
+  uploadImageSelectionColHeader.setAttribute('style', `max-width:150px; text-align: left;`)
+  uploadImageSelectionColHeader.setAttribute('name', `imgChoiceName`)
+
+  try {
+    for (var x = 0; x < upload.files.images.length; x++) {
+      var rowImg = document.createElement('option')
+      rowImg.setAttribute('value', x)
+      rowImg.setAttribute('style', `width:150px; text-align: left;`)
+      rowImg.innerHTML = `${upload.files.images[x].name}`
+      uploadImageSelectionColHeader.appendChild(rowImg)
+    }
+  } catch (err) {
+
+  }
   
-          });
-  
-          var count = 1;
-          data.forEach(function (i) {
-              table.row.add({
-                  "sequence": i.itemId,
-                  "#": `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${count}</div>`,
-                  "selectAll": '<input type="checkbox">',
-                  "audio": i.audio,
-                  //"format": 'adasd',//i.format,
-                  "length": i.length,
-                  //"imgSelection": i.imgSelection,
-                  //"outputFormat": i.vidFormatSelection,
-                  //"outputLocation": "temp output location",
-                  "audioFilepath": i.audioFilepath,
-                  "trackNum": i.trackNum,
-              }).node().id = 'rowBrowseId' + i.sampleItemId;
-              count++;
-          });
-          table.draw();
-          
+  //create div
+  var uploadImageSelectionColHeaderDiv = document.createElement('div')
+  uploadImageSelectionColHeaderDiv.setAttribute('class', `form-group`)
+  //create label
+  var uploadImageSelectionColHeaderLabel=document.createElement('label')
+  uploadImageSelectionColHeaderLabel.setAttribute('for', `imgChoiceName-group`)
+  //add label and select to div
+  uploadImageSelectionColHeaderDiv.appendChild(uploadImageSelectionColHeaderLabel)
+  uploadImageSelectionColHeaderDiv.appendChild(uploadImageSelectionColHeader)
+
+  //add image dropdown selection to table html
+  document.getElementById(`${uploadId}_table-image-col`).appendChild(uploadImageSelectionColHeaderDiv)
+  */
+
 }
 
 //create dataset for the table in an upload
 async function createDataset(uploadFiles, uploadId) {
   return new Promise(async function (resolve, reject) {
-      //create img selection part of form
-      var imageSelectionOptions = ``
-      try {
-          //for each image
-          for (var x = 0; x < uploadFiles.images.length; x++) {
-              var imagFilename = `${uploadFiles.images[x].name}`
-              imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imagFilename}</option>`
-          }
-      } catch (err) {
-
+    //create img selection part of form
+    var imageSelectionOptions = ``
+    try {
+      //for each image
+      for (var x = 0; x < uploadFiles.images.length; x++) {
+        var imagFilename = `${uploadFiles.images[x].name}`
+        imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imagFilename}</option>`
       }
+    } catch (err) {
 
-      //create dataset
-      let dataSet = []
-      let fileCount = 1;
-      try {
-          //for each audio file
-          for (var x = 0; x < uploadFiles['audio'].length; x++) {
-              var audioObj = uploadFiles['audio'][x]
+    }
 
-              //create img selection form
-              var imgSelectionSelect = `<select style='width:150px' id='${uploadId}_table-audio-${x}-img_choice' >`
-              imgSelectionSelect = imgSelectionSelect + imageSelectionOptions + `</select>`
+    //create dataset
+    let dataSet = []
+    let fileCount = 1;
+    try {
+      //for each audio file
+      for (var x = 0; x < uploadFiles['audio'].length; x++) {
+        var audioObj = uploadFiles['audio'][x]
 
-              //creaet vid output selection
-              var videoOutputSelection = `
+        //create img selection form
+        var imgSelectionSelect = `
+        <form class="form-inline">
+          <div class="form-group">
+            <label>Img:⠀</label>
+              <select id='${uploadId}_table-audio-${x}-img_choice' class="form-control" style="height:35px;">`;
+
+        imgSelectionSelect=`${imgSelectionSelect} ${imageSelectionOptions} </select> 
+        </div>
+      </form>`
+
+        //create vid output selection
+        var videoOutputSelection = `
               <select id='${uploadId}_table-vidFormat-row_${x}'>
                   <option value="0">mp4</option>
                   <option value="1">avi</option>
               </select> 
               `
 
-              //create row obj
-              let rowObj = {
-                  //sequence(leave empty)
-                  itemId: fileCount,
-                  //select box(leave empty)
-                  audio: audioObj.name,
-                  format: audioObj.type,
-                  length: audioObj.length,
-                  imgSelection: imgSelectionSelect,
-                  vidFormatSelection: videoOutputSelection,
-                  audioFilepath: audioObj.path,
-                  trackNum: audioObj.trackNum
-                  //video output(leave empty)
-              }
-              fileCount++
-              dataSet.push(rowObj)
-          }
-      } catch (err) {
-
+        //create row obj
+        let rowObj = {
+          //sequence(leave empty)
+          itemId: fileCount,
+          //select box(leave empty)
+          audio: audioObj.name,
+          format: audioObj.type,
+          length: audioObj.length,
+          imgSelection: imgSelectionSelect,
+          vidFormatSelection: videoOutputSelection,
+          audioFilepath: audioObj.path,
+          trackNum: audioObj.trackNum
+          //video output(leave empty)
+        }
+        fileCount++
+        dataSet.push(rowObj)
       }
+    } catch (err) {
 
-      resolve(dataSet)
+    }
+
+    resolve(dataSet)
   })
 }
 
@@ -707,91 +774,91 @@ async function createDataset(uploadFiles, uploadId) {
    * See: http://js-naturalsort.googlecode.com/svn/trunk/naturalSort.js
    */
   function naturalSort(a, b, html) {
-      var re = /(^-?[0-9]+(\.?[0-9]*)[df]?e?[0-9]?%?$|^0x[0-9a-f]+$|[0-9]+)/gi,
-          sre = /(^[ ]*|[ ]*$)/g,
-          dre = /(^([\w ]+,?[\w ]+)?[\w ]+,?[\w ]+\d+:\d+(:\d+)?[\w ]?|^\d{1,4}[\/\-]\d{1,4}[\/\-]\d{1,4}|^\w+, \w+ \d+, \d{4})/,
-          hre = /^0x[0-9a-f]+$/i,
-          ore = /^0/,
-          htmre = /(<([^>]+)>)/ig,
-          // convert all to strings and trim()
-          x = a.toString().replace(sre, '') || '',
-          y = b.toString().replace(sre, '') || '';
-      // remove html from strings if desired
-      if (!html) {
-          x = x.replace(htmre, '');
-          y = y.replace(htmre, '');
-      }
-      // chunk/tokenize
-      var xN = x.replace(re, '\0$1\0').replace(/\0$/, '').replace(/^\0/, '').split('\0'),
-          yN = y.replace(re, '\0$1\0').replace(/\0$/, '').replace(/^\0/, '').split('\0'),
-          // numeric, hex or date detection
-          xD = parseInt(x.match(hre), 10) || (xN.length !== 1 && x.match(dre) && Date.parse(x)),
-          yD = parseInt(y.match(hre), 10) || xD && y.match(dre) && Date.parse(y) || null;
+    var re = /(^-?[0-9]+(\.?[0-9]*)[df]?e?[0-9]?%?$|^0x[0-9a-f]+$|[0-9]+)/gi,
+      sre = /(^[ ]*|[ ]*$)/g,
+      dre = /(^([\w ]+,?[\w ]+)?[\w ]+,?[\w ]+\d+:\d+(:\d+)?[\w ]?|^\d{1,4}[\/\-]\d{1,4}[\/\-]\d{1,4}|^\w+, \w+ \d+, \d{4})/,
+      hre = /^0x[0-9a-f]+$/i,
+      ore = /^0/,
+      htmre = /(<([^>]+)>)/ig,
+      // convert all to strings and trim()
+      x = a.toString().replace(sre, '') || '',
+      y = b.toString().replace(sre, '') || '';
+    // remove html from strings if desired
+    if (!html) {
+      x = x.replace(htmre, '');
+      y = y.replace(htmre, '');
+    }
+    // chunk/tokenize
+    var xN = x.replace(re, '\0$1\0').replace(/\0$/, '').replace(/^\0/, '').split('\0'),
+      yN = y.replace(re, '\0$1\0').replace(/\0$/, '').replace(/^\0/, '').split('\0'),
+      // numeric, hex or date detection
+      xD = parseInt(x.match(hre), 10) || (xN.length !== 1 && x.match(dre) && Date.parse(x)),
+      yD = parseInt(y.match(hre), 10) || xD && y.match(dre) && Date.parse(y) || null;
 
-      // first try and sort Hex codes or Dates
-      if (yD) {
-          if (xD < yD) {
-              return -1;
-          }
-          else if (xD > yD) {
-              return 1;
-          }
+    // first try and sort Hex codes or Dates
+    if (yD) {
+      if (xD < yD) {
+        return -1;
       }
+      else if (xD > yD) {
+        return 1;
+      }
+    }
 
-      // natural sorting through split numeric strings and default strings
-      for (var cLoc = 0, numS = Math.max(xN.length, yN.length); cLoc < numS; cLoc++) {
-          // find floats not starting with '0', string or 0 if not defined (Clint Priest)
-          var oFxNcL = !(xN[cLoc] || '').match(ore) && parseFloat(xN[cLoc], 10) || xN[cLoc] || 0;
-          var oFyNcL = !(yN[cLoc] || '').match(ore) && parseFloat(yN[cLoc], 10) || yN[cLoc] || 0;
-          // handle numeric vs string comparison - number < string - (Kyle Adams)
-          if (isNaN(oFxNcL) !== isNaN(oFyNcL)) {
-              return (isNaN(oFxNcL)) ? 1 : -1;
-          }
-          // rely on string comparison if different types - i.e. '02' < 2 != '02' < '2'
-          else if (typeof oFxNcL !== typeof oFyNcL) {
-              oFxNcL += '';
-              oFyNcL += '';
-          }
-          if (oFxNcL < oFyNcL) {
-              return -1;
-          }
-          if (oFxNcL > oFyNcL) {
-              return 1;
-          }
+    // natural sorting through split numeric strings and default strings
+    for (var cLoc = 0, numS = Math.max(xN.length, yN.length); cLoc < numS; cLoc++) {
+      // find floats not starting with '0', string or 0 if not defined (Clint Priest)
+      var oFxNcL = !(xN[cLoc] || '').match(ore) && parseFloat(xN[cLoc], 10) || xN[cLoc] || 0;
+      var oFyNcL = !(yN[cLoc] || '').match(ore) && parseFloat(yN[cLoc], 10) || yN[cLoc] || 0;
+      // handle numeric vs string comparison - number < string - (Kyle Adams)
+      if (isNaN(oFxNcL) !== isNaN(oFyNcL)) {
+        return (isNaN(oFxNcL)) ? 1 : -1;
       }
-      return 0;
+      // rely on string comparison if different types - i.e. '02' < 2 != '02' < '2'
+      else if (typeof oFxNcL !== typeof oFyNcL) {
+        oFxNcL += '';
+        oFyNcL += '';
+      }
+      if (oFxNcL < oFyNcL) {
+        return -1;
+      }
+      if (oFxNcL > oFyNcL) {
+        return 1;
+      }
+    }
+    return 0;
   }
 
   jQuery.extend(jQuery.fn.dataTableExt.oSort, {
-      "natural-asc": function (a, b) {
-          return naturalSort(a, b, true);
-      },
+    "natural-asc": function (a, b) {
+      return naturalSort(a, b, true);
+    },
 
-      "natural-desc": function (a, b) {
-          return naturalSort(a, b, true) * -1;
-      },
+    "natural-desc": function (a, b) {
+      return naturalSort(a, b, true) * -1;
+    },
 
-      "natural-nohtml-asc": function (a, b) {
-          return naturalSort(a, b, false);
-      },
+    "natural-nohtml-asc": function (a, b) {
+      return naturalSort(a, b, false);
+    },
 
-      "natural-nohtml-desc": function (a, b) {
-          return naturalSort(a, b, false) * -1;
-      },
+    "natural-nohtml-desc": function (a, b) {
+      return naturalSort(a, b, false) * -1;
+    },
 
-      "natural-ci-asc": function (a, b) {
-          a = a.toString().toLowerCase();
-          b = b.toString().toLowerCase();
+    "natural-ci-asc": function (a, b) {
+      a = a.toString().toLowerCase();
+      b = b.toString().toLowerCase();
 
-          return naturalSort(a, b, true);
-      },
+      return naturalSort(a, b, true);
+    },
 
-      "natural-ci-desc": function (a, b) {
-          a = a.toString().toLowerCase();
-          b = b.toString().toLowerCase();
+    "natural-ci-desc": function (a, b) {
+      a = a.toString().toLowerCase();
+      b = b.toString().toLowerCase();
 
-          return naturalSort(a, b, true) * -1;
-      }
+      return naturalSort(a, b, true) * -1;
+    }
   });
 
 }());
