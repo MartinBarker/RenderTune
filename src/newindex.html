@@ -214,6 +214,40 @@
                             <p>Default text here; hello</p>
                             <p>Make sure to keep all page content within the <code>#page-content-wrapper</code>.</p>
 
+                            
+                            <div class="wrapper1">
+                                <div class="div1">
+                                </div>
+                            </div>
+                            <div class="wrapper2">
+                                <div class="div2">
+                                aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd
+                                </div>
+                            </div>
+                            <script>
+                                $(function(){
+                                    $(".wrapper1").scroll(function(){
+                                        $(".wrapper2")
+                                            .scrollLeft($(".wrapper1").scrollLeft());
+                                    });
+                                    $(".wrapper2").scroll(function(){
+                                        $(".wrapper1")
+                                            .scrollLeft($(".wrapper2").scrollLeft());
+                                    });
+                                });
+                            </script>
+                            <style>
+                                .wrapper1, .wrapper2{width: 300px; border: none 0px RED;
+                                overflow-x: scroll; overflow-y:hidden;}
+                                .wrapper1{height: 20px; }
+                                .wrapper2{height: 200px; }
+                                .div1 {width:1000px; height: 20px; }
+                                .div2 {width:1000px; height: 200px; background-color: #88FF88;
+                                overflow: auto;}
+                            </style>
+
+
+
                         </div>
                     </div>
 

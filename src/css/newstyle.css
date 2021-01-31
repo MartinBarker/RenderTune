@@ -18,6 +18,7 @@ select.form-control{
 
 .scroll{
   overflow:auto;
+  overflow-x:scroll;
 }
 
 .sidebar-selected{
