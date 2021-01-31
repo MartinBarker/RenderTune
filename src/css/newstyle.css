@@ -6,6 +6,10 @@
   height: 30px;
 }
 
+.scroll{
+  overflow:auto;
+}
+
 .sidebar-selected{
   background:white!important;
   color:black!important;
@@ -72,6 +76,7 @@
   -moz-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
   transition: all 0.5s ease;
+  overflow:hidden;
 }
 #wrapper.toggled {
   padding-left: 250px;
@@ -98,7 +103,8 @@
   color:black;
   width: 100%;
   /* position: absolute; */
-  padding-left: 30px;
+  margin-left: 30px;
+  /* overflow:auto;  */
 }
 #wrapper.toggled #page-content-wrapper {
   /* position: absolute; */
