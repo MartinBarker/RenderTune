@@ -620,7 +620,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
         $(`#upload_${uploadNumber}_table tbody`).on( 'click', 'select', function (e) {
             e.stopPropagation();
           } );
-          */
+        */
 
         $(`#upload_${uploadNumber}_fullAlbumButton`).on('click', async function (e) {
             let resolution = $(`#upload_${uploadNumber}_fullAlbumResolutionChoice option:selected`).text();
@@ -629,14 +629,8 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
             fullAlbum(`upload-${uploadNumber}`, uploadNumber, resolution, padding)
         })
 
-
-        /*
-
-            //let concatAudioFfmpegCommand = await generateConcatAudioCommand(ffmpeg, selectedRows, outputFile)
-            //console.log('concatAudioFfmpegCommand = ', concatAudioFfmpegCommand)
-            
-
-            */
+        //let concatAudioFfmpegCommand = await generateConcatAudioCommand(ffmpeg, selectedRows, outputFile)
+        //console.log('concatAudioFfmpegCommand = ', concatAudioFfmpegCommand)
 
         //select all checkbox clicked
         $(`#upload_${uploadNumber}_table-selectAll`).on('click', function (event) {

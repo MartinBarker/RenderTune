@@ -2,6 +2,10 @@ const { Console } = require('console');
 const { resolve } = require('path');
 const { ipcRenderer } = window.require('electron');
 
+//require datatables
+require('datatables.net-dt')();
+require('datatables.net-rowreorder-dt')();
+
 // recieve app version and send it to html 
 ipcRenderer.send('app_version');
 ipcRenderer.on('app_version', (event, arg) => {
@@ -11,7 +15,6 @@ ipcRenderer.on('app_version', (event, arg) => {
 });
 
 //when you click the home button
-
 $("#homeButton").click(function (e) {
   //unselect all uploads
   unselectAllUploads()
@@ -38,7 +41,6 @@ $("#homeButton").click(function (e) {
     */
   }
 });
-
 
 //when you click the NewUpload button
 $("#newUploadButton").click(function (e) {
@@ -639,62 +641,159 @@ async function createDatatable(upload, uploadId) {
   //draw table
   table.draw();
 
-  
+
   //create image dropdown selection column header
 
   /////////
-    //create img selection part of <select> form for each image
-    var imageSelectionOptions = ``
-    for (var x = 0; x < upload.files.images.length; x++) {
-      var imageFilename = `${upload.files.images[x].name}`
-      imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
-    }
-    //create img selection form
-    var imgSelectionSelect = `
+  //create img selection part of <select> form for each image
+  var imageSelectionOptions = ``
+  for (var x = 0; x < upload.files.images.length; x++) {
+    var imageFilename = `${upload.files.images[x].name}`
+    imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
+  }
+  //create img selection form
+  var imgSelectionSelect = `
     <form class="form-inline">
       <div class="form-group">
         <label>Img:⠀</label>
           <select id='${uploadId}-imageOptionsCol' class="form-control" style="height:35px;">`;
-    imgSelectionSelect=`${imgSelectionSelect} ${imageSelectionOptions} </select> 
+  imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
       </div>
     </form>`
 
   //add image dropdown selection to table html
   document.getElementById(`${uploadId}_table-image-col`).innerHTML = imgSelectionSelect;
 
+  ////////////////////////////////
+  //if image selection col header is changed
+  $(`#${uploadId}-imageOptionsCol`).change(function (event) {
+    let indexValueImgChoice = $(`#${uploadId}-imageOptionsCol`).val()
+    table.rows().eq(0).each(function (index) {
+      document.getElementById(`${uploadId}_table-audio-${index}-img_choice`).selectedIndex = `${indexValueImgChoice}`
+    });
+  });
 
-  /*
-  var uploadImageSelectionColHeader = document.createElement('select')
-  uploadImageSelectionColHeader.setAttribute('id', `${uploadId}-imageOptionsCol`)
-  uploadImageSelectionColHeader.setAttribute('style', `max-width:150px; text-align: left;`)
-  uploadImageSelectionColHeader.setAttribute('name', `imgChoiceName`)
-
-  try {
-    for (var x = 0; x < upload.files.images.length; x++) {
-      var rowImg = document.createElement('option')
-      rowImg.setAttribute('value', x)
-      rowImg.setAttribute('style', `width:150px; text-align: left;`)
-      rowImg.innerHTML = `${upload.files.images[x].name}`
-      uploadImageSelectionColHeader.appendChild(rowImg)
+  //if select all checkbox clicked
+  $(`#${uploadId}_table-selectAll`).on('click', function (event) {
+    let checkedStatus = document.getElementById(`${uploadId}_table-selectAll`).checked
+    if (checkedStatus == true) {
+      //select all
+      var rows = table.rows().nodes();
+      $('input[type="checkbox"]', rows).prop('checked', true);
+      table.$("tr").addClass('selected')
+    } else {
+      //unselect all
+      var rows = table.rows().nodes();
+      $('input[type="checkbox"]', rows).prop('checked', false);
+      table.$("tr").removeClass('selected')
     }
-  } catch (err) {
 
-  }
-  
-  //create div
-  var uploadImageSelectionColHeaderDiv = document.createElement('div')
-  uploadImageSelectionColHeaderDiv.setAttribute('class', `form-group`)
-  //create label
-  var uploadImageSelectionColHeaderLabel=document.createElement('label')
-  uploadImageSelectionColHeaderLabel.setAttribute('for', `imgChoiceName-group`)
-  //add label and select to div
-  uploadImageSelectionColHeaderDiv.appendChild(uploadImageSelectionColHeaderLabel)
-  uploadImageSelectionColHeaderDiv.appendChild(uploadImageSelectionColHeader)
+    //updateFullAlbumDisplayInfo(table, uploadNumber)
 
-  //add image dropdown selection to table html
-  document.getElementById(`${uploadId}_table-image-col`).appendChild(uploadImageSelectionColHeaderDiv)
-  */
+  });
 
+  //if a row is clicked
+  $(`#${uploadId}_table tbody`).on('click', 'tr', function () {
+    //determine whether or not to select/deselect & check/uncheck row
+    var isSelected = $(this).hasClass('selected')
+    $(this).toggleClass('selected').find(':checkbox').prop('checked', !isSelected);
+  });
+
+  //if table order changes
+  table.on('order.dt', function (e, diff, edit) {
+
+    //don't adjust "#" column if already changed by rowReorder or search events
+    if (!reorder && !searched) {
+      //console.log('order.dt - resetting order');
+      i = 1;
+      //assign "#" values in row order
+      table.rows({ search: 'applied', order: 'applied' }).every(function (rowIdx, tableLoop, rowLoop) {
+        var data = this.data();
+        data['#'] = `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${i}</div>`//i;
+        i++;
+        this.data(data);
+      });
+    }
+    //reset booleans
+    reorder = false;
+    searched = false;
+
+  });
+  table.on('row-reorder', function (e, details, edit) {
+    //get original row indexes and original sequence (rowReorder indexes)
+    origIndexes = table.rows().indexes().toArray();
+    origSeq = table.rows().data().pluck('sequence').toArray();
+  });
+
+  table.on('search.dt', function () {
+    //console.log('search', reorder);
+    //skip if reorder changed the "#" column order
+    if (!reorder) {
+      //console.log('search.dt - resetting order');
+      i = 1;
+      //assign "#" values in row order
+      table.rows({ search: 'applied', order: 'applied' }).every(function (rowIdx, tableLoop, rowLoop) {
+        var data = this.data();
+        data['#'] = `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${i}</div>`//i;
+        i++;
+        this.data(data);
+      });
+    }
+    //don't change "#" order in the order event
+    searched = true;
+  });
+
+  table.on('row-reordered', function (e, details, edit) {
+    //console.log('row-reorderd');
+    //get current row indexes and sequence (rowReorder indexes)
+    var indexes = table.rows().indexes().toArray();
+    //console.log('org indexes', origIndexes);
+    //console.log('new indexes', indexes);
+    var seq = table.rows().data().pluck('sequence').toArray();
+    //console.log('org seq', origSeq);
+    //console.log('new seq', seq);
+    i = 1;
+
+    for (var r = 0; r < indexes.length; r++) {
+      //get row data
+      var data = table.row(indexes[r]).data();
+      //console.log('looking for',seq[r]);
+      //get new sequence 
+      //origSeq   [1, 3, 4, 2]
+      //seq       [3, 4, 1, 2]
+      //indexes   [0, 2, 3, 1]
+      //use the new sequence number to find index in origSeq
+      //the (index + 1) is the original row "#" to assign to the current row
+      newSeq = origSeq.indexOf(seq[r]);
+      //console.log('found new seq',newSeq);
+
+      //assign the new "#" to the current row
+      data['#'] = `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${newSeq + 1}</div>`//newSeq + 1;
+      table.row(indexes[r]).data(data);
+
+    }
+    //re-sort the table by the "#" column
+    table.order([1, 'asc']);
+
+    //don't adjust the "#" column in the search and order events
+    reorder = true;
+  });
+
+  //row-reorder
+  table.on('row-reorder', function (e, diff, edit) {
+    var result = 'Reorder started on row: ' + edit.triggerRow.data()[1] + '<br>';
+
+    for (var i = 0, ien = diff.length; i < ien; i++) {
+      var rowData = table.row(diff[i].node).data();
+
+      result += rowData[1] + ' updated to be in position ' +
+        diff[i].newData + ' (was ' + diff[i].oldData + ')<br>';
+    }
+
+    //console.log(result);
+  });
+
+  /////////////////////////////////
 }
 
 //create dataset for the table in an upload
@@ -727,7 +826,7 @@ async function createDataset(uploadFiles, uploadId) {
             <label>Img:⠀</label>
               <select id='${uploadId}_table-audio-${x}-img_choice' class="form-control" style="height:35px;">`;
 
-        imgSelectionSelect=`${imgSelectionSelect} ${imageSelectionOptions} </select> 
+        imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
         </div>
       </form>`
 
