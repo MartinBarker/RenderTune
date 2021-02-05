@@ -131,6 +131,11 @@ $(document).ready(function () {
   init();
 });
 
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+
+
 //init: get uploadList and display it
 async function init() {
   //ensure uploadList exists
@@ -488,7 +493,19 @@ async function createUploadPage(upload, uploadId) {
     let img = upload.files.images[z]
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
-  console.log('createUploadPage upload = ', upload)
+  let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
+  
+  let imageSelectionFormHTML = `
+  <div class="form-group">
+    <span>
+      <label for="size">Image:
+        <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
+      </label>
+      ${imageSelectionHTML}
+    </span>
+  </div>
+  `;
+
   //add html to page
   $("#upload-pages-container").append(`
     <div class="col-lg-12 upload">
@@ -549,21 +566,25 @@ async function createUploadPage(upload, uploadId) {
             <!-- Padding -->
             <div class="form-group">
               <span>
-                <label for="size">Padding:</label>
-                <select class="form-control">
-                  <option>small</option>
-                  <option>medium</option>
-                  <option>large</option>
+                <label for="size">Padding:
+                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="If a padding option is selected, than the image will be padded to reach its resolution."></i>
+                </label>
+                <select id='${uploadId}-paddingSelect' class="form-control">
+                  <option value="none">None</option>
+                  <option value="white">White</option>
+                  <option value="black">Black</option>
                 </select>
               </span>
             </div>
           </div>
-          
+
           <div class="col-md-3"style="">
             <!-- Resolution -->
             <div class="form-group">
               <span>
-                <label for="size">Resolution:</label>
+                <label for="size">Resolution:
+                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output resolution for the rendered video."></i>
+                </label>
                 <select class="form-control">
                   <option>small</option>
                   <option>medium</option>
@@ -577,7 +598,9 @@ async function createUploadPage(upload, uploadId) {
             <!-- Output Folder -->
             <div class="form-group">
               <span>
-                <label for="size">Output Folder:</label>
+                <label for="size">Output: 
+                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
+                </label>
                 <select class="form-control">
                   <option>small</option>
                   <option>medium</option>
@@ -591,7 +614,9 @@ async function createUploadPage(upload, uploadId) {
           <!-- Output Format -->
           <div class="form-group">
             <span>
-              <label for="size">Output Format:</label>
+              <label for="size">Format:
+                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output video format for the rendered video."></i>
+              </label>
               <select class="form-control">
                 <option>small</option>
                 <option>medium</option>
@@ -603,24 +628,16 @@ async function createUploadPage(upload, uploadId) {
         </div>
 
         <!-- Image Selection -->
-        <div class="form-group">
-          <span>
-            <label for="size">Image:</label>
-            <select class="form-control">
-              <option>small</option>
-              <option>medium</option>
-              <option>large</option>
-            </select>
-          </span>
+        ${imageSelectionFormHTML}
+
+        <!-- resolution options -->
+        <div>Resolution: 
+          <div style="display:inline;" id='${uploadNumber}_resolutionDiv'>
+          </div> 
         </div>
+
+
       </div>
-
-      Concat X songs into a video:
-      
-    
-      Render x individual videos:
-    
-
     </div>
     `);
   //create datatable (dataset, event listeners, etc)
@@ -630,6 +647,7 @@ async function createUploadPage(upload, uploadId) {
 async function createFilesTable(upload, uploadId) {
   //create dataset
   let data = await createFilesTableDataset(upload.files, uploadId, upload)
+  console.log('data = ', JSON.stringify(data))
 
   //setup table
   var reorder = false;
@@ -641,6 +659,7 @@ async function createFilesTable(upload, uploadId) {
   let tableId = `#${uploadId}_table`;
   //create table
   var table = $(tableId).DataTable({
+    "autoWidth": true,
     "pageLength": 5000,
     select: {
       style: 'multi',
@@ -681,7 +700,8 @@ async function createFilesTable(upload, uploadId) {
       },
       {//audio filename 
         targets: 3,
-        type: "natural"
+        type: "natural",
+        className: 'track-name'
       },
       /*
       {//audio format
@@ -724,6 +744,9 @@ async function createFilesTable(upload, uploadId) {
         targets: 9,
         visible: true,
         orderable: true,
+        type: "natural",
+        className: 'track-name'
+
       },
       /*
       { //image selection
@@ -743,6 +766,15 @@ async function createFilesTable(upload, uploadId) {
     },
 
   });
+
+  //generate resolutions for each image
+  let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+  console.log('uploadImageResolutions = ', uploadImageResolutions)
+  //create div of resolutions based off the default selected image name
+  let resOptions = generateResolutionHTML(uploadImageResolutions, upload.files.images[0].name);
+  //add resolution html to upload
+  document.getElementById(`${uploadNumber}_resolutionDiv`).appendChild(resOptions)
+  
 
   //add dataset to table
   var count = 1;
@@ -766,22 +798,6 @@ async function createFilesTable(upload, uploadId) {
   });
   //draw table
   table.draw();
-
-  /*
-  //create image dropdown selection column header
-  let imgSelectionHeader = await createImgSelect(upload, `${uploadId}-imageOptionsCol`, true)
-
-  //add image dropdown selection to table html
-  document.getElementById(`${uploadId}_table-image-col`).innerHTML = imgSelectionHeader
-
-  //if image selection col header is changed
-  $(`#${uploadId}-imageOptionsCol`).change(function (event) {
-    let indexValueImgChoice = $(`#${uploadId}-imageOptionsCol`).val()
-    table.rows().eq(0).each(function (index) {
-      document.getElementById(`${uploadId}_table-audio-${index}-img_choice`).selectedIndex = `${indexValueImgChoice}`
-    });
-  });
-  */
 
   //if select all checkbox clicked
   $(`#${uploadId}_table-selectAll`).on('click', function (event) {
@@ -902,12 +918,89 @@ async function createFilesTable(upload, uploadId) {
 
     //console.log(result);
   });
-
-  /////////////////////////////////
 }
 
+//calcualte resolution
+function calculateResolution(oldWidth, oldHeight, newWidth) {
+  let aspectRatio = oldWidth / oldHeight;
+  let newHeight = newWidth / aspectRatio
+  return ([Math.round(newWidth), Math.round(newHeight)])
+}
+
+//generate resoltuions based on images
+async function getResolutionOptions(images) {
+  return new Promise(async function (resolve, reject) {
+      try {
+          let returnVar = {};
+          for (var x = 0; x < images.length; x++) {
+              let [width, height] = await ipcRenderer.invoke('get-image-resolution', images[x].path); //await getResolution(images[x].path);
+              let resolutions = [];
+              resolutions.push(`${width}x${height}`)
+              //calculate 640wx480h SD
+              let [res1_width, res1_height] = calculateResolution(width, height, 640);
+              resolutions.push(`${res1_width}x${res1_height}`)
+              //calculate 1280x720 HD
+              let [res2_width, res2_height] = calculateResolution(width, height, 1280);
+              resolutions.push(`${res2_width}x${res2_height}`)
+              //calculate 1920x1080 HD
+              let [res3_width, res3_height] = calculateResolution(width, height, 1920);
+              resolutions.push(`${res3_width}x${res3_height}`)
+              //calculate 2560x1440 HD
+              let [res4_width, res4_height] = calculateResolution(width, height, 2560);
+              resolutions.push(`${res4_width}x${res4_height}`)
+
+              let temp = {
+                  'resolutions': resolutions
+              }
+              returnVar[images[x].name] = temp;
+          }
+          resolve(returnVar)
+      } catch (err) {
+          console.log('getResolutionOptions() err = ', err)
+      }
+  });
+}
+
+//generate resolution dropdown html
+function generateResolutionHTML(uploadImageResolutions, imageName) {
+  if (uploadImageResolutions == null && imageName == null) {
+      console.log('both null')
+      uploadImageResolutions = { 'staticResolutions': { resolutions: ['640x480', '1280x720', '1920x1080', '2560x1440', '2560x1600'] } }
+      imageName = 'staticResolutions';
+  }
+  var fullAlbumResolutionSelectionColHeader = document.createElement('select')
+  fullAlbumResolutionSelectionColHeader.setAttribute('id', `upload_${uploadNumber}_fullAlbumResolutionChoice`)
+  fullAlbumResolutionSelectionColHeader.setAttribute('style', `max-width:150px; text-align: left;`);
+  let minAlreadySelected = false;
+  for (var x = 0; x < uploadImageResolutions[imageName].resolutions.length; x++) {
+      let resolution = `${uploadImageResolutions[imageName].resolutions[x]}`
+      let width = parseInt(resolution.split("x")[0]);
+      var resOption = document.createElement('option')
+      resOption.setAttribute('value', `${imageName}`)
+      resOption.setAttribute('style', `width:150px; text-align: left;`)
+      //create display text
+      let definition = "";
+      if (width > 1) {
+          definition = 'SD';
+          if (width > 1280) {
+              definition = '<a class="red_color">HD</a>';
+
+          }
+      }
+      let displayText = `${resolution} ${definition}`;
+      resOption.innerHTML = displayText//'<div style="color:red">bungis</div>'//displayText
+      fullAlbumResolutionSelectionColHeader.appendChild(resOption)
+      //select 1920 hd result by default
+      if (width >= 1920 && !minAlreadySelected) {
+          minAlreadySelected = true;
+          resOption.setAttribute('selected', 'selected');
+      }
+  }
+  return fullAlbumResolutionSelectionColHeader;
+};
+
 //create select div with an option for each image
-async function createImgSelect(upload, selectId, includeLabel){
+async function createImgSelect(images, selectId, includeLabel){
   return new Promise(async function (resolve, reject) {
     //include label if we want to 
     let label = "";
@@ -915,20 +1008,26 @@ async function createImgSelect(upload, selectId, includeLabel){
       label="<label>Img:⠀</label>"
     }
 
+    //create an option for each img
     var imageSelectionOptions = ``
-    for (var x = 0; x < upload.files.images.length; x++) {
-      var imageFilename = `${upload.files.images[x].name}`
+    for (var x = 0; x < images.length; x++) {
+      var imageFilename = `${images[x].name}`
       imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imageFilename}</option>`
-    }
+    };
+
     //create img selection form
     var imgSelectionSelect = `
       <form class="form-inline">
         <div class="form-group">
             ${label}
-            <select id='${selectId}' class="form-control" style="height:40px;max-width: 150px;">`;
+            <select id='${selectId}' class="form-control" >`; //style="height:40px;max-width: 150px;"
+
+
     imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
         </div>
-      </form>`
+      </form>`;
+
+      //return html
       resolve(imgSelectionSelect)
   })
 }
