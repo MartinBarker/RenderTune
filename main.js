@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 const sizeOf = require('image-size');
@@ -60,6 +60,14 @@ ipcMain.on('app_version', (event) => {
 //auto-update quiet and install
 ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
+});
+
+//open folder dir picker window and return string of folder path
+ipcMain.handle('choose-dir', async (event) => {
+    dir = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory']
+    });
+    return dir.filePaths[0];
 });
 
 ipcMain.handle('get-audio-metadata', async (event, filename) => {

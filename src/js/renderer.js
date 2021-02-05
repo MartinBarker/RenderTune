@@ -1,5 +1,6 @@
 const remote = require('electron').remote;
 
+
 const win = remote.getCurrentWindow(); /* Note this is different to the
 html global `window` variable */
 

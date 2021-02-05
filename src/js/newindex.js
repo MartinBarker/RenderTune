@@ -592,8 +592,8 @@ async function createUploadPage(upload, uploadId) {
                 </label>
 
                 <div>
-                //https://jaketrent.com/post/select-directory-in-electron
-                  <input id='${uploadId}-outputSelect' onchange="outputChanged($(this).val());" type="file" webkitdirectory />
+                  <button onClick='chooseDir()'>PICK</button>
+                  <!-- <input id='${uploadId}-outputSelect' onchange="outputChanged($(this).val());" type="file" webkitdirectory /> -->
                 </div>
 
               </span>
@@ -689,6 +689,12 @@ async function createUploadPage(upload, uploadId) {
     console.log('output dir changed: ', $(this).val())
  });
 
+}
+
+async function chooseDir(){
+  console.log('chooseDir()')
+  const dirPath = await ipcRenderer.invoke('choose-dir');
+  console.log('chooseDir() dirPath=', dirPath)
 }
 
 async function createFilesTable(upload, uploadId) {
