@@ -1,3 +1,21 @@
+.imgDropdown{
+  width: 30px;
+  height: 30px;
+}
+
+.optionsContainer{
+  width: 90% ;
+  padding-right: 0px; 
+  padding-left: 0px; 
+  margin-right: 0px; 
+  margin-left: 0px; 
+  flex-wrap: nowrap;
+}
+
+.uploadSelection{
+  width:70%!important;
+}
+
 .form-inline{
   display:inline !important;
 }
@@ -17,6 +35,7 @@ select.form-control{
 }
 
 .scroll{
+  margin-right: 15px;
   overflow:auto;
   overflow-x:scroll;
 }
@@ -133,7 +152,7 @@ select.form-control{
 }
 .sidebar-nav li {
   text-indent: 20px;
-  line-height: 43.9px;
+  line-height: 43px;
 }
 .sidebar-nav li a {
   display: block;
@@ -179,6 +198,7 @@ select.form-control{
 
 /* The navigation menu links */
 .sidenav a {
+  height: 43px;
   padding: 0px 8px 6px 11px;
   text-decoration: none;
   font-size: 25px;

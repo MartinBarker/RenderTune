@@ -256,12 +256,25 @@ async function newUploadFileDropEvent(event, preventDefault) {
       audioFileInfo.format = audioFormat;
 
       const metadata = await getMetadata(f.path);
-      audioFileInfo.trackNum = metadata.common.track.no;
+      audioFileInfo.album = metadata.common.album || "";
+      audioFileInfo.year = metadata.common.year || "";
+      audioFileInfo.artist = metadata.common.artist || "";
+      audioFileInfo.trackNum = metadata.common.track.no || "";
       audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
 
       //push results if that file isnt alread inside .audio
       if (fileList.audio.filter(e => e.path === `${f.path}`).length == 0) {
-        fileList.audio.push({ 'path': f.path, 'type': audioFormat, 'name': f.name, 'length': audioFileInfo.length, 'trackNum': audioFileInfo.trackNum })
+        fileList.audio.push({ 
+          'path': f.path, 
+          'type': audioFormat, 
+          'name': f.name, 
+          'length': audioFileInfo.length, 
+          'trackNum': audioFileInfo.trackNum,
+          "album":audioFileInfo.album,
+          "year":audioFileInfo.year,
+          "artist":audioFileInfo.artist,
+          
+        })
         console.log('pushing audio')
         haveNewFilesBeenAdded = true;
       }
@@ -421,9 +434,10 @@ async function updateUploadListDisplay() {
         //update sidebar display
         $("#sidebar-uploads").prepend(`
               <li>
-
-                  
-                  <a href="#" id='${uploadId}-sidebar' onClick='displayUpload("${uploadId}")'><img src="${imgPath}" class='sidebarUploadImg'> ${uploadTitle}</a>
+                  <a href="#" id='${uploadId}-sidebar' onClick='displayUpload("${uploadId}")'>
+                    <img src="${imgPath}" class='sidebarUploadImg'>
+                    ${uploadTitle}
+                  </a>
               </li>
             `);
 
@@ -480,65 +494,142 @@ async function createUploadPage(upload, uploadId) {
     <div class="col-lg-12 upload">
       <h1>${upload.title}</h1>
 
-      <button type="button" class="btn btn-primary">Render x individual videos </button>
-      <br><br>
-      <button type="button" class="btn btn-primary">Combine x songs into one video</button>
-
-      <br> <br>
-
-
       <!-- files table -->
       <div class='scroll'>
         <table id="${uploadId}_table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
                 <tr>
-                    <th>sequence</th>
-                    <th style='min-width: 25px;'>#</th>
-                    <th style="min-width: 20px;"><input id='${uploadId}_table-selectAll' type="checkbox"></th>
-                    <th class='left-align-col' >Audio</th>
-                    <th class='left-align-col' style='max-width:58px'>Length</th>
-                    <!-- 
-                    <th style='width:150px'>
-                        Video Format: 
-                        <div>
-                            <select id='${uploadId}_table-vidFormat-col'>
-                                <option value="0">mp4</option>
-                                <option value="1">avi</option>
-                            </select> 
-                        </div>
-                    </th> -->
-                    <th>audioFilepath</th>
-                    <th class='left-align-col' style='width:83px'>Track Num</th>
-                    <th class='left-align-col' style='width:300px'>
-                        <div id='${uploadId}_table-image-col'>
-                            <label>Img:</label>
-                        </div>
-                    </th>
+                  <!-- invisible number col -->
+                  <th>sequence</th>
 
-                    <!--
-                    <th>Video Output Folder: 
-                        <div >
-                            <button id='${uploadId}_table-vidLocationButton'>Select</button>
-                            <input style='display:none' id='${uploadId}_table-vidLocation' type="file" webkitdirectory />
-                        </div>
-                    </th>
-                    -->
+                  <!-- draggable number display col -->
+                  <th style='min-width: 25px;'>#</th>
+                  
+                  <!-- select box -->
+                  <th style="min-width: 20px;">
+                    <input id='${uploadId}_table-selectAll' type="checkbox">
+                  </th>
+
+                  <!-- Audio Filename -->
+                  <th class='left-align-col' style="width:40%">Audio</th>
+                  
+                  <!-- Audio Length -->
+                  <th class='left-align-col' style='max-width:58px'>Length</th>
+                  
+                  <!-- invisible audio filepath -->
+                  <th>audioFilepath</th>
+                  
+                  <!-- audio track number -->
+                  <th class='left-align-col' style='width:83px'>Track Num</th>
+
+                  <!-- audio album -->
+                  <th class='left-align-col'>Album</th>
+
+                  <!-- audio year  -->
+                  <th class='left-align-col' style='width:83px'>Year</th>
+
+                  <!-- audio artist  -->
+                  <th class='left-align-col' >Artist</th>
+                  
+                  <!-- image selection -->
+                  <!-- <th class='left-align-col' style='width:300px'>
+                      <div id='${uploadId}_table-image-col'>
+                          <label>Img:</label>
+                      </div>
+                  </th> -->
                 </tr>
             </thead>
         </table>
-
       </div>
 
-   
+      <h3>Render Options:</h3>
+      <div style='margin-right: 20px;'>
+        <div class="row">
+          <div class="col-md-3" style="">
+            <!-- Padding -->
+            <div class="form-group">
+              <span>
+                <label for="size">Padding:</label>
+                <select class="form-control">
+                  <option>small</option>
+                  <option>medium</option>
+                  <option>large</option>
+                </select>
+              </span>
+            </div>
+          </div>
+          
+          <div class="col-md-3"style="">
+            <!-- Resolution -->
+            <div class="form-group">
+              <span>
+                <label for="size">Resolution:</label>
+                <select class="form-control">
+                  <option>small</option>
+                  <option>medium</option>
+                  <option>large</option>
+                </select>
+              </span>
+            </div>
+          </div>
+          
+          <div class="col-md-3"style="">
+            <!-- Output Folder -->
+            <div class="form-group">
+              <span>
+                <label for="size">Output Folder:</label>
+                <select class="form-control">
+                  <option>small</option>
+                  <option>medium</option>
+                  <option>large</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="col-md-3"style="">
+          <!-- Output Format -->
+          <div class="form-group">
+            <span>
+              <label for="size">Output Format:</label>
+              <select class="form-control">
+                <option>small</option>
+                <option>medium</option>
+                <option>large</option>
+              </select>
+            </span>
+          </div>
+          </div>
+        </div>
+
+        <!-- Image Selection -->
+        <div class="form-group">
+          <span>
+            <label for="size">Image:</label>
+            <select class="form-control">
+              <option>small</option>
+              <option>medium</option>
+              <option>large</option>
+            </select>
+          </span>
+        </div>
+      </div>
+
+      Concat X songs into a video:
+      
+    
+      Render x individual videos:
+    
+
     </div>
     `);
   //create datatable (dataset, event listeners, etc)
-  createDatatable(upload, uploadId)
+  createFilesTable(upload, uploadId)
 }
 
-async function createDatatable(upload, uploadId) {
+async function createFilesTable(upload, uploadId) {
   //create dataset
-  let data = await createDataset(upload.files, uploadId, upload)
+  let data = await createFilesTableDataset(upload.files, uploadId, upload)
 
   //setup table
   var reorder = false;
@@ -560,12 +651,13 @@ async function createDatatable(upload, uploadId) {
       { "data": "#" },
       { "data": "selectAll" },
       { "data": "audio" },
-      //{ "data": "format" },
       { "data": "length" },
-      //{ "data": "outputFormat" },
       { "data": "audioFilepath" },
       { "data": "trackNum" },
-      { "data": "imgSelection" },
+      { "data": "album" },
+      { "data": "year" },
+      { "data": "artist" },
+      //{ "data": "imgSelection" },
     ],
     columnDefs: [
       { //invisible sequence num
@@ -616,13 +708,31 @@ async function createDatatable(upload, uploadId) {
       {//trackNum
         targets: 6,
         visible: true,
+        orderable: true,
       },
+      {//album
+        targets: 7,
+        visible: true,
+        orderable: true,
+      },
+      {//year
+        targets: 8,
+        visible: true,
+        orderable: true,
+      },
+      {//artist
+        targets: 9,
+        visible: true,
+        orderable: true,
+      },
+      /*
       { //image selection
         targets: 7,
         type: "string",
         orderable: false,
         className: 'text-left'
       },
+      */
     ],
     "language": {
       "emptyTable": "No files in this upload"
@@ -642,19 +752,22 @@ async function createDatatable(upload, uploadId) {
       "#": `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${count}</div>`,
       "selectAll": '<input type="checkbox">',
       "audio": i.audio,
-      //"format": 'adasd',//i.format,
       "length": i.length,
       //"outputFormat": i.vidFormatSelection,
       //"outputLocation": "temp output location",
       "audioFilepath": i.audioFilepath,
       "trackNum": i.trackNum,
-      "imgSelection": i.imgSelection,
+      "album": i.album,
+      "year": i.year,
+      "artist": i.artist,
+      //"imgSelection": i.imgSelection,
     }).node().id = 'rowBrowseId' + i.sampleItemId;
     count++;
   });
   //draw table
   table.draw();
 
+  /*
   //create image dropdown selection column header
   let imgSelectionHeader = await createImgSelect(upload, `${uploadId}-imageOptionsCol`, true)
 
@@ -668,6 +781,7 @@ async function createDatatable(upload, uploadId) {
       document.getElementById(`${uploadId}_table-audio-${index}-img_choice`).selectedIndex = `${indexValueImgChoice}`
     });
   });
+  */
 
   //if select all checkbox clicked
   $(`#${uploadId}_table-selectAll`).on('click', function (event) {
@@ -820,7 +934,7 @@ async function createImgSelect(upload, selectId, includeLabel){
 }
 
 //create dataset for the table in an upload
-async function createDataset(uploadFiles, uploadId, upload) {
+async function createFilesTableDataset(uploadFiles, uploadId, upload) {
   return new Promise(async function (resolve, reject) {
     //create img selection part of form
     /*
@@ -844,30 +958,29 @@ async function createDataset(uploadFiles, uploadId, upload) {
       for (var x = 0; x < uploadFiles['audio'].length; x++) {
         var audioObj = uploadFiles['audio'][x]
 
+        /*
         //create img selection form
         let imgSelectionSelect = await createImgSelect(upload, `${uploadId}_table-audio-${x}-img_choice`, false)
-
         //create vid output selection
         var videoOutputSelection = `
               <select id='${uploadId}_table-vidFormat-row_${x}'>
                   <option value="0">mp4</option>
                   <option value="1">avi</option>
               </select> 
-              `
+              `; 
+        */
 
         //create row obj
         let rowObj = {
-          //sequence(leave empty)
           itemId: fileCount,
-          //select box(leave empty)
           audio: audioObj.name,
           format: audioObj.type,
           length: audioObj.length,
-          imgSelection: imgSelectionSelect,
-          vidFormatSelection: videoOutputSelection,
           audioFilepath: audioObj.path,
-          trackNum: audioObj.trackNum
-          //video output(leave empty)
+          trackNum: audioObj.trackNum,
+          album: audioObj.album,
+          year: audioObj.year,
+          artist: audioObj.artist,
         }
         fileCount++
         dataSet.push(rowObj)
