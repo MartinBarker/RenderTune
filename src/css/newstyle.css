@@ -1,3 +1,7 @@
+.form-control{
+  padding-left: 0px !important;
+}
+
 .dropdown-menu li{
   width: 500px; white-space: normal;overflow: hidden;
 }

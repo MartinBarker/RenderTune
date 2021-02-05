@@ -399,6 +399,7 @@ async function createNewUploadCard(uploadTitle, uploadNumber, uploadFiles) {
         //});
 
         function generateResolutionOptions(uploadImageResolutions, imageName) {
+            
             if (uploadImageResolutions == null && imageName == null) {
                 console.log('both null')
                 uploadImageResolutions = { 'staticResolutions': { resolutions: ['640x480', '1280x720', '1920x1080', '2560x1440', '2560x1600'] } }

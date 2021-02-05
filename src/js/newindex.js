@@ -493,18 +493,9 @@ async function createUploadPage(upload, uploadId) {
     let img = upload.files.images[z]
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
+
+  //create <select> for images
   let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
-  
-  let imageSelectionFormHTML = `
-  <div class="form-group">
-    <span>
-      <label for="size">Image:
-        <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
-      </label>
-      ${imageSelectionHTML}
-    </span>
-  </div>
-  `;
 
   //add html to page
   $("#upload-pages-container").append(`
@@ -578,17 +569,15 @@ async function createUploadPage(upload, uploadId) {
             </div>
           </div>
 
-          <div class="col-md-3"style="">
+          <div class="col-md-3"style="min-width: 164px;">
             <!-- Resolution -->
             <div class="form-group">
               <span>
                 <label for="size">Resolution:
                   <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output resolution for the rendered video."></i>
                 </label>
-                <select class="form-control">
-                  <option>small</option>
-                  <option>medium</option>
-                  <option>large</option>
+                <select id='${uploadId}-resolutionSelect' class="form-control">
+                  
                 </select>
               </span>
             </div>
@@ -601,11 +590,12 @@ async function createUploadPage(upload, uploadId) {
                 <label for="size">Output: 
                   <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
                 </label>
-                <select class="form-control">
-                  <option>small</option>
-                  <option>medium</option>
-                  <option>large</option>
-                </select>
+
+                <div>
+                //https://jaketrent.com/post/select-directory-in-electron
+                  <input id='${uploadId}-outputSelect' onchange="outputChanged($(this).val());" type="file" webkitdirectory />
+                </div>
+
               </span>
             </div>
           </div>
@@ -617,10 +607,8 @@ async function createUploadPage(upload, uploadId) {
               <label for="size">Format:
                 <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output video format for the rendered video."></i>
               </label>
-              <select class="form-control">
-                <option>small</option>
-                <option>medium</option>
-                <option>large</option>
+              <select class="form-control" id='${uploadId}-formatSelect'>
+                <option>mp4</option>
               </select>
             </span>
           </div>
@@ -628,26 +616,84 @@ async function createUploadPage(upload, uploadId) {
         </div>
 
         <!-- Image Selection -->
-        ${imageSelectionFormHTML}
-
-        <!-- resolution options -->
-        <div>Resolution: 
-          <div style="display:inline;" id='${uploadNumber}_resolutionDiv'>
-          </div> 
+        <div class="form-group">
+          <span>
+            <label for="size">Image:
+              <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
+            </label>
+            ${imageSelectionHTML}
+          </span>
         </div>
-
 
       </div>
     </div>
     `);
   //create datatable (dataset, event listeners, etc)
   createFilesTable(upload, uploadId)
+
+  //generate resolutions for each image
+  let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+  //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
+  createResolutionSelect(uploadImageResolutions, upload.files.images[0].name, `${uploadId}-resolutionSelect`);
+
+  //if padding option changes, update resolution options
+  $(`#${uploadId}-paddingSelect`).on('change', async function () {
+
+    //get padding choice
+    let paddingChoice = $(this).val();
+
+    //get image choice
+    let newImageNum = $(`#${uploadId}-imgSelect`).val();
+    let newImageName = upload.files.images[newImageNum].name;
+
+    //generate new resolution options
+    let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+
+    if (!paddingChoice.includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
+    } else {
+        //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
+        createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-resolutionSelect`);
+    }
+
+  });
+
+  //if image selection changes, update resolution options
+  $(`#${uploadId}-imgSelect`).on('change', async function () {
+    //get image info
+    let newImageNum = $(this).val();
+    let newImageName = upload.files.images[newImageNum].name;
+    
+    //get padding info
+    let paddingChoice = $(`#${uploadId}-paddingSelect`).val();
+    console.log('img changed paddingChoice = ', paddingChoice)
+
+    
+    console.log(`image changed to: ${newImageName}, paddingChoice= ${paddingChoice}`)
+
+    //generate new resolution options
+    let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+
+    if (!paddingChoice.includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
+    } else {
+        //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
+        createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-resolutionSelect`);
+    }
+
+  });
+
+  //if output dir changes
+
+  $(`${uploadId}-outputSelect`).bind("change paste keyup", function() {
+    console.log('output dir changed: ', $(this).val())
+ });
+
 }
 
 async function createFilesTable(upload, uploadId) {
   //create dataset
   let data = await createFilesTableDataset(upload.files, uploadId, upload)
-  console.log('data = ', JSON.stringify(data))
 
   //setup table
   var reorder = false;
@@ -766,15 +812,6 @@ async function createFilesTable(upload, uploadId) {
     },
 
   });
-
-  //generate resolutions for each image
-  let uploadImageResolutions = await getResolutionOptions(upload.files.images);
-  console.log('uploadImageResolutions = ', uploadImageResolutions)
-  //create div of resolutions based off the default selected image name
-  let resOptions = generateResolutionHTML(uploadImageResolutions, upload.files.images[0].name);
-  //add resolution html to upload
-  document.getElementById(`${uploadNumber}_resolutionDiv`).appendChild(resOptions)
-  
 
   //add dataset to table
   var count = 1;
@@ -962,15 +999,15 @@ async function getResolutionOptions(images) {
 }
 
 //generate resolution dropdown html
-function generateResolutionHTML(uploadImageResolutions, imageName) {
+function createResolutionSelect(uploadImageResolutions, imageName, selectId) {
+  //clear options 
+  document.getElementById(`${selectId}`).textContent =``;
+
   if (uploadImageResolutions == null && imageName == null) {
-      console.log('both null')
       uploadImageResolutions = { 'staticResolutions': { resolutions: ['640x480', '1280x720', '1920x1080', '2560x1440', '2560x1600'] } }
       imageName = 'staticResolutions';
   }
-  var fullAlbumResolutionSelectionColHeader = document.createElement('select')
-  fullAlbumResolutionSelectionColHeader.setAttribute('id', `upload_${uploadNumber}_fullAlbumResolutionChoice`)
-  fullAlbumResolutionSelectionColHeader.setAttribute('style', `max-width:150px; text-align: left;`);
+
   let minAlreadySelected = false;
   for (var x = 0; x < uploadImageResolutions[imageName].resolutions.length; x++) {
       let resolution = `${uploadImageResolutions[imageName].resolutions[x]}`
@@ -988,15 +1025,16 @@ function generateResolutionHTML(uploadImageResolutions, imageName) {
           }
       }
       let displayText = `${resolution} ${definition}`;
-      resOption.innerHTML = displayText//'<div style="color:red">bungis</div>'//displayText
-      fullAlbumResolutionSelectionColHeader.appendChild(resOption)
+      resOption.innerHTML = displayText;
+
       //select 1920 hd result by default
       if (width >= 1920 && !minAlreadySelected) {
           minAlreadySelected = true;
           resOption.setAttribute('selected', 'selected');
       }
+      document.getElementById(`${selectId}`).appendChild(resOption)
   }
-  return fullAlbumResolutionSelectionColHeader;
+  
 };
 
 //create select div with an option for each image
