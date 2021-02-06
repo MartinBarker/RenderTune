@@ -745,8 +745,12 @@ async function concatRenderPrep(uploadId, uploadNumber){
   var table = $(`#${uploadId}_table`).DataTable()
   //get all selected rows
   var selectedRows = table.rows('.selected').data()
+  //get outputDir
+  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+  let outputDir = uploads[uploadId].outputDir;
   let renderOptions = {
     concatAudio:true,
+    outputDir:outputDir,
     resolution:resolution,
     padding:padding,
     selectedRows:selectedRows,
@@ -762,7 +766,8 @@ async function render(renderOptions){ //(uploadName, uploadNumber, resolution, p
   
   if(renderOptions.concatAudio){
     console.log('ffmpeg() path.sep=', path.sep)
-    let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`
+    let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`;
+    console.log('concatAudioFilepath=', concatAudioFilepath)
     let cmdArr = [];
     let outputDuration = '';
     //add inputs
