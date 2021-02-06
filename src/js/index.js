@@ -1492,8 +1492,6 @@ async function updateFullAlbumDisplayInfo(table, uploadNumber) {
     document.getElementById(`upload_${uploadNumber}_numChecked`).innerText = count
     document.getElementById(`upload_${uploadNumber}_numCheckedFullAlbum`).innerText = count
 
-
-
 }
 
 //update which uploads are displayed

@@ -1,3 +1,27 @@
+.uploadOptionBox{
+  border:1.5px solid #CED4DA; 
+  border-radius:4px;
+  padding:5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cursorPointer{
+  cursor:pointer;
+}
+
+.sidebarText{
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.album-col{
+  width:100%;
+  min-width:140px;
+}
+.settingsCol{
+  min-width:126px !important;
+}
 .changeDir{
   border:1.5px solid #CED4DA; 
   border-radius:4px;
