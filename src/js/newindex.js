@@ -356,7 +356,7 @@ async function addNewUpload(uploadTitle) {
       //get default output dir from first image filepath
       let firstImgPath = fileList.images[0].path;
       let outputDir = firstImgPath.substr(0, firstImgPath.lastIndexOf(`${path.sep}`));
-      let outputFolder = firstImgPath.substr(firstImgPath.lastIndexOf(`${path.sep}`) + 1);
+      let outputFolder = outputDir.substr(outputDir.lastIndexOf(`${path.sep}`) + 1);
 
       let uploadKey = `upload-${uploadNumber}`
       let uploadObj = { 'title': uploadTitle, 'files': fileList, 'outputDir': outputDir, 'outputFolder': outputFolder }
