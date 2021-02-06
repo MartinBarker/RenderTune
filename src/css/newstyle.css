@@ -1,4 +1,22 @@
+.changeDir{
+  border:1.5px solid #CED4DA; 
+  border-radius:4px;
+  padding:5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+select:hover{
+  cursor:pointer;
+  background:#d6e0eb;
+}
+.changeDir:hover{
+  cursor:pointer;
+  background:#d6e0eb;
+}
+
 .form-control{
+  width:100% !important;
   padding-left: 0px !important;
 }
 

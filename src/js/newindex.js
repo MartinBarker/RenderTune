@@ -1,6 +1,7 @@
 const { Console } = require('console');
 const { resolve } = require('path');
 const { ipcRenderer } = window.require('electron');
+var path = require('path');
 
 //require datatables
 require('datatables.net-dt')();
@@ -350,8 +351,13 @@ async function addNewUpload(uploadTitle) {
         uploadTitle = `upload-${uploadNumber}`
       }
 
+      //get default output dir from first image filepath
+      let firstImgPath = fileList.images[0].path;
+      let outputDir = firstImgPath.substr(0, firstImgPath.lastIndexOf(`${path.sep}`));
+      let outputFolder = firstImgPath.substr(firstImgPath.lastIndexOf(`${path.sep}`)+1);
+
       let uploadKey = `upload-${uploadNumber}`
-      let uploadObj = { 'title': uploadTitle, 'files': fileList }
+      let uploadObj = { 'title': uploadTitle, 'files': fileList, 'outputDir': outputDir, 'outputFolder':outputFolder }
       fileList = null;
 
       //add to uploadList obj
@@ -500,7 +506,7 @@ async function createUploadPage(upload, uploadId) {
   //add html to page
   $("#upload-pages-container").append(`
     <div class="col-lg-12 upload">
-      <h1>${upload.title}</h1>
+      <!-- <h1>${upload.title}</h1> -->
 
       <!-- files table -->
       <div class='scroll'>
@@ -577,53 +583,38 @@ async function createUploadPage(upload, uploadId) {
                   <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output resolution for the rendered video."></i>
                 </label>
                 <select id='${uploadId}-resolutionSelect' class="form-control">
-                  
                 </select>
               </span>
             </div>
           </div>
-          
-          <div class="col-md-3"style="">
+
+          <div class="col-md-3" class="changeDirButton" onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
             <!-- Output Folder -->
             <div class="form-group">
               <span>
                 <label for="size">Output: 
                   <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
                 </label>
-
-                <div>
-                  <button onClick='chooseDir()'>PICK</button>
-                  <!-- <input id='${uploadId}-outputSelect' onchange="outputChanged($(this).val());" type="file" webkitdirectory /> -->
+                <div id='${uploadId}-dirText' class="changeDir">
+                  <i class="fa fa-folder" aria-hidden="true"></i>  ${upload.outputFolder}
                 </div>
-
               </span>
             </div>
           </div>
 
           <div class="col-md-3"style="">
-          <!-- Output Format -->
-          <div class="form-group">
-            <span>
-              <label for="size">Format:
-                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output video format for the rendered video."></i>
-              </label>
-              <select class="form-control" id='${uploadId}-formatSelect'>
-                <option>mp4</option>
-              </select>
-            </span>
-          </div>
+            <!-- Image Selection -->
+            <div class="form-group">
+              <span>
+                <label for="size">Image:
+                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
+                </label>
+                ${imageSelectionHTML}
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- Image Selection -->
-        <div class="form-group">
-          <span>
-            <label for="size">Image:
-              <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
-            </label>
-            ${imageSelectionHTML}
-          </span>
-        </div>
 
       </div>
     </div>
@@ -684,17 +675,23 @@ async function createUploadPage(upload, uploadId) {
   });
 
   //if output dir changes
-
   $(`${uploadId}-outputSelect`).bind("change paste keyup", function() {
     console.log('output dir changed: ', $(this).val())
  });
 
 }
 
-async function chooseDir(){
-  console.log('chooseDir()')
+async function changeDir(displayTextID, uploadId){
+  //get new dirFolder and dirPath from user
   const dirPath = await ipcRenderer.invoke('choose-dir');
-  console.log('chooseDir() dirPath=', dirPath)
+  let dirFolder = dirPath.substr(dirPath.lastIndexOf(`${path.sep}`)+1);
+  document.getElementById(displayTextID).innerHTML = `<i class="fa fa-folder" aria-hidden="true"></i>  ${dirFolder}`;
+  //update upload
+  var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
+  uploadList[uploadId].outputDir=dirPath
+  uploadList[uploadId].outputFolder=dirFolder
+  let result = await localStorage.setItem('uploadList', JSON.stringify(uploadList))
+
 }
 
 async function createFilesTable(upload, uploadId) {
