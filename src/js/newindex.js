@@ -765,11 +765,9 @@ async function render(renderOptions){ //(uploadName, uploadNumber, resolution, p
   var outputDir = renderOptions.outputDir;
   
   if(renderOptions.concatAudio){
-    console.log('ffmpeg() path.sep=', path.sep)
     let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`;
-    console.log('concatAudioFilepath=', concatAudioFilepath)
     let cmdArr = [];
-    let outputDuration = '';
+    let outputDuration = 0;
     //add inputs
     let inputs = '';
     for (var i = 0; i < selectedRows.length; i++) {
@@ -777,11 +775,12 @@ async function render(renderOptions){ //(uploadName, uploadNumber, resolution, p
         cmdArr.push(`${selectedRows[i].audioFilepath}`)
         inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
         //calculate total time
-        var lengthSplit = selectedRows[i].length.split(':'); // split it at the colons
+        var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
         // minutes are worth 60 seconds. Hours are worth 60 minutes.
         var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]); 
-        outputDuration = outputDuration + seconds
+        outputDuration = outputDuration + seconds;
     }
+    
     //add concat options
     cmdArr.push("-y");
     cmdArr.push("-filter_complex")
@@ -804,7 +803,6 @@ async function runFfmpegCommand(ffmpegArgs, cutDuration){
       const getFfmpegPath = () => getFfPath('ffmpeg');
       //const getFfprobePath = () => getFfPath('ffprobe');
       const ffmpegPath = getFfmpegPath();
-      console.log('runFfmpegCommand() ffmpegPath = ', ffmpegPath)
       const process = execa(ffmpegPath, ffmpegArgs);
       handleProgress(process, cutDuration);
       const result = await process;
@@ -832,6 +830,7 @@ function handleProgress(process, cutDuration) {
         const progressTime = Math.max(0, moment.duration(str).asSeconds());
         console.log(progressTime);
         const progress = cutDuration ? progressTime / cutDuration : 0;
+
         console.log('progress = ', progress)
         //onProgress(progress);
       } catch (err) {
