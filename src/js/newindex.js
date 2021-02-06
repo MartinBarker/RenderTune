@@ -9,6 +9,9 @@ const execa = window.require('execa');
 require('datatables.net-dt')();
 require('datatables.net-rowreorder-dt')();
 
+//global var for renderList
+var renderList = [];
+
 // recieve app version and send it to html 
 ipcRenderer.send('app_version');
 ipcRenderer.on('app_version', (event, arg) => {
@@ -47,34 +50,30 @@ $("#homeButton").click(function (e) {
 
 //when you click the NewUpload button
 $("#newUploadButton").click(function (e) {
+  //hide render-jobs modal
+  $('#render-jobs-modal').modal('hide');
 
-  if ($("#newUploadButton").hasClass("page-selected")) {
-
-  } else {
-
-    console.log('toggle new upload button on')
+  if (!$("#newUploadButton").hasClass("page-selected")) {
     $("#newUploadButton").toggleClass("page-selected");
-    //change which body html to display
-    //$("#new-upload-html").show();
-    //$("#default-home-html").hide();
-    //$("#upload-selection-html").hide();
-
-    //untoggle home button if needed
-    /*
-    if ($("#homeButton").hasClass('page-selected')) {
-      $("#homeButton").toggleClass("page-selected");
-    }
-    */
-
-    /*
-    //untoggle UploadsList button if needed 
-    if ($("#menu-toggle").hasClass('svg-selected')) {
-      $("#menu-toggle").toggleClass("svg-selected");
-      $("#wrapper").toggleClass("toggled");
-    }
-    */
   }
 });
+
+//when you click renderJobsButton
+$("#renderJobsButton").click(function (e) {
+  //hide new-upload modal
+  $('#new-upload-modal').modal('hide');
+
+  if (!$("#renderJobsButton").hasClass("page-selected")) {
+    $("#renderJobsButton").toggleClass("page-selected");
+  }
+});
+//if renderJobs modal is closed:
+$('#render-jobs-modal').on('hide.bs.modal', function () {
+  if ($("#renderJobsButton").hasClass("page-selected")) {
+    $("#renderJobsButton").toggleClass("page-selected");
+  }
+})
+
 
 //when you click the Uploads list button
 $("#menu-toggle").click(function (e) {
@@ -130,24 +129,51 @@ $('#new-upload-modal').on('hide.bs.modal', function () {
 
 //when document window is ready call init function
 $(document).ready(function () {
-  //call init function
-  init();
+  //inital uploads sidebar display setup
+  initUploadsSetup();
+  //initial renders table setup
+  initRendersSetup();
 });
 
 $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
 
+async function initRendersSetup() {
+  //create table
 
-//init: get uploadList and display it
-async function init() {
+
+  var table = $(`#renders-table`).DataTable({
+    "autoWidth": true,
+    "pageLength": 5000,
+    select: {
+      style: 'multi',
+      selector: 'td:nth-child(2)'
+    },
+    columns: [
+      { "data": "selectAll" },
+      { "data": "type" },
+      { "data": "status" },
+      { "data": "length" },
+      { "data": "uploadName" }
+    ],
+    "language": {
+      "emptyTable": "No current renders"
+    },
+    dom: 'rt',
+    rowReorder: {
+      dataSrc: 'sequence',
+    },
+
+  });
+}
+
+//ensure uploadList exists
+async function initUploadsSetup() {
   //ensure uploadList exists
   var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
   if (!uploadList) {
-    console.log('localstorage uploadList not exist', uploadList)
     setLocalStorage('uploadList', {})
-  } else {
-    //console.log('localstorage uploadList do exist: ', uploadList)
   }
   //display uploads
   updateUploadListDisplay();
@@ -607,7 +633,7 @@ async function createUploadPage(upload, uploadId) {
             <!-- Output Folder -->
             <div class="form-group">
               <span>
-                <label for="size">Output: 
+                <label for="size">Output Dir: 
                   <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
                 </label>
                 <div id='${uploadId}-dirText' class="changeDir">
@@ -636,7 +662,12 @@ async function createUploadPage(upload, uploadId) {
             <a id='${uploadId}-tracklistText'></a>
           </code>
         </p>
-        <a href="#" class="btn btn-primary" id='${uploadId}-concatRenderButton' onClick='concatRenderPrep("${uploadId}", "${uploadNumber}")' >Render</a>
+
+        <div>
+          <!-- render button -->
+          <a href="#" class="btn btn-primary" id='${uploadId}-concatRenderButton' onClick='concatRenderPrep("${uploadId}", "${uploadNumber}")' >Render</a>
+        </div>
+
       </div>
     </div>
     <br>
@@ -736,7 +767,7 @@ async function changeDir(displayTextID, uploadId) {
 }
 
 //call when 'Render' button for concat full album is clicked
-async function concatRenderPrep(uploadId, uploadNumber){
+async function concatRenderPrep(uploadId, uploadNumber) {
   //get image/padding/resolution/output
   let resolution = $(`#${uploadId}-resolutionSelect option:selected`).text();
   resolution = (resolution.split(" ")[0]).trim()
@@ -748,39 +779,43 @@ async function concatRenderPrep(uploadId, uploadNumber){
   //get outputDir
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
   let outputDir = uploads[uploadId].outputDir;
+  let uploadName = uploads[uploadId].title;
   let renderOptions = {
-    concatAudio:true,
-    outputDir:outputDir,
-    resolution:resolution,
-    padding:padding,
-    selectedRows:selectedRows,
-    uploadNumber:uploadNumber
+    concatAudio: true,
+    outputDir: outputDir,
+    resolution: resolution,
+    padding: padding,
+    selectedRows: selectedRows,
+    uploadNumber: uploadNumber,
+    uploadId: uploadId,
+    uploadName: uploadName
   }
   render(renderOptions)
 }
 
 //render using ffmpeg
-async function render(renderOptions){ //(uploadName, uploadNumber, resolution, padding) {
+async function render(renderOptions) { //(uploadName, uploadNumber, resolution, padding) {
   var selectedRows = renderOptions.selectedRows;
   var outputDir = renderOptions.outputDir;
-  
-  if(renderOptions.concatAudio){
+  var uploadName = renderOptions.uploadName;
+
+  if (renderOptions.concatAudio) {
     let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`;
     let cmdArr = [];
     let outputDuration = 0;
     //add inputs
     let inputs = '';
     for (var i = 0; i < selectedRows.length; i++) {
-        cmdArr.push('-i')
-        cmdArr.push(`${selectedRows[i].audioFilepath}`)
-        inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
-        //calculate total time
-        var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
-        // minutes are worth 60 seconds. Hours are worth 60 minutes.
-        var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]); 
-        outputDuration = outputDuration + seconds;
+      cmdArr.push('-i')
+      cmdArr.push(`${selectedRows[i].audioFilepath}`)
+      inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
+      //calculate total time
+      var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
+      // minutes are worth 60 seconds. Hours are worth 60 minutes.
+      var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+      outputDuration = outputDuration + seconds;
     }
-    
+
     //add concat options
     cmdArr.push("-y");
     cmdArr.push("-filter_complex")
@@ -792,91 +827,110 @@ async function render(renderOptions){ //(uploadName, uploadNumber, resolution, p
     cmdArr.push("320k")
     //set output 
     cmdArr.push(concatAudioFilepath);
-    //run ffmpeg command
+    //add to renderList
+    addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath)
+    //run ffmpeg command to concat audio
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration);
   }
 }
 
+//add new render to renders list
+async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile) {
+  renderList.push({
+    type: renderType,
+    durationSeconds: durationSeconds,
+    uploadName: uploadName,
+    outputDir: outputDir,
+    outputFile: outputFile
+  });
+  updateRendersModal()
+}
+
+//update renders modal that displays in progress/completed/failed renders
+async function updateRendersModal() {
+
+}
+
 //run ffmpeg command 
-async function runFfmpegCommand(ffmpegArgs, cutDuration){
+async function runFfmpegCommand(ffmpegArgs, cutDuration) {
   return new Promise(async function (resolve, reject) {
-      const getFfmpegPath = () => getFfPath('ffmpeg');
-      //const getFfprobePath = () => getFfPath('ffprobe');
-      const ffmpegPath = getFfmpegPath();
-      const process = execa(ffmpegPath, ffmpegArgs);
-      handleProgress(process, cutDuration);
-      const result = await process;
-      resolve(result);
+    const getFfmpegPath = () => getFfPath('ffmpeg');
+    //const getFfprobePath = () => getFfPath('ffprobe');
+    const ffmpegPath = getFfmpegPath();
+    const process = execa(ffmpegPath, ffmpegArgs);
+    handleProgress(process, cutDuration);
+    const result = await process;
+    resolve(result);
   })
 }
 
 const moment = window.require("moment");
 const readline = window.require('readline');
 function handleProgress(process, cutDuration) {
-    //onProgress(0);
-  
-    const rl = readline.createInterface({ input: process.stderr });
-    rl.on('line', (line) => {
-        console.log('progress', line);
-  
-      try {
-        let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
-        // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
-        if (!match) match = line.match(/(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
-        if (!match) return;
-  
-        const str = match[1];
-        console.log(str);
-        const progressTime = Math.max(0, moment.duration(str).asSeconds());
-        console.log(progressTime);
-        const progress = cutDuration ? progressTime / cutDuration : 0;
+  //onProgress(0);
 
-        console.log('progress = ', progress)
-        //onProgress(progress);
-      } catch (err) {
-        console.log('Failed to parse ffmpeg progress line', err);
-      }
-    });
+  const rl = readline.createInterface({ input: process.stderr });
+  rl.on('line', (line) => {
+    console.log('progress', line);
+
+    try {
+      let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+      // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
+      if (!match) match = line.match(/(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+      if (!match) return;
+
+      const str = match[1];
+      console.log(str);
+      const progressTime = Math.max(0, moment.duration(str).asSeconds());
+      console.log(progressTime);
+      const progress = cutDuration ? progressTime / cutDuration : 0;
+
+      console.log('progress = ', progress)
+      //onProgress(progress);
+    } catch (err) {
+      console.log('Failed to parse ffmpeg progress line', err);
+    }
+  });
 }
 
 //new ffmpeg functions:
 function getFfCommandLine(cmd, args) {
-    const mapArg = arg => (/[^0-9a-zA-Z-_]/.test(arg) ? `'${arg}'` : arg);
-    return `${cmd} ${args.map(mapArg).join(' ')}`;
+  const mapArg = arg => (/[^0-9a-zA-Z-_]/.test(arg) ? `'${arg}'` : arg);
+  return `${cmd} ${args.map(mapArg).join(' ')}`;
 }
 
 function getFfPath(cmd) {
-    try{
-        const isDev = window.require('electron-is-dev');
-        const os = window.require('os');
-        const platform = os.platform();
-        console.log("getFfPath() platform = ", platform)
-        if (platform === 'darwin') {
-          return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
-        }
-      
-        const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
-        return isDev
-          ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
-          : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
-    }catch(err){
-        console.log('getFfPath cmd=', cmd, '. err = ', err)
-        return("")
+  try {
+    const isDev = window.require('electron-is-dev');
+    const os = window.require('os');
+    const platform = os.platform();
+    console.log("getFfPath() platform = ", platform)
+    if (platform === 'darwin') {
+      return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
     }
+
+    const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
+    return isDev
+      ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
+      : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+  } catch (err) {
+    console.log('getFfPath cmd=', cmd, '. err = ', err)
+    return ("")
+  }
 
 }
 
 async function runFfprobe(args) {
-    const ffprobePath = getFfprobePath();
-    console.log(getFfCommandLine('ffprobe', args));
-    return execa(ffprobePath, args);
+  const ffprobePath = getFfprobePath();
+  console.log(getFfCommandLine('ffprobe', args));
+  return execa(ffprobePath, args);
 }
 
 function runFfmpeg(args) {
-    console.log('runFfmpeg() args = ', args)
-    const ffmpegPath = getFfmpegPath();
-    console.log(getFfCommandLine('ffmpeg', args));
-    return execa(ffmpegPath, args);
+  console.log('runFfmpeg() args = ', args)
+  const ffmpegPath = getFfmpegPath();
+  console.log(getFfCommandLine('ffmpeg', args));
+  return execa(ffmpegPath, args);
 }
 
 async function createFilesTable(upload, uploadId) {

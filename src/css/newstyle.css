@@ -1,3 +1,13 @@
+.renderJobsIconCircle{
+  right: 3px;
+  height: 20px!important;
+  width: 20px!important;
+  display: inline-block!important;
+  position: absolute;
+  color: #17ff4c;
+  margin-top: 18px;
+}
+
 .uploadOptionBox{
   border:1.5px solid #CED4DA; 
   border-radius:4px;
@@ -109,10 +119,10 @@ select.form-control{
 
 .sidebar-selected{
   background:white!important;
-  color:black!important;
+  color:#2C1C35!important;
 }.sidebar-selected:hover{
   background:white!important;
-  color:black!important;
+  color:#2C1C35!important;
 }
 
 #deleteAllBox:hover {
@@ -162,7 +172,7 @@ select.form-control{
 
 .svg-selected{
   color:white !important;
-  background:#000000;
+  background:#2C1C35;
 }
 
 /* Toggle Styles */
@@ -197,7 +207,7 @@ select.form-control{
   width: 250px;
 }
 #page-content-wrapper {
-  color:black;
+  color:#2C1C35;
   width: 100%;
   /* position: absolute; */
   margin-left: 30px;
