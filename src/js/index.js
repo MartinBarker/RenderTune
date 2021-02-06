@@ -1236,7 +1236,7 @@ function handleProgress(process, cutDuration) {
         console.log('Failed to parse ffmpeg progress line', err);
       }
     });
-  }
+}
 const execa = window.require('execa');
 //generate video using image and audio
 async function generateVid(audioPath, imgPath, vidOutput, updateInfoLocation, resolution, padding) {

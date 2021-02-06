@@ -1,7 +1,9 @@
 const { Console } = require('console');
 const { resolve } = require('path');
 const { ipcRenderer } = window.require('electron');
+const { join } = window.require('path');
 var path = require('path');
+const execa = window.require('execa');
 
 //require datatables
 require('datatables.net-dt')();
@@ -735,7 +737,6 @@ async function changeDir(displayTextID, uploadId) {
 
 //call when 'Render' button for concat full album is clicked
 async function concatRenderPrep(uploadId, uploadNumber){
-  console.log('concatRenderPrep() uploadId = ', uploadId)
   //get image/padding/resolution/output
   let resolution = $(`#${uploadId}-resolutionSelect option:selected`).text();
   resolution = (resolution.split(" ")[0]).trim()
@@ -744,7 +745,6 @@ async function concatRenderPrep(uploadId, uploadNumber){
   var table = $(`#${uploadId}_table`).DataTable()
   //get all selected rows
   var selectedRows = table.rows('.selected').data()
-  console.log('selectedRows = ', selectedRows, ". selectedRows.length=", selectedRows.length)
   let renderOptions = {
     concatAudio:true,
     resolution:resolution,
@@ -752,63 +752,127 @@ async function concatRenderPrep(uploadId, uploadNumber){
     selectedRows:selectedRows,
     uploadNumber:uploadNumber
   }
-  console.log('concatRenderPrep() renderOptions = ', renderOptions)
-  //render()
+  render(renderOptions)
 }
 
-//render a full album upload
+//render using ffmpeg
 async function render(renderOptions){ //(uploadName, uploadNumber, resolution, padding) {
-  document.getElementById(`upload_${uploadNumber}_fullAlbumStatus`).innerText = 'Generating Audio: 0%'
-  //get table
-  var table = $(`#upload_${uploadNumber}_table`).DataTable()
-  //get all selected rows
-  var selectedRows = table.rows('.selected').data()
-  //get outputFile location
-  var path = require('path');
-  var outputDir = path.dirname(selectedRows[0].audioFilepath)
-  //create outputfile
-  var timestamp = new Date().getUTCMilliseconds();
-  let outputFilepath = `${outputDir}${path.sep}output-${timestamp}.mp3`
-
-  let concatCmdInfo = await createFfmpegCmd(
-      "concatMp3",
-      {
-        selectedRows:selectedRows,
-        outputFilepath:outputFilepath
-      }
-  );
-  let concatMp3Length = concatCmdInfo.duration;
-  //run command 
-  console.log('BEGIN FFMPEG AUDIO CONCAT COMMAND')
-  let runFfmpegCommandResp = await runFfmpegCommand(concatCmdInfo.args, concatMp3Length);
-  console.log('END FFMPEG AUDIO CONCAT COMMAND. runFfmpegCommandResp = ', runFfmpegCommandResp)
-
-  //get img input filepath
-  var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-  var upload = uploadList[`upload-${uploadNumber}`]
-  let imgChoice = document.getElementById(`upload_${uploadNumber}_fullAlbumImgChoice`).value
-  let imgInput = upload.files.images[imgChoice].path
-  //create vid output filepath
-  let vidOutput = `${outputDir}${path.sep}fullAlbum-${timestamp}.mp4`
-  //create command to generate vid
-  let vidCmdInfo = await createFfmpegCmd(
-      "vid",
-      {
-        inputAudio:outputFilepath,
-        inputImg:imgInput,
-        outputFilepath:vidOutput,
-        resolution:resolution,
-        padding:padding, 
-      }
-  )
-  //run command 
-  console.log('BEGIN FFMPEG VID GENERATE COMMAND')
-  runFfmpegCommandResp = await runFfmpegCommand(vidCmdInfo.args, concatMp3Length);
-  console.log('END FFMPEGVID GENERATE COMMAND. runFfmpegCommandResp = ', runFfmpegCommandResp)
-  //delete audio file
-  deleteFile(outputFilepath)
+  var selectedRows = renderOptions.selectedRows;
+  var outputDir = renderOptions.outputDir;
   
-  //console.log('after caclling deleting file')
+  if(renderOptions.concatAudio){
+    console.log('ffmpeg() path.sep=', path.sep)
+    let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`
+    let cmdArr = [];
+    let outputDuration = '';
+    //add inputs
+    let inputs = '';
+    for (var i = 0; i < selectedRows.length; i++) {
+        cmdArr.push('-i')
+        cmdArr.push(`${selectedRows[i].audioFilepath}`)
+        inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
+        //calculate total time
+        var lengthSplit = selectedRows[i].length.split(':'); // split it at the colons
+        // minutes are worth 60 seconds. Hours are worth 60 minutes.
+        var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]); 
+        outputDuration = outputDuration + seconds
+    }
+    //add concat options
+    cmdArr.push("-y");
+    cmdArr.push("-filter_complex")
+    cmdArr.push(`concat=n=${i}:v=0:a=1`)
+    //add audio codec and quality 
+    cmdArr.push("-c:a")
+    cmdArr.push("libmp3lame")
+    cmdArr.push("-b:a")
+    cmdArr.push("320k")
+    //set output 
+    cmdArr.push(concatAudioFilepath);
+    //run ffmpeg command
+    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration);
+  }
+}
+
+//run ffmpeg command 
+async function runFfmpegCommand(ffmpegArgs, cutDuration){
+  return new Promise(async function (resolve, reject) {
+      const getFfmpegPath = () => getFfPath('ffmpeg');
+      //const getFfprobePath = () => getFfPath('ffprobe');
+      const ffmpegPath = getFfmpegPath();
+      console.log('runFfmpegCommand() ffmpegPath = ', ffmpegPath)
+      const process = execa(ffmpegPath, ffmpegArgs);
+      handleProgress(process, cutDuration);
+      const result = await process;
+      resolve(result);
+  })
+}
+
+const moment = window.require("moment");
+const readline = window.require('readline');
+function handleProgress(process, cutDuration) {
+    //onProgress(0);
+  
+    const rl = readline.createInterface({ input: process.stderr });
+    rl.on('line', (line) => {
+        console.log('progress', line);
+  
+      try {
+        let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+        // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
+        if (!match) match = line.match(/(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
+        if (!match) return;
+  
+        const str = match[1];
+        console.log(str);
+        const progressTime = Math.max(0, moment.duration(str).asSeconds());
+        console.log(progressTime);
+        const progress = cutDuration ? progressTime / cutDuration : 0;
+        console.log('progress = ', progress)
+        //onProgress(progress);
+      } catch (err) {
+        console.log('Failed to parse ffmpeg progress line', err);
+      }
+    });
+}
+
+//new ffmpeg functions:
+function getFfCommandLine(cmd, args) {
+    const mapArg = arg => (/[^0-9a-zA-Z-_]/.test(arg) ? `'${arg}'` : arg);
+    return `${cmd} ${args.map(mapArg).join(' ')}`;
+}
+
+function getFfPath(cmd) {
+    try{
+        const isDev = window.require('electron-is-dev');
+        const os = window.require('os');
+        const platform = os.platform();
+        console.log("getFfPath() platform = ", platform)
+        if (platform === 'darwin') {
+          return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+        }
+      
+        const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
+        return isDev
+          ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
+          : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+    }catch(err){
+        console.log('getFfPath cmd=', cmd, '. err = ', err)
+        return("")
+    }
+
+}
+
+async function runFfprobe(args) {
+    const ffprobePath = getFfprobePath();
+    console.log(getFfCommandLine('ffprobe', args));
+    return execa(ffprobePath, args);
+}
+
+function runFfmpeg(args) {
+    console.log('runFfmpeg() args = ', args)
+    const ffmpegPath = getFfmpegPath();
+    console.log(getFfCommandLine('ffmpeg', args));
+    return execa(ffmpegPath, args);
 }
 
 async function createFilesTable(upload, uploadId) {
