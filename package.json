@@ -9,7 +9,8 @@
     "build-win": "electron-builder build --win --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
-    "download-ffmpeg": "mkdir -p ffmpeg-mac && wget https://github.com/mifi/ffmpeg-build-script/releases/download/n4.3.1/ffmpeg -O ffmpeg-mac/ffmpeg && wget https://github.com/mifi/ffmpeg-build-script/releases/download/n4.3.1/ffprobe -O ffmpeg-mac/ffprobe && chmod +x ffmpeg-mac/ffmpeg && chmod +x ffmpeg-mac/ffprobe"
+    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --enable-gpl --enable-pthreads --enable-nonfree  --enable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect && make && cd ..",
+    "build-mas":"electron-builder build --mac"
   },
   "browserslist": {
     "production": [
