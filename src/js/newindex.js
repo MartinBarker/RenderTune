@@ -651,19 +651,54 @@ async function createUploadPage(upload, uploadId) {
         Render <a class='numSelected'>0</a> individual videos
       </div>
       <div class="card-body">
-        <p class="card-text">
-          table here with info
-        </p>
+      
+      <!-- files table -->
+      <div class='scroll'>
+        <table id="${uploadId}-individual-table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
+            <thead> 
+                <tr>
+                  <!-- select box -->
+                  <th >
+                    <input id='${uploadId}-individual-table-select-col' type="checkbox">
+                  </th>
+
+                  <!-- Audio Filename -->
+                  <th class='left-align-col' >Audio</th>
+                  
+                  <!-- invisible audio filepath -->
+                  <th>audioFilepath</th>
+
+                  <!-- Audio Length -->
+                  <th class='left-align-col'>Length</th>
+                  
+                  <!-- Image Selection -->
+                  <th class='left-align-col' >
+                      <div id='${uploadId}-individual-table-image-col'>
+                          <label>Img:</label>
+                      </div>
+                  </th>
+
+                  <!-- Padding Selection -->
+                  <th class='left-align-col' >Padding</th>
+
+                  <!-- Resolution Selection -->
+                  <th class='left-align-col' >Resolution</th>
+
+                </tr>
+            </thead>
+        </table>
+      </div>
         <a href="#" class="btn btn-primary">Render</a>
       </div>
     </div>
 
-      
-
     </div>
     `);
-  //create datatable (dataset, event listeners, etc)
-  createFilesTable(upload, uploadId)
+  //create files table
+  createFilesTable(upload, uploadId);
+
+  //create individual renders table
+  createIndividualRendersTable(upload, uploadId);
 
   //generate resolutions for each image
   let uploadImageResolutions = await getResolutionOptions(upload.files.images);
@@ -1103,6 +1138,82 @@ function runFfmpeg(args) {
   const ffmpegPath = getFfmpegPath();
   console.log(getFfCommandLine('ffmpeg', args));
   return execa(ffmpegPath, args);
+}
+
+async function createIndividualRendersTable(upload, uploadId){
+  //create dataset
+
+  //setup table
+  var table = $(`#${uploadId}-individual-table`).DataTable({
+    "autoWidth": true,
+    "pageLength": 5000,
+    select: {
+      style: 'multi',
+      selector: 'td:nth-child(0)'
+    },
+    columns: [
+      { "data": "selectAll" },
+      { "data": "audio" },
+      { "data": "audioFilepath" }, //invisible
+      { "data": "length" },
+      { "data": "imgSelection" },
+      { "data": "padding" },
+      { "data": "resolution" },
+    ],
+    columnDefs: [
+      {//select all checkbox
+        "className": 'selectall-checkbox',
+        "className": "text-center",
+        searchable: false,
+        orderable: false,
+        targets: 0,
+      },
+      //audio filename
+      { 
+        targets: 1,
+        type: "natural",
+        className: 'track-name'
+      },
+      //invisible audioFilepath
+      {
+        targets: 2,
+        visible: false,
+      },
+
+    ],
+    "language": {
+      "emptyTable": "No files selected"
+    },
+    dom: 'rt',
+    rowReorder: {
+      dataSrc: 'sequence',
+    },
+  });
+  //add dataset to table
+  /*
+  var count = 1;
+  data.forEach(function (i) {
+    table.row.add({
+      "sequence": i.itemId,
+      "#": `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${count}</div>`,
+      "selectAll": '<input type="checkbox">',
+      "audio": i.audio,
+      "length": i.length,
+      //"outputFormat": i.vidFormatSelection,
+      //"outputLocation": "temp output location",
+      "audioFilepath": i.audioFilepath,
+      "trackNum": i.trackNum,
+      "album": i.album,
+      "year": i.year,
+      "artist": i.artist,
+      //"imgSelection": i.imgSelection,
+    }).node().id = 'rowBrowseId' + i.sampleItemId;
+    count++;
+  });
+  */
+  //draw table
+  table.draw();
+
 }
 
 async function createFilesTable(upload, uploadId) {
