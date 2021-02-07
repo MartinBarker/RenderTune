@@ -1,3 +1,16 @@
+.renders-modal-content{
+  width:250%!important;
+  max-width: none !important;
+
+  min-width: 200px !important;
+  margin: 1.75rem auto !important;
+  position: absolute;
+  right: 10px!important;
+  left: 0px!important;
+  height: 85%;
+  
+
+}
 
 .renderJobsIconCircle{
   right: 3px;
