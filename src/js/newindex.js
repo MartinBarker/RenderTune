@@ -780,6 +780,7 @@ async function render(renderOptions) {
   var outputDir = renderOptions.outputDir;
   var uploadName = renderOptions.uploadName;
   var uploadId = renderOptions.uploadId;
+  var padding = renderOptions.padding;
   var concatAudioOutput = '';
   let cmdArr = [];
   //calculate duration
@@ -851,9 +852,15 @@ async function render(renderOptions) {
   cmdArr.push('-bufsize') 
   cmdArr.push('3M') 
   cmdArr.push('-filter:v') 
-  console.log('resolution: ', `|scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}|`)
-  cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`) 
-  //cmdArr.push(`scale=w=1920:h=1080`) 
+  if(padding.toLowerCase()=='none'){
+    //console.log('NO PADDING')
+    cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`) 
+    cmdArr.push('-vf')
+    cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
+  }else{
+    //console.log('YES PADDING')
+    cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`) 
+  }
   cmdArr.push('-preset') 
   cmdArr.push('medium') 
   cmdArr.push('-tune') 
@@ -863,8 +870,6 @@ async function render(renderOptions) {
   cmdArr.push('-pix_fmt') 
   cmdArr.push('yuv420p') 
   cmdArr.push('-shortest') 
-  cmdArr.push('-vf')
-  cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
   cmdArr.push(`${videoOutput}`)
   //add to renderList
   renderStatusId = `${uploadId}-render-${Date.now()}`;
@@ -873,7 +878,9 @@ async function render(renderOptions) {
   let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
 
   //delete concatAudio filepath if needed
-
+  if (renderOptions.concatAudio) {
+    deleteFile(concatAudioOutput)
+  }
 }
 
 //add new render to renders list
@@ -888,6 +895,17 @@ async function addToRenderList(renderType, durationSeconds, uploadName, outputDi
     renderStatusId: `${renderStatusId}`
   });
   updateRendersModal()
+}
+
+//delete file on the user's machine
+function deleteFile(path) {
+  const fs = require('fs')
+  fs.unlink(path, (err) => {
+      if (err) {
+          console.error("err deleting file = ", err)
+          return
+      }
+  })
 }
 
 //update renders modal that displays in progress/completed/failed renders
