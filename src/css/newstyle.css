@@ -1,8 +1,9 @@
+
 .renderJobsIconCircle{
   right: 3px;
   height: 20px!important;
   width: 20px!important;
-  display: inline-block!important;
+  display:none!important;
   position: absolute;
   color: #17ff4c;
   margin-top: 18px;
@@ -186,9 +187,10 @@ select.form-control{
   overflow:hidden;
 }
 #wrapper.toggled {
-  padding-left: 250px;
+  padding-left: 200px;
 }
 #sidebar-wrapper {
+  margin-left: 0px;
   top:40px;
   /* z-index: 1000; */
   position: fixed;
@@ -204,7 +206,7 @@ select.form-control{
   transition: all 0.5s ease;
 }
 #wrapper.toggled #sidebar-wrapper {
-  width: 250px;
+  width: 200px;
 }
 #page-content-wrapper {
   color:#2C1C35;

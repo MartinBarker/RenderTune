@@ -92,7 +92,7 @@
                 ' class="sidebar-nav">
                     Uploads: (<a id='numberOfUploads'>0</a>)
 
-                    <div id='deleteAllBox' style='float:right; padding-right:30px; cursor: pointer; display: inline;'
+                    <div id='deleteAllBox' style='padding-right:30px; cursor: pointer; display: inline;'
                         data-toggle='modal' data-target="#deleteAllModal">
                         <i class="fa fa-trash" aria-hidden="true"></i>
                     </div>
@@ -201,7 +201,7 @@
                                               </th>
                             
                                               <!-- Render Type -->
-                                              <th class='left-align-col' >Type</th>
+                                              <th class='left-align-col' >Filename</th>
                                               
                                               <!-- Render Status -->
                                               <th class='left-align-col' >Status</th>
@@ -210,9 +210,9 @@
                                               <th class='left-align-col' >Length</th>
                                               
                                               <!-- Render UploadName -->
-                                              <th class='left-align-col' >UploadName</th>
+                                              <th class='left-align-col' style='max-width:100px;'>UploadName</th>
                                               
-                                              
+
                                             </tr>
                                         </thead>
                                     </table>
@@ -226,10 +226,6 @@
                                     <!-- cancel button -->
                                     <button style='display:inline' type="button" class="float-right btn btn-light"
                                         data-dismiss="modal">Close</button>
-
-                                    <!-- create upload button -->
-                                    <button style='display:inline' type="button"
-                                      >Create</button>
 
                                 </div>
 

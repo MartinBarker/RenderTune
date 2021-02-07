@@ -139,35 +139,6 @@ $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
 
-async function initRendersSetup() {
-  //create table
-
-
-  var table = $(`#renders-table`).DataTable({
-    "autoWidth": true,
-    "pageLength": 5000,
-    select: {
-      style: 'multi',
-      selector: 'td:nth-child(2)'
-    },
-    columns: [
-      { "data": "selectAll" },
-      { "data": "type" },
-      { "data": "status" },
-      { "data": "length" },
-      { "data": "uploadName" }
-    ],
-    "language": {
-      "emptyTable": "No current renders"
-    },
-    dom: 'rt',
-    rowReorder: {
-      dataSrc: 'sequence',
-    },
-
-  });
-}
-
 //ensure uploadList exists
 async function initUploadsSetup() {
   //ensure uploadList exists
@@ -768,16 +739,23 @@ async function changeDir(displayTextID, uploadId) {
 
 //call when 'Render' button for concat full album is clicked
 async function concatRenderPrep(uploadId, uploadNumber) {
-  //get image/padding/resolution/output
+  //get uploads
+  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+  //get upload
+  let upload = uploads[uploadId];
+  //get resolution
   let resolution = $(`#${uploadId}-resolutionSelect option:selected`).text();
   resolution = (resolution.split(" ")[0]).trim()
+  //get padding
   let padding = $(`#${uploadId}-paddingSelect option:selected`).text();
+  //get image
+  let imgChoice = document.getElementById(`${uploadId}-imgSelect`).value
+  let imageFilepath = upload.files.images[imgChoice].path
   //get table
   var table = $(`#${uploadId}_table`).DataTable()
   //get all selected rows
   var selectedRows = table.rows('.selected').data()
   //get outputDir
-  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
   let outputDir = uploads[uploadId].outputDir;
   let uploadName = uploads[uploadId].title;
   let renderOptions = {
@@ -788,32 +766,41 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     selectedRows: selectedRows,
     uploadNumber: uploadNumber,
     uploadId: uploadId,
-    uploadName: uploadName
+    uploadName: uploadName,
+    concatAudioFilepath:`${outputDir}${path.sep}output-${Date.now()}.mp3`,
+    imageFilepath:imageFilepath,
+    outputVideoFilepath:`${outputDir}${path.sep}concatVideo-${Date.now()}.mp4`
   }
   render(renderOptions)
 }
 
 //render using ffmpeg
-async function render(renderOptions) { //(uploadName, uploadNumber, resolution, padding) {
+async function render(renderOptions) { 
   var selectedRows = renderOptions.selectedRows;
   var outputDir = renderOptions.outputDir;
   var uploadName = renderOptions.uploadName;
+  var uploadId = renderOptions.uploadId;
+  var concatAudioOutput = '';
+  let cmdArr = [];
+  //calculate duration
+  let outputDuration = 0;
+  for (var i = 0; i < selectedRows.length; i++) {
+    //calculate total time
+    var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
+    // minutes are worth 60 seconds. Hours are worth 60 minutes.
+    var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+    outputDuration = outputDuration + seconds;
+  }
 
+  //if we need to combine audio, do it first
   if (renderOptions.concatAudio) {
-    let concatAudioFilepath = `${outputDir}${path.sep}output-${new Date().getUTCMilliseconds()}.mp3`;
-    let cmdArr = [];
-    let outputDuration = 0;
+    let concatAudioFilepath = renderOptions.concatAudioFilepath;
     //add inputs
     let inputs = '';
     for (var i = 0; i < selectedRows.length; i++) {
       cmdArr.push('-i')
       cmdArr.push(`${selectedRows[i].audioFilepath}`)
       inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
-      //calculate total time
-      var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
-      // minutes are worth 60 seconds. Hours are worth 60 minutes.
-      var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
-      outputDuration = outputDuration + seconds;
     }
 
     //add concat options
@@ -828,37 +815,192 @@ async function render(renderOptions) { //(uploadName, uploadNumber, resolution, 
     //set output 
     cmdArr.push(concatAudioFilepath);
     //add to renderList
-    addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath)
+    let renderStatusId = `${uploadId}-render-${Date.now()}`;
+    addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
     //run ffmpeg command to concat audio
-    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration);
+    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+    concatAudioOutput=concatAudioFilepath;
   }
+  
+  //render video
+  cmdArr = [];
+  let audioInput = concatAudioOutput || renderOptions.audioFilepath;
+  let videoOutput = renderOptions.outputVideoFilepath;
+  let imageFilepath = renderOptions.imageFilepath;
+  cmdArr.push('-loop') 
+  cmdArr.push('1')
+  cmdArr.push('-framerate') 
+  cmdArr.push('2')
+  cmdArr.push('-i')
+  cmdArr.push(`${imageFilepath}`)
+  cmdArr.push('-i')
+  cmdArr.push(`${audioInput}`)
+  cmdArr.push('-y')
+  cmdArr.push('-acodec') 
+  cmdArr.push('copy') 
+  cmdArr.push('-b:a') 
+  cmdArr.push('320k') 
+  cmdArr.push('-vcodec') 
+  cmdArr.push('libx264') 
+  cmdArr.push('-b:v') 
+  cmdArr.push('8000k') 
+  cmdArr.push('-maxrate') 
+  cmdArr.push('8000k') 
+  cmdArr.push('-minrate') 
+  cmdArr.push('8000k') 
+  cmdArr.push('-bufsize') 
+  cmdArr.push('3M') 
+  cmdArr.push('-filter:v') 
+  console.log('resolution: ', `|scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}|`)
+  cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`) 
+  //cmdArr.push(`scale=w=1920:h=1080`) 
+  cmdArr.push('-preset') 
+  cmdArr.push('medium') 
+  cmdArr.push('-tune') 
+  cmdArr.push('stillimage') 
+  cmdArr.push('-crf') 
+  cmdArr.push('18') 
+  cmdArr.push('-pix_fmt') 
+  cmdArr.push('yuv420p') 
+  cmdArr.push('-shortest') 
+  cmdArr.push('-vf')
+  cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
+  cmdArr.push(`${videoOutput}`)
+  //add to renderList
+  renderStatusId = `${uploadId}-render-${Date.now()}`;
+  addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+  //run ffmpeg command to concat audio
+  let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+
+  //delete concatAudio filepath if needed
+
 }
 
 //add new render to renders list
-async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile) {
+async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile, renderStatusId) {
   renderList.push({
+    status:'in-progress',
     type: renderType,
     durationSeconds: durationSeconds,
     uploadName: uploadName,
     outputDir: outputDir,
-    outputFile: outputFile
+    outputFilename: (outputFile.substr(outputFile.lastIndexOf(`${path.sep}`)+1)),
+    renderStatusId: `${renderStatusId}`
   });
   updateRendersModal()
 }
 
 //update renders modal that displays in progress/completed/failed renders
 async function updateRendersModal() {
+  let rendersInProgress=0;
+  //get renders table
+  var table = $(`#renders-table`).DataTable();
+  //clear table data
+  table.clear()
+  //add data to table
+  for(var i = 0; i < renderList.length; i++){
+    let data = renderList[i];
+    let renderStatus = `<a id="${data.renderStatusId}"></a>`;
+    if(data.status != 'done'){
+      rendersInProgress++
+    }else{
+      renderStatus = 'Done'
+    }
+    table.row.add({
+      "selectAll": '<input type="checkbox">',
+      "filename": data.outputFilename,
+      "status": renderStatus,
+      "length": (new Date(data.durationSeconds * 1000).toISOString().substr(11, 8)),
+      "uploadName": data.uploadName,
+    })
+  }
 
+  
+  //if select all checkbox clicked
+  $(`#renders-tableSelectAll`).on('click', function (event) {
+    let checkedStatus = document.getElementById(`renders-tableSelectAll`).checked
+    if (checkedStatus == true) {
+      //select all
+      var rows = table.rows().nodes();
+      $('input[type="checkbox"]', rows).prop('checked', true);
+      table.$("tr").addClass('selected')
+    } else {
+      //unselect all
+      var rows = table.rows().nodes();
+      $('input[type="checkbox"]', rows).prop('checked', false);
+      table.$("tr").removeClass('selected')
+    }
+    //updateSelectedDisplays(`${uploadId}_table`, `${uploadId}`);
+  });
+
+  //if a row is clicked
+  $(`#renders-table tbody`).on('click', 'tr', function () {
+    //determine whether or not to select/deselect & check/uncheck row
+    var isSelected = $(this).hasClass('selected')
+    $(this).toggleClass('selected').find(':checkbox').prop('checked', !isSelected);
+    //updateSelectedDisplays(`${uploadId}_table`, `${uploadId}`);
+
+  });
+
+  //if table order changes
+  //table.on('order.dt', function (e, diff, edit) {
+  //  resetTableSelections(`${uploadId}_table`, uploadId);
+
+
+  //if there are renders in progress, make sidebar spinner visible, else make invisible
+  if(rendersInProgress > 0){
+    document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "inline", "important");
+    document.getElementById('renderJobsCount').innerText=`${rendersInProgress}`
+  }else{
+    document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "none", "important");
+    document.getElementById('renderJobsCount').innerText=`0`
+  }
+  
+  //draw table
+  table.draw();
+}
+
+async function initRendersSetup() {
+  //create renders table
+  var table = $(`#renders-table`).DataTable({
+    "autoWidth": true,
+    "pageLength": 5000,
+    select: {
+      style: 'multi',
+      selector: 'td:nth-child(0)'
+    },
+    columns: [
+      { "data": "selectAll" },
+      { "data": "filename" },
+      { "data": "status" },
+      { "data": "length" },
+      { "data": "uploadName" }
+    ],
+    columnDefs: [
+      {//select all checkbox
+        "className": 'selectall-checkbox',
+        "className": "text-center",
+        searchable: false,
+        orderable: false,
+        targets: 0,
+      },
+    ],
+    "language": {
+      "emptyTable": "No current renders"
+    },
+    dom: 'rt',
+
+  });
 }
 
 //run ffmpeg command 
-async function runFfmpegCommand(ffmpegArgs, cutDuration) {
+async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId) {
   return new Promise(async function (resolve, reject) {
     const getFfmpegPath = () => getFfPath('ffmpeg');
     //const getFfprobePath = () => getFfPath('ffprobe');
     const ffmpegPath = getFfmpegPath();
     const process = execa(ffmpegPath, ffmpegArgs);
-    handleProgress(process, cutDuration);
+    handleProgress(process, cutDuration, renderStatusId);
     const result = await process;
     resolve(result);
   })
@@ -866,12 +1008,12 @@ async function runFfmpegCommand(ffmpegArgs, cutDuration) {
 
 const moment = window.require("moment");
 const readline = window.require('readline');
-function handleProgress(process, cutDuration) {
-  //onProgress(0);
-
+function handleProgress(process, cutDuration, renderStatusId) {
+  //set to zero % compelted as initial default
+  document.getElementById(renderStatusId).innerText='0%';
+  //read progress from process
   const rl = readline.createInterface({ input: process.stderr });
   rl.on('line', (line) => {
-    console.log('progress', line);
 
     try {
       let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
@@ -880,12 +1022,24 @@ function handleProgress(process, cutDuration) {
       if (!match) return;
 
       const str = match[1];
-      console.log(str);
       const progressTime = Math.max(0, moment.duration(str).asSeconds());
-      console.log(progressTime);
       const progress = cutDuration ? progressTime / cutDuration : 0;
+      var displayProgress = parseInt(progress * 100)
+      //update table display
+      document.getElementById(renderStatusId).innerText=`${displayProgress}%`;
+      //if render has completed
+      if(displayProgress >= 100){
+        //get render from renderList
+        for(var z = 0; z < renderList.length; z++){
+          //update render status to be 'done'
+          if(renderList[z].renderStatusId == renderStatusId ){
+            renderList[z].status='done'
+          }
+          //update render modal display
+          updateRendersModal()
+        }
+      }
 
-      console.log('progress = ', progress)
       //onProgress(progress);
     } catch (err) {
       console.log('Failed to parse ffmpeg progress line', err);
