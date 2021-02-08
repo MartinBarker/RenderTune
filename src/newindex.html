@@ -270,42 +270,27 @@
                     <div id='default-home-html' style="display:visible;" class="row">
                         <div class="col-lg-12">
                             <h1>Home</h1>
-                            <p>Default text here; hello</p>
-                            <p>Make sure to keep all page content within the <code>#page-content-wrapper</code>.</p>
-
+                            <p>Hello, this is the home page for Digify, an open-source, cross-platform, free electron program that uses ffmpeg to render videos by combining an image file + audio file(s).</p>
+                            <p>Digify Website:<a style='color: blue; cursor: pointer;'
+                                onclick="openUrl('web')">https://martinbarker.me/digify</a></p>
+                            <p>View code here:<a style='color: blue; cursor: pointer;'
+                                onclick="openUrl('github')">https://github.com/MartinBarker/digify</a></p>
                             
-                            <div class="wrapper1">
-                                <div class="div1">
-                                </div>
-                            </div>
-                            <div class="wrapper2">
-                                <div class="div2">
-                                aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd aaaa bbbb cccc dddd
-                                </div>
-                            </div>
-                            <script>
-                                $(function(){
-                                    $(".wrapper1").scroll(function(){
-                                        $(".wrapper2")
-                                            .scrollLeft($(".wrapper1").scrollLeft());
-                                    });
-                                    $(".wrapper2").scroll(function(){
-                                        $(".wrapper1")
-                                            .scrollLeft($(".wrapper2").scrollLeft());
-                                    });
-                                });
-                            </script>
-                            <style>
-                                .wrapper1, .wrapper2{width: 300px; border: none 0px RED;
-                                overflow-x: scroll; overflow-y:hidden;}
-                                .wrapper1{height: 20px; }
-                                .wrapper2{height: 200px; }
-                                .div1 {width:1000px; height: 20px; }
-                                .div2 {width:1000px; height: 200px; background-color: #88FF88;
-                                overflow: auto;}
-                            </style>
-
-
+                            <h1>Tutorial:</h1>
+                            <p>Click the <svg 
+                                style="height: 30px;padding: 0px !important;left: 0px !important;width: 30px;"
+                                xmlns="http://www.w3.org/2000/svg" version="1.0" width="168.000000pt" height="149.000000pt"
+                                viewBox="0 0 168.000000 149.000000" preserveAspectRatio="xMidYMid meet">
+        
+                                <g class="custom-svg" transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)"
+                                    fill="#818181" stroke="none">
+                                    <path
+                                        d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z" />
+                                    <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z" />
+                                </g>
+                            </svg> icon to view your uploads. If you have 0 uploads, click the <a>
+                                <i class="fa fa-plus-circle fa-2x" style="color:#818181" aria-hidden="true"></i>
+                            </a> icon to create a new upload. <br> When you create a new upload, choose or drag files into the window, add an optional title, and click 'create'. You will be directed to the upload page, where you can change settings and render videos.<br>Once a video starts rendering, you can view its progress in the <i class="fa fa-tasks fa-2x" style="color:#818181" aria-hidden="true"></i> renders popup.</p>
 
                         </div>
                     </div>

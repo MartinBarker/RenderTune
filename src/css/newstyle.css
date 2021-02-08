@@ -1,3 +1,17 @@
+#uploadTitle{
+  font-size: 30px !important;
+}
+#main {
+  height: calc(100% - 32px);
+  margin-top: 29px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#uploadTitle{
+    font-size: 16px;
+}
+
 .renders-modal-content{
   width:250%!important;
   max-width: none !important;
@@ -29,6 +43,7 @@
   white-space: nowrap;
   overflow: hidden;
 }
+
 
 .cursorPointer{
   cursor:pointer;
@@ -307,6 +322,7 @@ select.form-control{
 .main {
   margin-left: 160px; /* Same as the width of the sidebar */
   padding: 0px 10px;
+  
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
@@ -345,12 +361,7 @@ body {
     background: #254053;
   }
   
-  #main {
-    height: calc(100% - 32px);
-    margin-top: 32px;
-    padding: 20px;
-    overflow-y: auto;
-  }
+
 
   #titlebar {
     padding: 4px;

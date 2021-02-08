@@ -74,41 +74,18 @@ $('#render-jobs-modal').on('hide.bs.modal', function () {
   }
 })
 
-
 //when you click the Uploads list button
 $("#menu-toggle").click(function (e) {
+  console.log('menu-toggle clicked')
   e.preventDefault();
   $("#wrapper").toggleClass("toggled");
-  //if there is no upload in the sidebar with the 'selected tag' 
-  var noUploadSelected = !document.querySelector(".sidebar-selected");
-  console.log('noUploadSelected = ', noUploadSelected)
-  if (noUploadSelected) {
-    //toggle home icon as on if it is off
-    console.log('status = ', $("#homeButton").hasClass("page-selected"))
-    //$("#homeButton").toggleClass("page-selected");
-    console.log('status = ', $("#homeButton").hasClass("page-selected"))
-  }
+
   //if uploads-list is already open
   if ($("#menu-toggle").hasClass("svg-selected")) {
-
-    //go back to home
-    //$("#homeButton").toggleClass("page-selected");
-    //$("#new-upload-html").hide();
-    //$("#default-home-html").show();
-    //$("#upload-selection-html").hide();
 
     //else if uploads-list is not currently open when we click it
   } else {
 
-    //$("#new-upload-html").hide();
-    //$("#default-home-html").hide();
-    //$("#upload-pages-container").show();
-    //if 'selected' is on for homeButton, toggle it off
-    /*
-    if ($("#homeButton").hasClass('page-selected')) {
-      $("#homeButton").toggleClass("page-selected");
-    }
-    */
     //if 'selected' is on for newUploadButton, toggle it off
     if ($("#newUploadButton").hasClass('page-selected')) {
       $("#newUploadButton").toggleClass("page-selected");
@@ -116,6 +93,7 @@ $("#menu-toggle").click(function (e) {
   }
 
   $("#menu-toggle").toggleClass("svg-selected");
+  console.log('menu-toggle selected')
 });
 
 //if newUpload modal is closed:
@@ -129,6 +107,8 @@ $('#new-upload-modal').on('hide.bs.modal', function () {
 
 //when document window is ready call init function
 $(document).ready(function () {
+  $('[data-toggle="tooltip"]').tooltip({'delay': { show: 5000, hide: 3000 }});
+
   //inital uploads sidebar display setup
   initUploadsSetup();
   //initial renders table setup
@@ -421,12 +401,12 @@ async function addToUploadList(uploadKey, uploadValue) {
 //upload where we display all the uploads
 async function updateUploadListDisplay() {
   return new Promise(async function (resolve, reject) {
+    console.log('updateUploadListDisplay()')
     //reset
     document.getElementById('sidebar-uploads').innerHTML = "";
     //get uploadList from localstorage
     var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-
-    console.log('~ updateUploadListDisplay() uploadList = ', uploadList)
+    console.log('updateUploadListDisplay() uploadList = ', uploadList)
 
     //if uploadList exists
     if (uploadList != null) {
@@ -503,10 +483,19 @@ async function createUploadPage(upload, uploadId) {
   let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
 
   //add html to page
+  console.log('upload = ', upload)
+  let audioFilesCount = upload.files.audio.length;
+  let imageFilesCount = upload.files.images.length;
   $("#upload-pages-container").append(`
     <div class="col-lg-12 upload">
-      <h3>${upload.title}</h1>
+      <div>
+        <a id='uploadTitle'><strong>${upload.title}</strong></a> <a>(${audioFilesCount} audio files | ${imageFilesCount} image files)</a>
+      
+      </div>
 
+      <hr>
+
+      <h4>Files Table:</h4>
       <!-- files table -->
       <div class='scroll'>
         <table id="${uploadId}_table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
@@ -556,15 +545,16 @@ async function createUploadPage(upload, uploadId) {
       </div>
 
       <!-- settings -->
+      <h4 style='padding-top:10px'>Options:</h4>
       <div style='margin-right: 20px;'>
       <div class="row">
-
+        
         <div class="col settingsCol">
           <!-- Image Selection -->
           <div class="form-group">
             <span>
               <label for="size">Image:
-                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
+                <i class="fa fa-question-circle" data-delay='{"show":"5000", "hide":"3000"}' aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Chosen image that will be combined with audio to render a video."></i>
               </label>
               ${imageSelectionHTML}
             </span>
@@ -615,14 +605,19 @@ async function createUploadPage(upload, uploadId) {
           </div>
         </div>
       </div>
+
+
+    <h4>Renders:</h4>
+
     </div> 
+    
     
     <!-- Full Album Upload -->
     <div class="card" style="left: 15px;
     width: 100%;
     margin-right: 50px;">
       <div class="card-header">
-        Concat <a class='${uploadId}-numSelected'>0</a> songs into 1 video
+        Combine <a class='${uploadId}-numSelected'>0</a> songs into 1 video <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="This will combine however many audio files you have selected in the Files Table into a single videofile."></i>
       </div>
       <div class="card-body">
         <p class="card-text">
@@ -648,10 +643,14 @@ async function createUploadPage(upload, uploadId) {
     width: 100%;
     margin-right: 50px;">
       <div class="card-header">
-        Render <a class='${uploadId}-numSelected'>0</a> individual videos
+        Render <a class='${uploadId}-numSelected'>0</a> individual videos <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Keep everything as default or use the Batch Render Options to change any settings before clicking the 'Render' button to batch render multiple videos"></i>
       </div>
       <div class="card-body">
       
+      <p class="card-text">
+      Batch Render Options:
+      </p>
+
       <!-- individual renders table -->
       <div class='scroll'>
         <table id="${uploadId}-individual-table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
@@ -668,7 +667,7 @@ async function createUploadPage(upload, uploadId) {
                   <th class='left-align-col' style='max-width:58px'>Length</th>
                   
                   <!-- Image Selection -->
-                  <th class='left-align-col' style="width:200px" >
+                  <th class='left-align-col' style="min-width:200px !important" >
                     <div id='${uploadId}-individual-table-image-col'>
                         <label>Img:</label>
                     </div>
@@ -692,7 +691,7 @@ async function createUploadPage(upload, uploadId) {
             </thead>
         </table>
       </div>
-        <a href="#" class="btn btn-primary"><div>Render <new class='${uploadId}-numSelected'>0</new> videos</div></a>
+        <a onClick='individRenderPrep("${uploadId}", "${uploadNumber}")' href="#" class="btn btn-primary"><div>Render <new class='${uploadId}-numSelected'>0</new> videos</div></a>
       </div>
     </div>
 
@@ -776,6 +775,76 @@ async function changeDir(displayTextID, uploadId) {
 
 }
 
+//call when 'Render' button for individual render(s) is clicked
+async function individRenderPrep(uploadId, uploadNumber) {
+  //get uploads
+  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+  //get upload
+  let upload = uploads[uploadId];
+  //get table
+  var table = $(`#${uploadId}-individual-table`).DataTable()
+  //get all rows
+  var rows = table.rows().data()
+  //for each row
+  for (var x = 0; x < rows.length; x++) {
+    var row = rows[x]
+    console.log(`individPrep() rows[${x}] = `, row)
+    //get audio input filepath
+    let audioInputPath = row.audioFilepath;
+    console.log('audioInputPath=', audioInputPath)
+    //get image input filepath
+    let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${x}`).value
+    //get img name
+    let imageFilepath = upload.files.images[indexValueImgChoice].path
+    console.log('imageFilepath=', imageFilepath)
+    //get resolution
+    let resolution = ($(`#${uploadId}-individual-table-resolution-row-${x} :selected`).text()).split(" ")[0];
+    console.log('resolution=', resolution)
+    //get padding
+    let padding = $(`#${uploadId}-individual-table-padding-row-${x}`).val();
+    console.log('padding=', padding)
+    //get outputDir and uploadName
+    let outputDir = uploads[uploadId].outputDir;
+    let uploadName = uploads[uploadId].title;
+
+    //if audio file is not of type mp3, then convert to mp3:
+    let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
+    console.log('audioType=', audioType)
+    let concatAudioChoice = false
+    if(audioType!='mp3'){
+      console.log('not mp3 so convert')
+      concatAudioChoice = true
+    }
+
+    //create outputFilename from row audio
+    let filename = row.audio
+    //remove filename ending
+    filename=filename.substr(0, filename.lastIndexOf("."))
+    //clean audio filename to make sure there aren't any special chars
+    filename.replace(/[/\\?%*:|"<>]/g, '-');
+    console.log('filename=', filename)
+
+    //create render options
+    let renderOptions = {
+      audioFilepath:audioInputPath,
+      concatAudio: concatAudioChoice,
+      outputDir: outputDir,
+      resolution: resolution,
+      padding: padding,
+      selectedRows: [row],
+      uploadNumber: uploadNumber,
+      uploadId: uploadId,
+      uploadName: uploadName,
+      concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
+      imageFilepath: imageFilepath,
+      outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
+    }
+    
+    await render(renderOptions)
+    
+  }
+}
+
 //call when 'Render' button for concat full album is clicked
 async function concatRenderPrep(uploadId, uploadNumber) {
   //get uploads
@@ -794,7 +863,7 @@ async function concatRenderPrep(uploadId, uploadNumber) {
   var table = $(`#${uploadId}_table`).DataTable()
   //get all selected rows
   var selectedRows = table.rows('.selected').data()
-  //get outputDir
+  //get outputDir and uploadName
   let outputDir = uploads[uploadId].outputDir;
   let uploadName = uploads[uploadId].title;
   let renderOptions = {
@@ -806,120 +875,130 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     uploadNumber: uploadNumber,
     uploadId: uploadId,
     uploadName: uploadName,
-    concatAudioFilepath: `${outputDir}${path.sep}output-${Date.now()}.mp3`,
+    concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
     imageFilepath: imageFilepath,
-    outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${Date.now()}.mp4`
+    outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
   }
-  render(renderOptions)
+  await render(renderOptions)
 }
 
 //render using ffmpeg
 async function render(renderOptions) {
-  var selectedRows = renderOptions.selectedRows;
-  var outputDir = renderOptions.outputDir;
-  var uploadName = renderOptions.uploadName;
-  var uploadId = renderOptions.uploadId;
-  var padding = renderOptions.padding;
-  var concatAudioOutput = '';
-  let cmdArr = [];
-  //calculate duration
-  let outputDuration = 0;
-  for (var i = 0; i < selectedRows.length; i++) {
-    //calculate total time
-    var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
-    // minutes are worth 60 seconds. Hours are worth 60 minutes.
-    var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
-    outputDuration = outputDuration + seconds;
-  }
-
-  //if we need to combine audio, do it first
-  if (renderOptions.concatAudio) {
-    let concatAudioFilepath = renderOptions.concatAudioFilepath;
-    //add inputs
-    let inputs = '';
+  return new Promise(async function (resolve, reject) {
+    console.log('render*() options=', renderOptions)
+    var selectedRows = renderOptions.selectedRows;
+    var outputDir = renderOptions.outputDir;
+    var uploadName = renderOptions.uploadName;
+    var uploadId = renderOptions.uploadId;
+    var padding = renderOptions.padding;
+    var concatAudioOutput = '';
+    let cmdArr = [];
+    //calculate duration
+    let outputDuration = 0;
     for (var i = 0; i < selectedRows.length; i++) {
-      cmdArr.push('-i')
-      cmdArr.push(`${selectedRows[i].audioFilepath}`)
-      inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
+      //calculate total time
+      var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
+      // minutes are worth 60 seconds. Hours are worth 60 minutes.
+      var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+      outputDuration = outputDuration + seconds;
     }
 
-    //add concat options
-    cmdArr.push("-y");
-    cmdArr.push("-filter_complex")
-    cmdArr.push(`concat=n=${i}:v=0:a=1`)
-    //add audio codec and quality 
-    cmdArr.push("-c:a")
-    cmdArr.push("libmp3lame")
-    cmdArr.push("-b:a")
-    cmdArr.push("320k")
-    //set output 
-    cmdArr.push(concatAudioFilepath);
+    //if we need to combine audio, do it first
+    if (renderOptions.concatAudio) {
+      let concatAudioFilepath = renderOptions.concatAudioFilepath;
+      //add inputs
+      let inputs = '';
+      for (var i = 0; i < selectedRows.length; i++) {
+        cmdArr.push('-i')
+        cmdArr.push(`${selectedRows[i].audioFilepath}`)
+        inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
+      }
+
+      //add concat options
+      cmdArr.push("-y");
+      cmdArr.push("-filter_complex")
+      cmdArr.push(`concat=n=${i}:v=0:a=1`)
+      //add audio codec and quality 
+      cmdArr.push("-c:a")
+      cmdArr.push("libmp3lame")
+      cmdArr.push("-b:a")
+      cmdArr.push("320k")
+      //set output 
+      cmdArr.push(concatAudioFilepath);
+      //add to renderList
+      let renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
+      addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
+      //run ffmpeg command to concat audio
+      let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+      concatAudioOutput = concatAudioFilepath;
+    }
+
+    //render video
+    cmdArr = [];
+    console.log("render() concatAudioOutput=", concatAudioOutput)
+    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
+    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
+    let audioInput = concatAudioOutput || renderOptions.audioFilepath;
+    console.log("render() audioInput=", audioInput)
+    let videoOutput = renderOptions.outputVideoFilepath;
+    let imageFilepath = renderOptions.imageFilepath;
+    cmdArr.push('-loop')
+    cmdArr.push('1')
+    cmdArr.push('-framerate')
+    cmdArr.push('2')
+    cmdArr.push('-i')
+    cmdArr.push(`${imageFilepath}`)
+    cmdArr.push('-i')
+    cmdArr.push(`${audioInput}`)
+    cmdArr.push('-y')
+    cmdArr.push('-acodec')
+    cmdArr.push('copy')
+    cmdArr.push('-b:a')
+    cmdArr.push('320k')
+    cmdArr.push('-vcodec')
+    cmdArr.push('libx264')
+    cmdArr.push('-b:v')
+    cmdArr.push('8000k')
+    cmdArr.push('-maxrate')
+    cmdArr.push('8000k')
+    cmdArr.push('-minrate')
+    cmdArr.push('8000k')
+    cmdArr.push('-bufsize')
+    cmdArr.push('3M')
+    cmdArr.push('-filter:v')
+    if (padding.toLowerCase() == 'none') {
+      //console.log('NO PADDING')
+      cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
+      cmdArr.push('-vf')
+      cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
+    } else {
+      //console.log('YES PADDING')
+      cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
+    }
+    cmdArr.push('-preset')
+    cmdArr.push('medium')
+    cmdArr.push('-tune')
+    cmdArr.push('stillimage')
+    cmdArr.push('-crf')
+    cmdArr.push('18')
+    cmdArr.push('-pix_fmt')
+    cmdArr.push('yuv420p')
+    cmdArr.push('-shortest')
+    cmdArr.push(`${videoOutput}`)
     //add to renderList
-    let renderStatusId = `${uploadId}-render-${Date.now()}`;
-    addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
+    renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
+    addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
     //run ffmpeg command to concat audio
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
-    concatAudioOutput = concatAudioFilepath;
-  }
 
-  //render video
-  cmdArr = [];
-  let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-  let videoOutput = renderOptions.outputVideoFilepath;
-  let imageFilepath = renderOptions.imageFilepath;
-  cmdArr.push('-loop')
-  cmdArr.push('1')
-  cmdArr.push('-framerate')
-  cmdArr.push('2')
-  cmdArr.push('-i')
-  cmdArr.push(`${imageFilepath}`)
-  cmdArr.push('-i')
-  cmdArr.push(`${audioInput}`)
-  cmdArr.push('-y')
-  cmdArr.push('-acodec')
-  cmdArr.push('copy')
-  cmdArr.push('-b:a')
-  cmdArr.push('320k')
-  cmdArr.push('-vcodec')
-  cmdArr.push('libx264')
-  cmdArr.push('-b:v')
-  cmdArr.push('8000k')
-  cmdArr.push('-maxrate')
-  cmdArr.push('8000k')
-  cmdArr.push('-minrate')
-  cmdArr.push('8000k')
-  cmdArr.push('-bufsize')
-  cmdArr.push('3M')
-  cmdArr.push('-filter:v')
-  if (padding.toLowerCase() == 'none') {
-    //console.log('NO PADDING')
-    cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
-    cmdArr.push('-vf')
-    cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
-  } else {
-    //console.log('YES PADDING')
-    cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
-  }
-  cmdArr.push('-preset')
-  cmdArr.push('medium')
-  cmdArr.push('-tune')
-  cmdArr.push('stillimage')
-  cmdArr.push('-crf')
-  cmdArr.push('18')
-  cmdArr.push('-pix_fmt')
-  cmdArr.push('yuv420p')
-  cmdArr.push('-shortest')
-  cmdArr.push(`${videoOutput}`)
-  //add to renderList
-  renderStatusId = `${uploadId}-render-${Date.now()}`;
-  addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
-  //run ffmpeg command to concat audio
-  let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+    //delete concatAudio filepath if needed
+    if (renderOptions.concatAudio) {
+      deleteFile(concatAudioOutput)
+    }
 
-  //delete concatAudio filepath if needed
-  if (renderOptions.concatAudio) {
-    deleteFile(concatAudioOutput)
-  }
+    resolve(runFfmpegCommandResp)
+  })
+
 }
 
 //add new render to renders list
@@ -2017,3 +2096,13 @@ async function createFilesTableDataset(uploadFiles, uploadId, upload) {
 
 }());
 
+//open url in user's default browser
+async function openUrl(type) {
+  var open = require("open");
+  if(type=='github') {
+      open("https://github.com/MartinBarker/digify/");
+  }else if(type=='web'){
+      open('https://martinbarker.me/digify')
+  }
+
+}
