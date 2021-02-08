@@ -622,7 +622,7 @@ async function createUploadPage(upload, uploadId) {
     width: 100%;
     margin-right: 50px;">
       <div class="card-header">
-        Concat <a class='numSelected'>0</a> songs into 1 video
+        Concat <a class='${uploadId}-numSelected'>0</a> songs into 1 video
       </div>
       <div class="card-body">
         <p class="card-text">
@@ -648,19 +648,15 @@ async function createUploadPage(upload, uploadId) {
     width: 100%;
     margin-right: 50px;">
       <div class="card-header">
-        Render <a class='numSelected'>0</a> individual videos
+        Render <a class='${uploadId}-numSelected'>0</a> individual videos
       </div>
       <div class="card-body">
       
-      <!-- files table -->
+      <!-- individual renders table -->
       <div class='scroll'>
         <table id="${uploadId}-individual-table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
                 <tr>
-                  <!-- select box -->
-                  <th >
-                    <input id='${uploadId}-individual-table-select-col' type="checkbox">
-                  </th>
 
                   <!-- Audio Filename -->
                   <th class='left-align-col' >Audio</th>
@@ -669,26 +665,34 @@ async function createUploadPage(upload, uploadId) {
                   <th>audioFilepath</th>
 
                   <!-- Audio Length -->
-                  <th class='left-align-col'>Length</th>
+                  <th class='left-align-col' style='max-width:58px'>Length</th>
                   
                   <!-- Image Selection -->
-                  <th class='left-align-col' >
-                      <div id='${uploadId}-individual-table-image-col'>
-                          <label>Img:</label>
-                      </div>
+                  <th class='left-align-col' style="width:200px" >
+                    <div id='${uploadId}-individual-table-image-col'>
+                        <label>Img:</label>
+                    </div>
                   </th>
 
                   <!-- Padding Selection -->
-                  <th class='left-align-col' >Padding</th>
+                  <th class='left-align-col' style="width:200px" >
+                    <div id='${uploadId}-individual-table-padding-col' >
+                      <label>Padding:</label>
+                    </div>
+                  </th>
 
                   <!-- Resolution Selection -->
-                  <th class='left-align-col' >Resolution</th>
+                  <th class='left-align-col' >
+                    <div id='${uploadId}-individual-table-resolution-col' >
+                      <label>Resolution:</label>
+                    </div>
+                  </th>
 
                 </tr>
             </thead>
         </table>
       </div>
-        <a href="#" class="btn btn-primary">Render</a>
+        <a href="#" class="btn btn-primary"><div>Render <new class='${uploadId}-numSelected'>0</new> videos</div></a>
       </div>
     </div>
 
@@ -802,15 +806,15 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     uploadNumber: uploadNumber,
     uploadId: uploadId,
     uploadName: uploadName,
-    concatAudioFilepath:`${outputDir}${path.sep}output-${Date.now()}.mp3`,
-    imageFilepath:imageFilepath,
-    outputVideoFilepath:`${outputDir}${path.sep}concatVideo-${Date.now()}.mp4`
+    concatAudioFilepath: `${outputDir}${path.sep}output-${Date.now()}.mp3`,
+    imageFilepath: imageFilepath,
+    outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${Date.now()}.mp4`
   }
   render(renderOptions)
 }
 
 //render using ffmpeg
-async function render(renderOptions) { 
+async function render(renderOptions) {
   var selectedRows = renderOptions.selectedRows;
   var outputDir = renderOptions.outputDir;
   var uploadName = renderOptions.uploadName;
@@ -855,56 +859,56 @@ async function render(renderOptions) {
     addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
     //run ffmpeg command to concat audio
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
-    concatAudioOutput=concatAudioFilepath;
+    concatAudioOutput = concatAudioFilepath;
   }
-  
+
   //render video
   cmdArr = [];
   let audioInput = concatAudioOutput || renderOptions.audioFilepath;
   let videoOutput = renderOptions.outputVideoFilepath;
   let imageFilepath = renderOptions.imageFilepath;
-  cmdArr.push('-loop') 
+  cmdArr.push('-loop')
   cmdArr.push('1')
-  cmdArr.push('-framerate') 
+  cmdArr.push('-framerate')
   cmdArr.push('2')
   cmdArr.push('-i')
   cmdArr.push(`${imageFilepath}`)
   cmdArr.push('-i')
   cmdArr.push(`${audioInput}`)
   cmdArr.push('-y')
-  cmdArr.push('-acodec') 
-  cmdArr.push('copy') 
-  cmdArr.push('-b:a') 
-  cmdArr.push('320k') 
-  cmdArr.push('-vcodec') 
-  cmdArr.push('libx264') 
-  cmdArr.push('-b:v') 
-  cmdArr.push('8000k') 
-  cmdArr.push('-maxrate') 
-  cmdArr.push('8000k') 
-  cmdArr.push('-minrate') 
-  cmdArr.push('8000k') 
-  cmdArr.push('-bufsize') 
-  cmdArr.push('3M') 
-  cmdArr.push('-filter:v') 
-  if(padding.toLowerCase()=='none'){
+  cmdArr.push('-acodec')
+  cmdArr.push('copy')
+  cmdArr.push('-b:a')
+  cmdArr.push('320k')
+  cmdArr.push('-vcodec')
+  cmdArr.push('libx264')
+  cmdArr.push('-b:v')
+  cmdArr.push('8000k')
+  cmdArr.push('-maxrate')
+  cmdArr.push('8000k')
+  cmdArr.push('-minrate')
+  cmdArr.push('8000k')
+  cmdArr.push('-bufsize')
+  cmdArr.push('3M')
+  cmdArr.push('-filter:v')
+  if (padding.toLowerCase() == 'none') {
     //console.log('NO PADDING')
-    cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`) 
+    cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
     cmdArr.push('-vf')
     cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
-  }else{
+  } else {
     //console.log('YES PADDING')
-    cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`) 
+    cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
   }
-  cmdArr.push('-preset') 
-  cmdArr.push('medium') 
-  cmdArr.push('-tune') 
-  cmdArr.push('stillimage') 
-  cmdArr.push('-crf') 
-  cmdArr.push('18') 
-  cmdArr.push('-pix_fmt') 
-  cmdArr.push('yuv420p') 
-  cmdArr.push('-shortest') 
+  cmdArr.push('-preset')
+  cmdArr.push('medium')
+  cmdArr.push('-tune')
+  cmdArr.push('stillimage')
+  cmdArr.push('-crf')
+  cmdArr.push('18')
+  cmdArr.push('-pix_fmt')
+  cmdArr.push('yuv420p')
+  cmdArr.push('-shortest')
   cmdArr.push(`${videoOutput}`)
   //add to renderList
   renderStatusId = `${uploadId}-render-${Date.now()}`;
@@ -921,12 +925,12 @@ async function render(renderOptions) {
 //add new render to renders list
 async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile, renderStatusId) {
   renderList.push({
-    status:'in-progress',
+    status: 'in-progress',
     type: renderType,
     durationSeconds: durationSeconds,
     uploadName: uploadName,
     outputDir: outputDir,
-    outputFilename: (outputFile.substr(outputFile.lastIndexOf(`${path.sep}`)+1)),
+    outputFilename: (outputFile.substr(outputFile.lastIndexOf(`${path.sep}`) + 1)),
     renderStatusId: `${renderStatusId}`
   });
   updateRendersModal()
@@ -936,27 +940,27 @@ async function addToRenderList(renderType, durationSeconds, uploadName, outputDi
 function deleteFile(path) {
   const fs = require('fs')
   fs.unlink(path, (err) => {
-      if (err) {
-          console.error("err deleting file = ", err)
-          return
-      }
+    if (err) {
+      console.error("err deleting file = ", err)
+      return
+    }
   })
 }
 
 //update renders modal that displays in progress/completed/failed renders
 async function updateRendersModal() {
-  let rendersInProgress=0;
+  let rendersInProgress = 0;
   //get renders table
   var table = $(`#renders-table`).DataTable();
   //clear table data
   table.clear()
   //add data to table
-  for(var i = 0; i < renderList.length; i++){
+  for (var i = 0; i < renderList.length; i++) {
     let data = renderList[i];
     let renderStatus = `<a id="${data.renderStatusId}"></a>`;
-    if(data.status != 'done'){
+    if (data.status != 'done') {
       rendersInProgress++
-    }else{
+    } else {
       renderStatus = 'Done'
     }
     table.row.add({
@@ -968,7 +972,7 @@ async function updateRendersModal() {
     })
   }
 
-  
+
   //if select all checkbox clicked
   $(`#renders-tableSelectAll`).on('click', function (event) {
     let checkedStatus = document.getElementById(`renders-tableSelectAll`).checked
@@ -1001,14 +1005,14 @@ async function updateRendersModal() {
 
 
   //if there are renders in progress, make sidebar spinner visible, else make invisible
-  if(rendersInProgress > 0){
+  if (rendersInProgress > 0) {
     document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "inline", "important");
-    document.getElementById('renderJobsCount').innerText=`${rendersInProgress}`
-  }else{
+    document.getElementById('renderJobsCount').innerText = `${rendersInProgress}`
+  } else {
     document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "none", "important");
-    document.getElementById('renderJobsCount').innerText=`0`
+    document.getElementById('renderJobsCount').innerText = `0`
   }
-  
+
   //draw table
   table.draw();
 }
@@ -1063,7 +1067,7 @@ const moment = window.require("moment");
 const readline = window.require('readline');
 function handleProgress(process, cutDuration, renderStatusId) {
   //set to zero % compelted as initial default
-  document.getElementById(renderStatusId).innerText='0%';
+  document.getElementById(renderStatusId).innerText = '0%';
   //read progress from process
   const rl = readline.createInterface({ input: process.stderr });
   rl.on('line', (line) => {
@@ -1079,14 +1083,14 @@ function handleProgress(process, cutDuration, renderStatusId) {
       const progress = cutDuration ? progressTime / cutDuration : 0;
       var displayProgress = parseInt(progress * 100)
       //update table display
-      document.getElementById(renderStatusId).innerText=`${displayProgress}%`;
+      document.getElementById(renderStatusId).innerText = `${displayProgress}%`;
       //if render has completed
-      if(displayProgress >= 100){
+      if (displayProgress >= 100) {
         //get render from renderList
-        for(var z = 0; z < renderList.length; z++){
+        for (var z = 0; z < renderList.length; z++) {
           //update render status to be 'done'
-          if(renderList[z].renderStatusId == renderStatusId ){
-            renderList[z].status='done'
+          if (renderList[z].renderStatusId == renderStatusId) {
+            renderList[z].status = 'done'
           }
           //update render modal display
           updateRendersModal()
@@ -1140,19 +1144,14 @@ function runFfmpeg(args) {
   return execa(ffmpegPath, args);
 }
 
-async function createIndividualRendersTable(upload, uploadId){
-  //create dataset
+async function createIndividualRendersTable(upload, uploadId) {
 
   //setup table
   var table = $(`#${uploadId}-individual-table`).DataTable({
     "autoWidth": true,
     "pageLength": 5000,
-    select: {
-      style: 'multi',
-      selector: 'td:nth-child(0)'
-    },
+
     columns: [
-      { "data": "selectAll" },
       { "data": "audio" },
       { "data": "audioFilepath" }, //invisible
       { "data": "length" },
@@ -1161,58 +1160,108 @@ async function createIndividualRendersTable(upload, uploadId){
       { "data": "resolution" },
     ],
     columnDefs: [
-      {//select all checkbox
-        "className": 'selectall-checkbox',
-        "className": "text-center",
-        searchable: false,
-        orderable: false,
-        targets: 0,
-      },
       //audio filename
-      { 
-        targets: 1,
+      {
+        targets: 0,
         type: "natural",
-        className: 'track-name'
+        className: 'track-name',
+        sortable: false,
       },
       //invisible audioFilepath
       {
-        targets: 2,
+        targets: 1,
         visible: false,
+        sortable: false,
       },
+      { targets: 2, sortable: false },
+      { targets: 3, sortable: false },
+      { targets: 4, sortable: false },
+      { targets: 5, sortable: false },
 
     ],
     "language": {
       "emptyTable": "No files selected"
     },
     dom: 'rt',
-    rowReorder: {
-      dataSrc: 'sequence',
-    },
+
   });
-  //add dataset to table
-  /*
-  var count = 1;
-  data.forEach(function (i) {
-    table.row.add({
-      "sequence": i.itemId,
-      "#": `<div style='cursor: pointer;'><i class="fa fa-bars"></i> ${count}</div>`,
-      "selectAll": '<input type="checkbox">',
-      "audio": i.audio,
-      "length": i.length,
-      //"outputFormat": i.vidFormatSelection,
-      //"outputLocation": "temp output location",
-      "audioFilepath": i.audioFilepath,
-      "trackNum": i.trackNum,
-      "album": i.album,
-      "year": i.year,
-      "artist": i.artist,
-      //"imgSelection": i.imgSelection,
-    }).node().id = 'rowBrowseId' + i.sampleItemId;
-    count++;
-  });
-  */
+
+  //create img selection col header and add it to table
+  let imgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-col`, true, 'max-width: 150px;')
+  document.getElementById(`${uploadId}-individual-table-image-col`).innerHTML = imgSelect;
+  //create padding selection col header and add it to table
+  let paddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-col`, true, 'max-width: 100px;')
+  document.getElementById(`${uploadId}-individual-table-padding-col`).innerHTML = paddingSelect;
+  //create resolution selection col header and add it to table
+  let resolutionSelect = await createResolutionSelectIndividualCol(`${uploadId}-individual-table-padding-col`, true, 'max-width: 50px;', 4)
+  document.getElementById(`${uploadId}-individual-table-resolution-col`).innerHTML = resolutionSelect;
+
   //draw table
   table.draw();
+
+  //get img resolutions info
+  let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+
+  //if image selection col header changes, update each row
+  $(`#${uploadId}-individual-table-image-col`).on('change', async function () {
+    //get new image choice
+    let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-col select`).value
+    //get img name
+    let imgInfo = upload.files.images[indexValueImgChoice]
+
+    //set all rows in table to have new image value
+    table.rows().eq(0).each(async function (index) {
+      //get padding choice for this row
+      let rowPaddingChoice = $(`#${uploadId}-individual-table-padding-row-${index}`).val()
+      //update selected img value for row
+      document.getElementById(`${uploadId}-individual-table-image-row-${index}`).selectedIndex = `${indexValueImgChoice}`;
+
+      //if padding is not 'none', generate dropdown with static resolutions
+      if (!rowPaddingChoice.includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${index}`);
+      } else {
+        createResolutionSelect(uploadImageResolutions, imgInfo.name, `${uploadId}-individual-table-resolution-row-${index}`);
+      }
+
+    });
+  });
+
+  //if padding selection col header changes, update each row
+  $(`#${uploadId}-individual-table-padding-col`).on('change', async function () {
+    //get new padding choice
+    let indexValuePaddingChoice = document.querySelector(`#${uploadId}-individual-table-padding-col select`).value
+    //set all rows in table to have new padding value
+    table.rows().eq(0).each(async function (index) {
+
+      //get image choice for row
+      let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${index}`).value
+      //get img name
+      let imgInfo = upload.files.images[indexValueImgChoice]
+      console.log('img name for this row: ', imgInfo.name)
+
+      //update selected padding choice for row
+      document.getElementById(`${uploadId}-individual-table-padding-row-${index}`).value = `${indexValuePaddingChoice}`
+      //get padding choice for this row
+      let rowPaddingChoice = $(`#${uploadId}-individual-table-padding-row-${index}`).val()
+      //if padding is not 'none', generate dropdown with static resolutions
+      if (!rowPaddingChoice.includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${index}`);
+      } else {
+        createResolutionSelect(uploadImageResolutions, imgInfo.name, `${uploadId}-individual-table-resolution-row-${index}`);
+      }
+    });
+  });
+
+  //if resolution selection col header changes, update each row
+  $(`#${uploadId}-individual-table-resolution-col`).on('change', async function () {
+    //get new resolution choice
+    let indexValueResolutionChoice = document.querySelector(`#${uploadId}-individual-table-resolution-col select`).value - 1;
+    console.log('indexValueResolutionChoice = ', indexValueResolutionChoice)
+    //set all rows in table to have new resolution value
+    table.rows().eq(0).each(function (index) {
+      document.getElementById(`${uploadId}-individual-table-resolution-row-${index}`).selectedIndex = `${indexValueResolutionChoice}`
+    });
+  });
 
 }
 
@@ -1509,23 +1558,55 @@ function resetTableSelections(uploadTableId, uploadId) {
 
 //update displays of full album tracklist and selectedCount
 async function updateSelectedDisplays(uploadTableId, uploadId) {
-  //console.log('updateSelectedDisplays()')
+  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+  //get upload
+  let upload = uploads[uploadId];
+  //get and clear individualrenders table
+  var individualRendersTable = $(`#${uploadId}-individual-table`).DataTable();
+  individualRendersTable.clear();
+  //get files table
   var table = $(`#${uploadTableId}`).DataTable()
   //get number of selected rows
   var selectedRows = table.rows('.selected').data()
   //get number of selected rows
   var selectedRowsCount = selectedRows.length;
   //update every numSelected class to include the number of row selected as innerText
-  let updateThese = document.querySelectorAll('.numSelected');
+  let updateThese = document.querySelectorAll(`.${uploadId}-numSelected`);
   for (var x = 0; x < updateThese.length; x++) {
     updateThese[x].innerText = selectedRowsCount
   }
 
-  //generate tracklist and length display text
+  let uploadImageResolutions = await getResolutionOptions(upload.files.images);
   var fullAlbumLength = ''
   var fullAlbumTracklist = ''
   let startTime, endTime = '0:00:00';
+  //for each selected row
   for (var i = 0; i < selectedRowsCount; i++) {
+    //get data for individualRenderTable
+    var row = selectedRows[i];
+    //create imgSelect
+    let rowImgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, false, 'max-width:150px', 'rowImg')
+    //create paddingSelect
+    let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
+
+    //add row to individualRenders table
+    individualRendersTable.row.add({
+      "audio": row.audio,
+      "audioFilepath": row.audioFilepath,
+      "length": row.length,
+      "imgSelection": rowImgSelect,
+      "padding": rowPaddingSelect,
+      "resolution": `<select id='${uploadId}-individual-table-resolution-row-${i}' class="form-control rowRes"></select>`,
+    })
+
+    //draw individual renders table
+    individualRendersTable.draw();
+
+    //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
+    createResolutionSelect(uploadImageResolutions, upload.files.images[0].name, `${uploadId}-individual-table-resolution-row-${i}`);
+
+    //generate tracklist and length display text
+    var currTime = selectedRows[i].length
     //set prevTime
     var prevTime = ''
     if (fullAlbumLength == '') {
@@ -1541,6 +1622,50 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //update tracklist
     fullAlbumTracklist = `${fullAlbumTracklist}${selectedRows[i].audio} ${startTime}-${endTime}<br>`
   }
+
+  //if selected padding option for row changes, update resolution for that row
+  $(`.rowPadding`).on('change', async function () {
+    console.log('rowPadding changed')
+    //get row info
+    let rowId = $(this)[0].id
+    let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
+    //get image info
+    let newImageNum = $(`#${uploadId}-individual-table-image-row-${rowNum}`).val();
+    let newImageName = upload.files.images[newImageNum].name;
+    //get padding info
+    let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${rowNum}`).val();
+    //if padding is not 'none', generate dropdown with static resolutions
+    if (!paddingChoice.includes('none')) {
+      createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+    } else {
+      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+    }
+  })
+
+  //if selected image option for row changes, update resolution for that row
+  $(`.rowImg`).on('change', async function () {
+    let rowId = $(this)[0].id
+    //console.log('rowImg changed for id: ', rowId)
+    let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
+    //console.log('rowNum: ', rowNum)
+
+    //get image info
+    let newImageNum = $(`#${rowId}`).val();
+    let newImageName = upload.files.images[newImageNum].name;
+    //console.log('newImageName:', newImageName)
+    //get padding info
+    let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${rowNum}`).val()
+    //console.log('paddingChoice:', paddingChoice)
+
+    //if padding is not 'none', generate dropdown with static resolutions
+    if (!paddingChoice.includes('none')) {
+      createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+    } else {
+      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+    }
+
+  })
+
   //set duration
   document.getElementById(`${uploadId}-lengthText`).innerText = fullAlbumLength
   //set tracklist
@@ -1606,6 +1731,7 @@ async function getResolutionOptions(images) {
 
 //generate resolution dropdown html
 function createResolutionSelect(uploadImageResolutions, imageName, selectId) {
+
   //clear options 
   document.getElementById(`${selectId}`).textContent = ``;
 
@@ -1643,8 +1769,64 @@ function createResolutionSelect(uploadImageResolutions, imageName, selectId) {
 
 };
 
+//create padding div
+async function createPaddingSelect(selectId, includeLabel, selectStyle = "", selectClass = "") {
+  return new Promise(async function (resolve, reject) {
+    //include label if we want to 
+    let label = "";
+    if (includeLabel) {
+      label = "<label>Padding:⠀</label>"
+    }
+
+    //create selection form
+    var selectForm = `
+          <form class="form-inline">
+            <div class="form-group">
+                ${label}
+                <select id='${selectId}' class="form-control ${selectClass}" style="${selectStyle}"> 
+                  <option value="none">None</option>
+                  <option value="white">White</option>
+                  <option value="black">Black</option>
+                </select> 
+            </div>
+          </form>`;
+
+    //return html
+    resolve(selectForm)
+  })
+}
+
+//create resolution div
+async function createResolutionSelectIndividualCol(selectId, includeLabel, selectStyle = "") {
+  return new Promise(async function (resolve, reject) {
+    //include label if we want to 
+    let label = "";
+    if (includeLabel) {
+      label = "<label>Resolution:⠀</label>"
+    }
+
+    //create selection form
+    var selectForm = `
+          <form class="form-inline">
+            <div class="form-group">
+                ${label}
+                <select id='${selectId}' class="form-control" style="${selectStyle}"> 
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected>4</option>
+                  <option value="5">5</option>
+                </select> 
+            </div>
+          </form>`;
+
+    //return html
+    resolve(selectForm)
+  })
+}
+
 //create select div with an option for each image
-async function createImgSelect(images, selectId, includeLabel) {
+async function createImgSelect(images, selectId, includeLabel, selectStyle = "", selectClass = "") {
   return new Promise(async function (resolve, reject) {
     //include label if we want to 
     let label = "";
@@ -1664,7 +1846,7 @@ async function createImgSelect(images, selectId, includeLabel) {
       <form class="form-inline">
         <div class="form-group">
             ${label}
-            <select id='${selectId}' class="form-control" >`; //style="height:40px;max-width: 150px;"
+            <select id='${selectId}' class="form-control ${selectClass}" style="${selectStyle}">`; //style="height:40px;max-width: 150px;"
 
 
     imgSelectionSelect = `${imgSelectionSelect} ${imageSelectionOptions} </select> 
