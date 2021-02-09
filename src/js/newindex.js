@@ -934,12 +934,13 @@ async function render(renderOptions) {
     }
 
     //render video
+    console.log(`render() scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
     cmdArr = [];
-    console.log("render() concatAudioOutput=", concatAudioOutput)
-    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
-    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
+    //console.log("render() concatAudioOutput=", concatAudioOutput)
+    //console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
+    //console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
     let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    console.log("render() audioInput=", audioInput)
+    //console.log("render() audioInput=", audioInput)
     let videoOutput = renderOptions.outputVideoFilepath;
     let imageFilepath = renderOptions.imageFilepath;
     cmdArr.push('-loop')
@@ -967,10 +968,22 @@ async function render(renderOptions) {
     cmdArr.push('3M')
     cmdArr.push('-filter:v')
     if (padding.toLowerCase() == 'none') {
-      //console.log('NO PADDING')
-      cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
-      cmdArr.push('-vf')
-      cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')
+      let width=parseInt(renderOptions.resolution.split('x')[0]);
+      if(width % 2 !== 0){
+        //width not divisible by two, add one extra pixel of padding
+        width=width+1
+      }
+
+      let height=parseInt(renderOptions.resolution.split('x')[1]);
+      if(height % 2 !== 0){
+        //width not divisible by two, add one extra pixel of padding
+        height=height+1
+      }
+
+      //console.log(`NO PADDING final: width=${width}, height=${height}`)
+      cmdArr.push(`scale=w=${width}:h=${height}`)
+      //cmdArr.push('-vf')
+      //cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')  //-vf "pad=ceil(iw/2)*2:ceil(ih/2)*2"
     } else {
       //console.log('YES PADDING')
       cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
