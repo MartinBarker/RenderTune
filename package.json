@@ -1,7 +1,7 @@
 {
   "name": "digify",
   "productName": "Digify",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -50,8 +50,6 @@
       "identity": null,
       "appId": "com.martinbarker.digifyunique",
       "category": "public.app-category.productivity",
-      "entitlements": "entitlements.mas.plist",
-      "entitlementsInherit": "entitlements.mas.inherit.plist",
       "target": [
         "mas"
       ],
@@ -172,8 +170,8 @@
     "mas": {
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "hardenedRuntime": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
       "provisioningProfile": "embedded.provisionprofile",
       "binaries": [
         "dist/mas/Digify.app/Contents/Resources/ffmpeg",

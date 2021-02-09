@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const { autoUpdater } = require('electron-updater');
+//const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 const sizeOf = require('image-size');
 require('dotenv').config();
@@ -31,7 +31,7 @@ function createWindow() {
 
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify();
+        //autoUpdater.checkForUpdatesAndNotify();
     });
 
 }
@@ -59,7 +59,7 @@ ipcMain.on('app_version', (event) => {
 
 //auto-update quiet and install
 ipcMain.on('restart_app', () => {
-    autoUpdater.quitAndInstall();
+    //autoUpdater.quitAndInstall();
 });
 
 //open folder dir picker window and return string of folder path
@@ -98,7 +98,7 @@ async function getResolution(filename){
         });
     })
 }
-
+/*
 //handle auto-update events
 autoUpdater.on('update-available', () => {
     mainWindow.webContents.send('update_available');
@@ -107,3 +107,4 @@ autoUpdater.on('update-available', () => {
 autoUpdater.on('update-downloaded', () => {
     mainWindow.webContents.send('update_downloaded');
 });
+*/
