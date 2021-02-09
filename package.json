@@ -1,7 +1,7 @@
 {
   "name": "digify",
-  "productName": "Digify",
-  "version": "0.1.0",
+  "productName": "Digify-mac",
+  "version": "0.1.1",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -42,16 +42,16 @@
     "asar": {
       "smartUnpack": false
     },
-    "appId": "com.martinbarker.digify",
+    "appId": "com.martinbarker.digifyunique",
     "artifactName": "${productName}-${os}.${ext}",
     "mac": {
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null,
-      "appId": "com.martinbarker.digify",
+      "appId": "com.martinbarker.digifyunique",
       "category": "public.app-category.productivity",
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
       "target": [
         "mas"
       ],

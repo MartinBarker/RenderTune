@@ -8,8 +8,5 @@
     <array>
       <string>LV6WXG529F.com.martinbarker.digifyunique</string>
     </array>
-    
-    <key>com.apple.security.network.client</key>
-    <true/>
   </dict>
 </plist>
