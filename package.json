@@ -1,7 +1,7 @@
 {
   "name": "digify",
   "productName": "Digify",
-  "version": "0.1.4",
+  "version": "0.1.7",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "build-win": "electron-builder build --win --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
-    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --enable-gpl --enable-pthreads --enable-nonfree  --enable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect && make && cd ..",
+    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree  --enable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect && make && cd ..",
     "build-mas": "electron-builder build --mac"
   },
   "browserslist": {
