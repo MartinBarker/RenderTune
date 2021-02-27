@@ -883,7 +883,7 @@ async function concatRenderPrep(uploadId, uploadNumber) {
 }
 
 //render using ffmpeg
-async function render(renderOptions) {
+async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoCmd=null) {
   return new Promise(async function (resolve, reject) {
     console.log('render*() options=', renderOptions)
     var selectedRows = renderOptions.selectedRows;
@@ -929,6 +929,12 @@ async function render(renderOptions) {
       let renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
       addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
       //run ffmpeg command to concat audio
+      if(debugConcatAudioCmd){
+        console.log('setting debugConcatAudioCmd')
+        cmdArr=debugConcatAudioCmd;
+      }
+      console.log('concatAudio: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
+
       let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
       concatAudioOutput = concatAudioFilepath;
     }
@@ -999,7 +1005,12 @@ async function render(renderOptions) {
     //add to renderList
     renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
     addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
-    //run ffmpeg command to concat audio
+    //run ffmpeg command to render video
+    if(debugRenderVideoCmd){
+      console.log('setting debugRenderVideoCmd')
+      cmdArr=debugRenderVideoCmd;
+    }
+    console.log('renderVideo: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
 
     //delete concatAudio filepath if needed

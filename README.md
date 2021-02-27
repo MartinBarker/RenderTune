@@ -1,7 +1,5 @@
 # digify
 
-
-
 Developing for this app:
 - clone this repo
 - cd into the folder
@@ -11,6 +9,7 @@ Developing for this app:
 - to build the app for the mac apple store, run `npm run build-mas`
 - once it has finished, sign the built app by running `sh mas-sign-script.sh` (make sure filepaths are correct for your computer)
 
+Run `otool -L ffmpeg-mac/ffmpeg | grep /usr/local` to view fffmpeg dependencies, before building&signing app, move any dylib files to diff location
 
 ## old stuff below:
 

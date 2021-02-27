@@ -1,7 +1,7 @@
 {
   "name": "digify",
   "productName": "Digify",
-  "version": "0.1.13",
+  "version": "0.1.20",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "build-win": "electron-builder build --win --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
-    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --enable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect && make && cd ..",
+    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
+    "download-ffmpeg2": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
     "build-mas": "electron-builder build --mac"
   },
   "browserslist": {
@@ -177,6 +178,118 @@
         "dist/mas/Digify.app/Contents/Resources/ffmpeg",
         "dist/mas/Digify.app/Contents/Resources/ffprobe",
         "dist/mas/Digify.app/Contents/Resources/app.asar.unpacked/node_modules/trash/lib/macos-trash"
+      ],
+      "asarUnpack": [
+        "node_modules/trash/**"
+      ],
+      "electronLanguages": [
+        "en"
+      ],
+      "extraResources": [
+        {
+          "from": "ffmpeg-mac/ffmpeg",
+          "to": "ffmpeg"
+        },
+        {
+          "from": "ffmpeg-mac/ffprobe",
+          "to": "ffprobe"
+        }
+      ],
+      "fileAssociations": [
+        {
+          "ext": [
+            "webm",
+            "mkv",
+            "flv",
+            "vob",
+            "ogv",
+            "drc",
+            "gif",
+            "gifv",
+            "mng",
+            "avi",
+            "mts",
+            "m2ts",
+            "ts",
+            "mov",
+            "qt",
+            "wmv",
+            "yuv",
+            "rm",
+            "rmvb",
+            "asf",
+            "amv",
+            "mp4",
+            "m4v",
+            "mpg",
+            "mp2",
+            "mpeg",
+            "mpe",
+            "mpv",
+            "m2v",
+            "svi",
+            "3gp",
+            "3g2",
+            "mxf",
+            "roq",
+            "nsv",
+            "f4v",
+            "f4p",
+            "f4a",
+            "f4b"
+          ],
+          "name": "Video",
+          "description": "Video files",
+          "role": "Viewer"
+        },
+        {
+          "ext": [
+            "aa",
+            "aac",
+            "aax",
+            "act",
+            "aiff",
+            "alac",
+            "amr",
+            "ape",
+            "au",
+            "awb",
+            "dct",
+            "dss",
+            "dvf",
+            "flac",
+            "gsm",
+            "iklax",
+            "ivs",
+            "m4a",
+            "m4b",
+            "m4p",
+            "mmf",
+            "mp3",
+            "mpc",
+            "msv",
+            "nmf",
+            "nsf",
+            "ogg",
+            "oga",
+            "mogg",
+            "opus",
+            "ra",
+            "rf64",
+            "sln",
+            "tta",
+            "voc",
+            "vox",
+            "wav",
+            "wma",
+            "wv",
+            "8svx",
+            "cda"
+          ],
+          "name": "Audio",
+          "description": "Audio files",
+          "role": "Viewer"
+        }
       ]
     },
     "win": {
@@ -352,6 +465,7 @@
     "electron-builder-notarize": "^1.1.2",
     "electron-is-dev": "^1.2.0",
     "electron-notarize": "^1.0.0",
+    "electron-osx-sign": "^0.5.0",
     "electron-updater": "^4.3.5",
     "execa": "^5.0.0",
     "ffmpeg-ffprobe-static": "^4.3.1-rc.2",
