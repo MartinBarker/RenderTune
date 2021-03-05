@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 //const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
+var path = require('path');
 const sizeOf = require('image-size');
 require('dotenv').config();
 
@@ -65,7 +66,9 @@ ipcMain.on('restart_app', () => {
 //open folder dir picker window and return string of folder path
 ipcMain.handle('choose-dir', async (event) => {
     dir = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory']
+        properties: ['openDirectory'],
+        message: 'Choose your output folder',
+        buttonLabel: 'Select this folder'
     });
     return dir.filePaths[0];
 });
@@ -76,6 +79,21 @@ ipcMain.handle('get-audio-metadata', async (event, filename) => {
     //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
     return metadata;
 });
+
+ipcMain.handle('set-dir', async (event) => {
+    let defaultPath = path.dirname('/Users');
+        const { filePaths } = await dialog.showOpenDialog({
+          properties: ['openDirectory', 'createDirectory'],
+          defaultPath,
+          title: 'title',
+          message: 'message',
+          buttonLabel: 'buttonLabel'
+        });
+        return (filePaths && filePaths.length === 1) ? filePaths[0] : undefined;
+      
+});
+
+
 
 ipcMain.handle('get-image-resolution', async (event, filename) => {
     let width = '';

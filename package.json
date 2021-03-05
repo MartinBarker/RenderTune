@@ -1,7 +1,7 @@
 {
   "name": "digify",
   "productName": "Digify",
-  "version": "0.1.20",
+  "version": "0.1.29",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
     "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
-    "download-ffmpeg2": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
+    
     "build-mas": "electron-builder build --mac"
   },
   "browserslist": {
@@ -25,17 +25,13 @@
     "extraMetadata": {
       "main": "main.js"
     },
-    "extends": null,
     "directories": {
       "buildResources": "build-resources"
     },
     "files": [
-      "src/**/*",
-      "*.js",
-      "src/index.html",
       "main.js",
-      "dist/**/*",
-      "package.json",
+      "src/",
+      "src/**/*",
       "build/**/*",
       "!node_modules/ffmpeg-ffprobe-static/ffmpeg",
       "!node_modules/ffmpeg-ffprobe-static/ffprobe"
@@ -46,15 +42,12 @@
     "appId": "com.martinbarker.digifyunique",
     "artifactName": "${productName}-${os}.${ext}",
     "mac": {
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false,
-      "identity": null,
+      "hardenedRuntime": true,
       "appId": "com.martinbarker.digifyunique",
       "category": "public.app-category.productivity",
       "target": [
         "mas"
       ],
-      "icon": "build/icon.icns",
       "asarUnpack": [
         "node_modules/trash/**"
       ],
@@ -71,6 +64,7 @@
           "to": "ffprobe"
         }
       ],
+      "icon": "build/icon.icns",
       "fileAssociations": [
         {
           "ext": [
@@ -169,269 +163,13 @@
       ]
     },
     "mas": {
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "hardenedRuntime": false,
       "entitlements": "entitlements.mas.plist",
       "entitlementsInherit": "entitlements.mas.inherit.plist",
       "provisioningProfile": "embedded.provisionprofile",
       "binaries": [
         "dist/mas/Digify.app/Contents/Resources/ffmpeg",
-        "dist/mas/Digify.app/Contents/Resources/ffprobe",
-        "dist/mas/Digify.app/Contents/Resources/app.asar.unpacked/node_modules/trash/lib/macos-trash"
-      ],
-      "asarUnpack": [
-        "node_modules/trash/**"
-      ],
-      "electronLanguages": [
-        "en"
-      ],
-      "extraResources": [
-        {
-          "from": "ffmpeg-mac/ffmpeg",
-          "to": "ffmpeg"
-        },
-        {
-          "from": "ffmpeg-mac/ffprobe",
-          "to": "ffprobe"
-        }
-      ],
-      "fileAssociations": [
-        {
-          "ext": [
-            "webm",
-            "mkv",
-            "flv",
-            "vob",
-            "ogv",
-            "drc",
-            "gif",
-            "gifv",
-            "mng",
-            "avi",
-            "mts",
-            "m2ts",
-            "ts",
-            "mov",
-            "qt",
-            "wmv",
-            "yuv",
-            "rm",
-            "rmvb",
-            "asf",
-            "amv",
-            "mp4",
-            "m4v",
-            "mpg",
-            "mp2",
-            "mpeg",
-            "mpe",
-            "mpv",
-            "m2v",
-            "svi",
-            "3gp",
-            "3g2",
-            "mxf",
-            "roq",
-            "nsv",
-            "f4v",
-            "f4p",
-            "f4a",
-            "f4b"
-          ],
-          "name": "Video",
-          "description": "Video files",
-          "role": "Viewer"
-        },
-        {
-          "ext": [
-            "aa",
-            "aac",
-            "aax",
-            "act",
-            "aiff",
-            "alac",
-            "amr",
-            "ape",
-            "au",
-            "awb",
-            "dct",
-            "dss",
-            "dvf",
-            "flac",
-            "gsm",
-            "iklax",
-            "ivs",
-            "m4a",
-            "m4b",
-            "m4p",
-            "mmf",
-            "mp3",
-            "mpc",
-            "msv",
-            "nmf",
-            "nsf",
-            "ogg",
-            "oga",
-            "mogg",
-            "opus",
-            "ra",
-            "rf64",
-            "sln",
-            "tta",
-            "voc",
-            "vox",
-            "wav",
-            "wma",
-            "wv",
-            "8svx",
-            "cda"
-          ],
-          "name": "Audio",
-          "description": "Audio files",
-          "role": "Viewer"
-        }
-      ]
-    },
-    "win": {
-      "target": [
-        "portable",
-        "zip",
-        "appx"
-      ],
-      "extraResources": [
-        "node_modules/ffmpeg-ffprobe-static/ffmpeg.exe",
-        "node_modules/ffmpeg-ffprobe-static/ffprobe.exe"
-      ],
-      "icon": "icon-build/app-512.png",
-      "fileAssociations": [
-        {
-          "ext": [
-            "webm",
-            "mkv",
-            "flv",
-            "vob",
-            "ogv",
-            "drc",
-            "gif",
-            "gifv",
-            "mng",
-            "avi",
-            "mts",
-            "m2ts",
-            "ts",
-            "mov",
-            "qt",
-            "wmv",
-            "yuv",
-            "rm",
-            "rmvb",
-            "asf",
-            "amv",
-            "mp4",
-            "m4v",
-            "mpg",
-            "mp2",
-            "mpeg",
-            "mpe",
-            "mpv",
-            "m2v",
-            "svi",
-            "3gp",
-            "3g2",
-            "mxf",
-            "roq",
-            "nsv",
-            "f4v",
-            "f4p",
-            "f4a",
-            "f4b"
-          ],
-          "name": "Video",
-          "description": "Video files",
-          "role": "Viewer"
-        },
-        {
-          "ext": [
-            "aa",
-            "aac",
-            "aax",
-            "act",
-            "aiff",
-            "alac",
-            "amr",
-            "ape",
-            "au",
-            "awb",
-            "dct",
-            "dss",
-            "dvf",
-            "flac",
-            "gsm",
-            "iklax",
-            "ivs",
-            "m4a",
-            "m4b",
-            "m4p",
-            "mmf",
-            "mp3",
-            "mpc",
-            "msv",
-            "nmf",
-            "nsf",
-            "ogg",
-            "oga",
-            "mogg",
-            "opus",
-            "ra",
-            "rf64",
-            "sln",
-            "tta",
-            "voc",
-            "vox",
-            "wav",
-            "wma",
-            "wv",
-            "8svx",
-            "cda"
-          ],
-          "name": "Audio",
-          "description": "Audio files",
-          "role": "Viewer"
-        }
-      ]
-    },
-    "appx": {
-      "applicationId": "LosslessCut",
-      "identityName": "57275mifi.no.LosslessCut",
-      "publisher": "CN=2C479316-22A8-4D63-BC38-F0FB9AB0B974",
-      "publisherDisplayName": "mifi.no"
-    },
-    "linux": {
-      "executableName": "losslesscut",
-      "extraResources": [
-        "node_modules/ffmpeg-ffprobe-static/ffmpeg",
-        "node_modules/ffmpeg-ffprobe-static/ffprobe"
-      ],
-      "icon": "icon-build/app-512.png",
-      "target": [
-        "tar.bz2",
-        "AppImage",
-        "snap"
-      ]
-    },
-    "snap": {
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-        "removable-media"
+        "dist/mas/Digify.app/Contents/Resources/ffprobe"
       ]
     }
   },
@@ -453,9 +191,9 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron-builder-notarize": "^1.1.2",
     "electron": "^11.1.0",
-    "electron-builder": "^22.9.1"
+    "electron-builder": "^22.9.1",
+    "electron-builder-notarize": "^1.1.2"
   },
   "dependencies": {
     "bootstrap": "^4.6.0",
