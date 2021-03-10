@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Name of your app.
-APP="Digify-mac"
+APP="RenderTune"
 # The path of your app to sign.
-APP_PATH="/Users/martinbarker/Documents/projects/digify-new/dist/mas/Digify.app"
+APP_PATH="/Users/martinbarker/Documents/projects/digify-new/dist/mas/RenderTune.app"
 # The path to the location you want to put the signed package.
 RESULT_PATH="/Users/martinbarker/Documents/projects/digify-new/$APP.pkg"
 # The name of certificates you requested.

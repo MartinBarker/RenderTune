@@ -1,7 +1,7 @@
 {
-  "name": "digify",
-  "productName": "Digify",
-  "version": "0.1.29",
+  "name": "rendertune",
+  "productName": "RenderTune",
+  "version": "0.1.30",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -168,8 +168,8 @@
       "entitlementsInherit": "entitlements.mas.inherit.plist",
       "provisioningProfile": "embedded.provisionprofile",
       "binaries": [
-        "dist/mas/Digify.app/Contents/Resources/ffmpeg",
-        "dist/mas/Digify.app/Contents/Resources/ffprobe"
+        "dist/mas/RenderTune.app/Contents/Resources/ffmpeg",
+        "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
       ]
     }
   },
