@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.1.30",
+  "version": "0.2.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,6 @@
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
     "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
-    
     "build-mas": "electron-builder build --mac"
   },
   "browserslist": {
@@ -26,7 +25,7 @@
       "main": "main.js"
     },
     "directories": {
-      "buildResources": "build-resources"
+      "buildResources": "build"
     },
     "files": [
       "main.js",
@@ -173,16 +172,12 @@
       ]
     },
     "win": {
-      "target": [
-        "portable",
-        "zip",
-        "appx"
-      ],
+      "target": ["appx"],
       "extraResources": [
         "node_modules/ffmpeg-ffprobe-static/ffmpeg.exe",
         "node_modules/ffmpeg-ffprobe-static/ffprobe.exe"
       ],
-      "icon": "build/appx/StoreLogo.png",
+      "icon": "build/icon.ico",
       "fileAssociations": [
         {
           "ext": [
