@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -172,7 +172,9 @@
       ]
     },
     "win": {
-      "target": ["appx"],
+      "target": [
+        "appx"
+      ],
       "extraResources": [
         "node_modules/ffmpeg-ffprobe-static/ffmpeg.exe",
         "node_modules/ffmpeg-ffprobe-static/ffprobe.exe"
@@ -280,7 +282,7 @@
       "identityName": "1845martinbarker.digify",
       "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
       "publisherDisplayName": "martinbarker",
-      "backgroundColor":"#a0beeb"
+      "backgroundColor": "#a0beeb"
     }
   },
   "repository": {
