@@ -5,6 +5,30 @@ const { join } = window.require('path');
 var path = require('path');
 const execa = window.require('execa');
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Auto-Update Event Handlers:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+const notification = document.getElementById('notification');
+const message = document.getElementById('message');
+//if restart button is clicked:
+const restartButton = document.getElementById('restart-button');ipcRenderer.on('update_available', () => {
+  ipcRenderer.removeAllListeners('update_available');
+  message.innerText = 'A new update is available. Downloading now...';
+  notification.classList.remove('hidden');
+});
+//if update has been downloaded:
+ipcRenderer.on('update_downloaded', () => {
+  ipcRenderer.removeAllListeners('update_downloaded');
+  message.innerText = 'Update Downloaded. It will be installed on restart. Restart now?';
+  restartButton.classList.remove('hidden');
+  notification.classList.remove('hidden');
+});
+function closeNotification() {
+  notification.classList.add('hidden');
+}function restartApp() {
+  ipcRenderer.send('restart_app');
+}
+
 //require datatables
 require('datatables.net-dt')();
 require('datatables.net-rowreorder-dt')();
