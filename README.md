@@ -1,5 +1,4 @@
 # RenderTune
-
 RenderTune is a free, open-source electron app that can combine audio + image file(s) into video files. You can render videos from a single audio file or combine multiple audio files into one video. RenderTune offers ordering options if you want to include multiple songs in a single video so you can make sure they appear in the order you wish. You can also specify the output video location, resolution, and aspects such as wheather or not to add padding to the video, and what color to make the background padding.
 
 ## How to run RenderTune locally:
