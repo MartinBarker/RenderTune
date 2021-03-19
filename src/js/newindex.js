@@ -2197,9 +2197,9 @@ async function createFilesTableDataset(uploadFiles, uploadId, upload) {
 async function openUrl(type) {
   var open = require("open");
   if(type=='github') {
-      open("https://github.com/MartinBarker/digify/");
+      open("https://github.com/MartinBarker/rendertune/");
   }else if(type=='web'){
-      open('https://martinbarker.me/digify')
+      open('https://martinbarker.me/rendertune')
   }
 
   
