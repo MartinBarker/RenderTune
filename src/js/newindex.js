@@ -106,8 +106,15 @@ $('#new-upload-modal').on('hide.bs.modal', function () {
 })
 
 //when document window is ready call init function
-$(document).ready(function () {
+$(document).ready(async function () {
   $('[data-toggle="tooltip"]').tooltip({'delay': { show: 5000, hide: 3000 }});
+  
+  //if OS is mac, clear local storage uploadList
+  const os = window.require('os');
+  const platform = os.platform();
+  if (platform === 'darwin') {
+    await setLocalStorage('uploadList', {})
+  }
 
   //inital uploads sidebar display setup
   initUploadsSetup();
@@ -330,10 +337,19 @@ async function addNewUpload(uploadTitle) {
         uploadTitle = `upload-${uploadNumber}`
       }
 
-      //get default output dir from first image filepath
+      //set outputDir and outputFolder
+      let outputDir = null;
+      let outputFolder = "unset";
+      //get default output dir from first image filepath for non-mac OS
       let firstImgPath = fileList.images[0].path;
-      let outputDir = firstImgPath.substr(0, firstImgPath.lastIndexOf(`${path.sep}`));
-      let outputFolder = outputDir.substr(outputDir.lastIndexOf(`${path.sep}`) + 1);
+      const os = window.require('os');
+      const platform = os.platform();
+      if (platform === 'darwin') {
+        console.log("on mac, so have outputDir unset by default ")
+      }else{
+        outputDir = firstImgPath.substr(0, firstImgPath.lastIndexOf(`${path.sep}`));
+        outputFolder = outputDir.substr(outputDir.lastIndexOf(`${path.sep}`) + 1);
+      }
 
       let uploadKey = `upload-${uploadNumber}`
       let uploadObj = { 'title': uploadTitle, 'files': fileList, 'outputDir': outputDir, 'outputFolder': outputFolder }
@@ -590,7 +606,7 @@ async function createUploadPage(upload, uploadId) {
             </div>
           </div>
 
-          <div class="col settingsCol changeDirButton" onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
+          <div class="col settingsCol changeDirButton" id='${uploadId}-changeDirDiv' onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
             <!-- Output Folder -->
             <div class="form-group">
               <span>
@@ -632,6 +648,7 @@ async function createUploadPage(upload, uploadId) {
         <div>
           <!-- render button -->
           <a href="#" class="btn btn-primary" id='${uploadId}-concatRenderButton' onClick='concatRenderPrep("${uploadId}", "${uploadNumber}")' >Render</a>
+          <a id='${uploadId}-concatRenderMsg' style='color:#fc3535; visibility:hidden;'>Please set your output folder</a>
         </div>
 
       </div>
@@ -692,11 +709,23 @@ async function createUploadPage(upload, uploadId) {
         </table>
       </div>
         <a onClick='individRenderPrep("${uploadId}", "${uploadNumber}")' href="#" class="btn btn-primary"><div>Render <new class='${uploadId}-numSelected'>0</new> videos</div></a>
+        
+
+        <a id='${uploadId}-individRenderMsg' style='color:#fc3535; visibility:hidden;'>Please set your output folder</a>
+        
+
       </div>
     </div>
 
     </div>
     `);
+
+  //if output folder == null, set color of changeDir button to red
+  let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+  if(!(uploads[uploadId].outputDir)){
+    document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
+  }
+
   //create files table
   createFilesTable(upload, uploadId);
 
@@ -772,6 +801,11 @@ async function changeDir(displayTextID, uploadId) {
   uploadList[uploadId].outputDir = dirPath
   uploadList[uploadId].outputFolder = dirFolder
   let result = await localStorage.setItem('uploadList', JSON.stringify(uploadList))
+  //set changeDir button color to white
+  document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "white";
+  //hide 'change dir' err messages
+  document.querySelector(`#${uploadId}-concatRenderMsg`).style.visibility='hidden';
+  document.querySelector(`#${uploadId}-individRenderMsg`).style.visibility='hidden';
 
 }
 
@@ -781,68 +815,80 @@ async function individRenderPrep(uploadId, uploadNumber) {
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
   //get upload
   let upload = uploads[uploadId];
-  //get table
-  var table = $(`#${uploadId}-individual-table`).DataTable()
-  //get all rows
-  var rows = table.rows().data()
-  //for each row
-  for (var x = 0; x < rows.length; x++) {
-    var row = rows[x]
-    console.log(`individPrep() rows[${x}] = `, row)
-    //get audio input filepath
-    let audioInputPath = row.audioFilepath;
-    console.log('audioInputPath=', audioInputPath)
-    //get image input filepath
-    let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${x}`).value
-    //get img name
-    let imageFilepath = upload.files.images[indexValueImgChoice].path
-    console.log('imageFilepath=', imageFilepath)
-    //get resolution
-    let resolution = ($(`#${uploadId}-individual-table-resolution-row-${x} :selected`).text()).split(" ")[0];
-    console.log('resolution=', resolution)
-    //get padding
-    let padding = $(`#${uploadId}-individual-table-padding-row-${x}`).val();
-    console.log('padding=', padding)
-    //get outputDir and uploadName
+
+    //get outputDir
     let outputDir = uploads[uploadId].outputDir;
-    let uploadName = uploads[uploadId].title;
+    //if outputDir == unset, turn button red and reveal err message to user
+    if(!outputDir){
+      //set color of changeDir button
+      //document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
+      //reveal message
+      document.querySelector(`#${uploadId}-individRenderMsg`).style.visibility='visible';
+    }else{
+      //get table
+      var table = $(`#${uploadId}-individual-table`).DataTable()
+      //get all rows
+      var rows = table.rows().data()
+      //for each row
+      for (var x = 0; x < rows.length; x++) {
+        var row = rows[x]
+        console.log(`individPrep() rows[${x}] = `, row)
+        //get audio input filepath
+        let audioInputPath = row.audioFilepath;
+        console.log('audioInputPath=', audioInputPath)
+        //get image input filepath
+        let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${x}`).value
+        //get img name
+        let imageFilepath = upload.files.images[indexValueImgChoice].path
+        console.log('imageFilepath=', imageFilepath)
+        //get resolution
+        let resolution = ($(`#${uploadId}-individual-table-resolution-row-${x} :selected`).text()).split(" ")[0];
+        console.log('resolution=', resolution)
+        //get padding
+        let padding = $(`#${uploadId}-individual-table-padding-row-${x}`).val();
+        console.log('padding=', padding)
+        //get outputDir and uploadName
+        let outputDir = uploads[uploadId].outputDir;
+        let uploadName = uploads[uploadId].title;
 
-    //if audio file is not of type mp3, then convert to mp3:
-    let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
-    console.log('audioType=', audioType)
-    let concatAudioChoice = false
-    if(audioType!='mp3'){
-      console.log('not mp3 so convert')
-      concatAudioChoice = true
+        //if audio file is not of type mp3, then convert to mp3:
+        let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
+        console.log('audioType=', audioType)
+        let concatAudioChoice = false
+        if(audioType!='mp3'){
+          console.log('not mp3 so convert')
+          concatAudioChoice = true
+        }
+
+        //create outputFilename from row audio
+        let filename = row.audio
+        //remove filename ending
+        filename=filename.substr(0, filename.lastIndexOf("."))
+        //clean audio filename to make sure there aren't any special chars
+        filename.replace(/[/\\?%*:|"<>]/g, '-');
+        console.log('filename=', filename)
+
+        //create render options
+        let renderOptions = {
+          audioFilepath:audioInputPath,
+          concatAudio: concatAudioChoice,
+          outputDir: outputDir,
+          resolution: resolution,
+          padding: padding,
+          selectedRows: [row],
+          uploadNumber: uploadNumber,
+          uploadId: uploadId,
+          uploadName: uploadName,
+          concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
+          imageFilepath: imageFilepath,
+          outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
+        }
+        
+        await render(renderOptions)
+        
+      }
     }
 
-    //create outputFilename from row audio
-    let filename = row.audio
-    //remove filename ending
-    filename=filename.substr(0, filename.lastIndexOf("."))
-    //clean audio filename to make sure there aren't any special chars
-    filename.replace(/[/\\?%*:|"<>]/g, '-');
-    console.log('filename=', filename)
-
-    //create render options
-    let renderOptions = {
-      audioFilepath:audioInputPath,
-      concatAudio: concatAudioChoice,
-      outputDir: outputDir,
-      resolution: resolution,
-      padding: padding,
-      selectedRows: [row],
-      uploadNumber: uploadNumber,
-      uploadId: uploadId,
-      uploadName: uploadName,
-      concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
-      imageFilepath: imageFilepath,
-      outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
-    }
-    
-    await render(renderOptions)
-    
-  }
 }
 
 //call when 'Render' button for concat full album is clicked
@@ -863,27 +909,56 @@ async function concatRenderPrep(uploadId, uploadNumber) {
   var table = $(`#${uploadId}_table`).DataTable()
   //get all selected rows
   var selectedRows = table.rows('.selected').data()
-  //get outputDir and uploadName
+  //get outputDir
   let outputDir = uploads[uploadId].outputDir;
-  let uploadName = uploads[uploadId].title;
-  let renderOptions = {
-    concatAudio: true,
-    outputDir: outputDir,
-    resolution: resolution,
-    padding: padding,
-    selectedRows: selectedRows,
-    uploadNumber: uploadNumber,
-    uploadId: uploadId,
-    uploadName: uploadName,
-    concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
-    imageFilepath: imageFilepath,
-    outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
+  //if outputDir == unset, turn button red and reveal err message to user
+  if(!outputDir){
+    //set color of changeDir button
+    document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
+    //reveal message
+    document.querySelector(`#${uploadId}-concatRenderMsg`).style.visibility='visible';
+  }else{
+    //get uploadName
+    let uploadName = uploads[uploadId].title;
+    let renderOptions = {
+      concatAudio: true,
+      outputDir: outputDir,
+      resolution: resolution,
+      padding: padding,
+      selectedRows: selectedRows,
+      uploadNumber: uploadNumber,
+      uploadId: uploadId,
+      uploadName: uploadName,
+      concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
+      imageFilepath: imageFilepath,
+      outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
+    }
+    await render(renderOptions)
   }
-  await render(renderOptions)
+}
+
+async function debugRender(ffmpegArgs){
+  return new Promise(async function (resolve, reject) {
+    const getFfmpegPath = () => getFfPath('ffmpeg');
+    //const getFfprobePath = () => getFfPath('ffprobe');
+    const ffmpegPath = getFfmpegPath();
+    const process = execa(ffmpegPath, ffmpegArgs);
+    //handleProgress(process, cutDuration, renderStatusId);
+    const result = await process;
+    console.log('finished, result=', result)
+    resolve(result);
+  })
+}
+
+async function debugDir(){
+  console.log('debugDir()')
+  const returnVar = await ipcRenderer.invoke('set-dir');
+  console.log('debugDir() returnVar=', returnVar)
+  //return metadata;
 }
 
 //render using ffmpeg
-async function render(renderOptions) {
+async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoCmd=null) {
   return new Promise(async function (resolve, reject) {
     console.log('render*() options=', renderOptions)
     var selectedRows = renderOptions.selectedRows;
@@ -929,18 +1004,23 @@ async function render(renderOptions) {
       let renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
       addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
       //run ffmpeg command to concat audio
+      if(debugConcatAudioCmd){
+        console.log('setting debugConcatAudioCmd')
+        cmdArr=debugConcatAudioCmd;
+      }
+      console.log('concatAudio: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
+
       let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
       concatAudioOutput = concatAudioFilepath;
     }
 
     //render video
-    console.log(`render() scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
     cmdArr = [];
-    //console.log("render() concatAudioOutput=", concatAudioOutput)
-    //console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
-    //console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
+    console.log("render() concatAudioOutput=", concatAudioOutput)
+    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
+    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
     let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    //console.log("render() audioInput=", audioInput)
+    console.log("render() audioInput=", audioInput)
     let videoOutput = renderOptions.outputVideoFilepath;
     let imageFilepath = renderOptions.imageFilepath;
     cmdArr.push('-loop')
@@ -968,6 +1048,7 @@ async function render(renderOptions) {
     cmdArr.push('3M')
     cmdArr.push('-filter:v')
     if (padding.toLowerCase() == 'none') {
+      //console.log('NO PADDING')
       let width=parseInt(renderOptions.resolution.split('x')[0]);
       if(width % 2 !== 0){
         //width not divisible by two, add one extra pixel of padding
@@ -982,8 +1063,6 @@ async function render(renderOptions) {
 
       //console.log(`NO PADDING final: width=${width}, height=${height}`)
       cmdArr.push(`scale=w=${width}:h=${height}`)
-      //cmdArr.push('-vf')
-      //cmdArr.push('pad=ceil(iw/2)*2:ceil(ih/2)*2')  //-vf "pad=ceil(iw/2)*2:ceil(ih/2)*2"
     } else {
       //console.log('YES PADDING')
       cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
@@ -1001,7 +1080,12 @@ async function render(renderOptions) {
     //add to renderList
     renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
     addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
-    //run ffmpeg command to concat audio
+    //run ffmpeg command to render video
+    if(debugRenderVideoCmd){
+      console.log('setting debugRenderVideoCmd')
+      cmdArr=debugRenderVideoCmd;
+    }
+    console.log('renderVideo: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
 
     //delete concatAudio filepath if needed
@@ -2118,4 +2202,6 @@ async function openUrl(type) {
       open('https://martinbarker.me/digify')
   }
 
+  
+  
 }

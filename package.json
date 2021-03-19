@@ -1,7 +1,7 @@
 {
-  "name": "digify",
-  "productName": "Digify",
-  "version": "0.1.0",
+  "name": "rendertune",
+  "productName": "RenderTune",
+  "version": "0.2.1",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -9,8 +9,8 @@
     "build-win": "electron-builder build --win --publish never",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
-    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --enable-gpl --enable-pthreads --enable-nonfree  --enable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect && make && cd ..",
-    "build-mas":"electron-builder build --mac"
+    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
+    "build-mas": "electron-builder build --mac"
   },
   "browserslist": {
     "production": [
@@ -24,17 +24,13 @@
     "extraMetadata": {
       "main": "main.js"
     },
-    "extends": null,
     "directories": {
-      "buildResources": "build-resources"
+      "buildResources": "build"
     },
     "files": [
-      "src/**/*",
-      "*.js",
-      "src/index.html",
       "main.js",
-      "dist/**/*",
-      "package.json",
+      "src/",
+      "src/**/*",
       "build/**/*",
       "!node_modules/ffmpeg-ffprobe-static/ffmpeg",
       "!node_modules/ffmpeg-ffprobe-static/ffprobe"
@@ -42,20 +38,15 @@
     "asar": {
       "smartUnpack": false
     },
-    "appId": "com.martinbarker.digify",
+    "appId": "com.martinbarker.digifyunique",
     "artifactName": "${productName}-${os}.${ext}",
     "mac": {
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false,
-      "identity": null,
-      "appId": "com.martinbarker.digify",
+      "hardenedRuntime": true,
+      "appId": "com.martinbarker.digifyunique",
       "category": "public.app-category.productivity",
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
       "target": [
         "mas"
       ],
-      "icon": "build/icon.icns",
       "asarUnpack": [
         "node_modules/trash/**"
       ],
@@ -72,6 +63,7 @@
           "to": "ffprobe"
         }
       ],
+      "icon": "build/icon.icns",
       "fileAssociations": [
         {
           "ext": [
@@ -170,28 +162,24 @@
       ]
     },
     "mas": {
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "hardenedRuntime": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
       "provisioningProfile": "embedded.provisionprofile",
       "binaries": [
-        "dist/mas/Digify.app/Contents/Resources/ffmpeg",
-        "dist/mas/Digify.app/Contents/Resources/ffprobe",
-        "dist/mas/Digify.app/Contents/Resources/app.asar.unpacked/node_modules/trash/lib/macos-trash"
+        "dist/mas/RenderTune.app/Contents/Resources/ffmpeg",
+        "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
       ]
     },
     "win": {
       "target": [
-        "portable",
-        "zip",
         "appx"
       ],
       "extraResources": [
         "node_modules/ffmpeg-ffprobe-static/ffmpeg.exe",
         "node_modules/ffmpeg-ffprobe-static/ffprobe.exe"
       ],
-      "icon": "icon-build/app-512.png",
+      "icon": "build/icon.ico",
       "fileAssociations": [
         {
           "ext": [
@@ -290,38 +278,11 @@
       ]
     },
     "appx": {
-      "applicationId": "LosslessCut",
-      "identityName": "57275mifi.no.LosslessCut",
-      "publisher": "CN=2C479316-22A8-4D63-BC38-F0FB9AB0B974",
-      "publisherDisplayName": "mifi.no"
-    },
-    "linux": {
-      "executableName": "losslesscut",
-      "extraResources": [
-        "node_modules/ffmpeg-ffprobe-static/ffmpeg",
-        "node_modules/ffmpeg-ffprobe-static/ffprobe"
-      ],
-      "icon": "icon-build/app-512.png",
-      "target": [
-        "tar.bz2",
-        "AppImage",
-        "snap"
-      ]
-    },
-    "snap": {
-      "plugs": [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-        "removable-media"
-      ]
+      "applicationId": "RenderTune",
+      "identityName": "1845martinbarker.digify",
+      "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
+      "publisherDisplayName": "martinbarker",
+      "backgroundColor": "#a0beeb"
     }
   },
   "repository": {
@@ -342,9 +303,9 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron-builder-notarize": "^1.1.2",
     "electron": "^11.1.0",
-    "electron-builder": "^22.9.1"
+    "electron-builder": "^22.9.1",
+    "electron-builder-notarize": "^1.1.2"
   },
   "dependencies": {
     "bootstrap": "^4.6.0",
@@ -354,6 +315,7 @@
     "electron-builder-notarize": "^1.1.2",
     "electron-is-dev": "^1.2.0",
     "electron-notarize": "^1.0.0",
+    "electron-osx-sign": "^0.5.0",
     "electron-updater": "^4.3.5",
     "execa": "^5.0.0",
     "ffmpeg-ffprobe-static": "^4.3.1-rc.2",

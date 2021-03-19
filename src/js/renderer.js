@@ -1,5 +1,5 @@
 const remote = require('electron').remote;
-
+const app = require('electron')
 
 const win = remote.getCurrentWindow(); /* Note this is different to the
 html global `window` variable */
@@ -34,6 +34,7 @@ function handleWindowControls() {
 
     document.getElementById('close-button').addEventListener("click", event => {
         win.close();
+        app.quit();
     });
 
     // Toggle maximise/restore buttons when maximisation/unmaximisation occurs

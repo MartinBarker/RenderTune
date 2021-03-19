@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const { autoUpdater } = require('electron-updater');
+//const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
+var path = require('path');
 const sizeOf = require('image-size');
 require('dotenv').config();
 
@@ -31,7 +32,7 @@ function createWindow() {
 
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify();
+        //autoUpdater.checkForUpdatesAndNotify();
     });
 
 }
@@ -41,9 +42,9 @@ app.on('ready', () => {
 });
 
 app.on('window-all-closed', function () {
-    if (process.platform !== 'darwin') {
+    //if (process.platform !== 'darwin') {
         app.quit();
-    }
+    //}
 });
 
 app.on('activate', function () {
@@ -59,13 +60,15 @@ ipcMain.on('app_version', (event) => {
 
 //auto-update quiet and install
 ipcMain.on('restart_app', () => {
-    autoUpdater.quitAndInstall();
+    //autoUpdater.quitAndInstall();
 });
 
 //open folder dir picker window and return string of folder path
 ipcMain.handle('choose-dir', async (event) => {
     dir = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory']
+        properties: ['openDirectory'],
+        message: 'Choose your output folder',
+        buttonLabel: 'Select this folder'
     });
     return dir.filePaths[0];
 });
@@ -76,6 +79,21 @@ ipcMain.handle('get-audio-metadata', async (event, filename) => {
     //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
     return metadata;
 });
+
+ipcMain.handle('set-dir', async (event) => {
+    let defaultPath = path.dirname('/Users');
+        const { filePaths } = await dialog.showOpenDialog({
+          properties: ['openDirectory', 'createDirectory'],
+          defaultPath,
+          title: 'title',
+          message: 'message',
+          buttonLabel: 'buttonLabel'
+        });
+        return (filePaths && filePaths.length === 1) ? filePaths[0] : undefined;
+      
+});
+
+
 
 ipcMain.handle('get-image-resolution', async (event, filename) => {
     let width = '';
@@ -98,7 +116,7 @@ async function getResolution(filename){
         });
     })
 }
-
+/*
 //handle auto-update events
 autoUpdater.on('update-available', () => {
     mainWindow.webContents.send('update_available');
@@ -107,3 +125,4 @@ autoUpdater.on('update-available', () => {
 autoUpdater.on('update-downloaded', () => {
     mainWindow.webContents.send('update_downloaded');
 });
+*/
