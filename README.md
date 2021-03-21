@@ -11,7 +11,7 @@ RenderTune is a free, open-source electron app that can combine audio + image fi
 ## Releasing a new version for electron auto-update:
 - Change version number in package.json
 - Make sure you have local vars for GH_TOKEN (win) and APPLEID/APPLEIDPASS (mac)
-- (win) run `electron-builder build --win --publish always` or `npm run build-win-publish` to generate `RenderTune-Setup-#.#.#.exe`
+- (win) run `electron-builder build --win --publish always` or `npm run build-win-publish` to generate an win installer with auto-update (`dist/nsis-web/RenderTune-Setup-#.#.#.exe`), a portable exe with no auto-update (`dist/RenderTune #.#.#.exe`), and a win-unpacked folder
 
 ## Releasing new build on Mac Apple Store (mas):
 - compile and build the sandboxed ffmpeg binaries by running the buildffmpeg.sh script with this command: `sh buildffmpeg.sh ` which will create the ffmpeg-mac/ folder.
