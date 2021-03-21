@@ -62,7 +62,10 @@
       "appId": "com.martinbarker.digifyunique",
       "artifactName": "${productName}-${os}.${ext}",
       "category": "public.app-category.productivity",
-      "target": ["dmg","zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "asarUnpack": [
         "node_modules/trash/**"
       ],

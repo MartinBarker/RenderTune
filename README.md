@@ -15,9 +15,9 @@ RenderTune is a free, open-source electron app that can combine audio + image fi
 
 ## Releasing a new version for mac-auto-update, mas, win-auto-update, win-portable, and win-store:
 - Change version number in package.json, make sure that version does not have already have a drafted release in Github, make sure you have all env vars set locally and ffmpeg-mac/ folder if you are on mac.
-- mas: On Mac OS, change package.json to have mas target, build & sign with `npm run build-mas`, upload .app file for review.
+- Mac Apple Store (mas): On Mac OS, change package.json to have mas target, build & sign with `npm run build-mas`, upload .app file for review.
 - mac-auto-update: On Mac OS, change package.json to have dmg/zip targets, remove RenderTune.pkg we crated above if it exists since we don't want to package that inside our build, build & publish by running the command `npm run build-mac-publish`.
-- win-auto-update / win-portable / win-store: On Windows, build nsis-web/portable/appx targets with `npm run build-win-publish`, sign nsis-web with powershell command and upload for review.
+- win-auto-update / win-portable / win-store: On Windows, make sure env vars are set by running `echo %GH_TOKEN%` in command prompt terminal, build nsis-web/portable/appx targets with command `npm run build-win-publish`, sign nsis-web with powershell command and upload for review.
 
 ## Releasing a new version for electron apps with auto-update:
 - Change version number in package.json (this is the bare minimum to change).
