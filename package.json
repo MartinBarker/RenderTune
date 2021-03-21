@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -38,6 +38,11 @@
     ],
     "asar": {
       "smartUnpack": true
+    },
+    "win": {
+      "target": [
+        "nsis-web"
+      ]
     }
   },
   "repository": {
