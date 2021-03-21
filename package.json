@@ -7,6 +7,7 @@
   "scripts": {
     "start": "electron .",
     "build-win": "electron-builder build --win --publish never",
+    "build-win-publish": "electron-builder build --win --publish always",
     "build": "electron-builder build --linux --mac --win --publish never",
     "deploy": "electron-builder build --linux --mac --win --publish always",
     "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
@@ -20,7 +21,25 @@
       "electron 8.0"
     ]
   },
- 
+  "build": {
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "src/",
+      "src/**/*",
+      "build/**/*",
+      "node_modules/ffmpeg-ffprobe-static/ffmpeg",
+      "node_modules/ffmpeg-ffprobe-static/ffprobe"
+    ],
+    "asar": {
+      "smartUnpack": true
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/MartinBarker/rendertune.git"
@@ -59,6 +78,7 @@
     "ffmpeg-static-electron": "^2.0.1",
     "ffprobe-static": "^3.0.0",
     "ffprobe-static-electron": "^2.0.0",
+    "find-config": "^1.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",

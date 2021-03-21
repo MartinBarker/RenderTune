@@ -1315,15 +1315,31 @@ function getFfPath(cmd) {
     const isDev = window.require('electron-is-dev');
     const os = window.require('os');
     const platform = os.platform();
-    console.log("getFfPath() platform = ", platform)
+    console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
+    let winInstallerBuild=null;
+    let exeName = null;
     if (platform === 'darwin') {
       return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+    }else if(platform === 'win32'){
+      //for win installer build with auto-updating, it installs with 'app.asar.unpacked' filepath before node_modules
+      winInstallerBuild="app.asar.unpacked/"
+      exeName = `${cmd}.exe`;
+    }else{
+      exeName = cmd;
     }
-
+    
+    if(isDev){
+      exeName=`node_modules/ffmpeg-ffprobe-static/${exeName}`;
+    }else{
+      exeName=join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
+    }
+    console.log("getFfPath() returning exeName=", exeName);
+    return(exeName);
+/*
     const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
-    return isDev
-      ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
-      : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+    return isDev ? `node_modules/ffmpeg-ffprobe-static/${exeName}` : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+*/
+
   } catch (err) {
     console.log('getFfPath cmd=', cmd, '. err = ', err)
     return ("")

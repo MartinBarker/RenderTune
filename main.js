@@ -3,8 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 var path = require('path');
 const sizeOf = require('image-size');
-require('dotenv').config();
-
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 let mainWindow;
 
 function createWindow() {
