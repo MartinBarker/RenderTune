@@ -1316,8 +1316,8 @@ function getFfPath(cmd) {
     const os = window.require('os');
     const platform = os.platform();
     console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
-    let winInstallerBuild=null;
-    let exeName = null;
+    let winInstallerBuild="";
+    let exeName = "";
     if (platform === 'darwin') {
       return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
     }else if(platform === 'win32'){
@@ -1333,12 +1333,15 @@ function getFfPath(cmd) {
     }else{
       exeName=join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
     }
+
+    //if snap build downloaded from store has wrong ffmpeg filepath:
+    if(!isDev && platform==="linux" && exeName.match(/snap\/rendertune\/\d+(?=\/)\/resources/)){
+      console.log("getFfPath() snap linux path before: ", exeName)
+      exeName=exeName.replace(/snap\/rendertune\/\d+(?=\/)\/resources/, "/snap/rendertune/current/resources/app.asar.unpacked/")
+    }
+
     console.log("getFfPath() returning exeName=", exeName);
     return(exeName);
-/*
-    const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
-    return isDev ? `node_modules/ffmpeg-ffprobe-static/${exeName}` : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
-*/
 
   } catch (err) {
     console.log('getFfPath cmd=', cmd, '. err = ', err)
