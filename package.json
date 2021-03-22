@@ -224,7 +224,7 @@
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
     "electron": "^11.3.0",
-    "electron-builder": "^22.2.0",
+    "electron-builder": "^22.10.5",
     "electron-builder-notarize": "^1.1.2"
   },
   "dependencies": {

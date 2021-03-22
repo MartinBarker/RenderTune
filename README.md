@@ -28,7 +28,7 @@ RenderTune is a free, open-source electron app that can combine audio + image fi
 - (mac): Mac Apple Store (mas): Change package.json mac build to have mas target, build & sign with `npm run build-mas`, upload .app file for review.
 - (mac): mac-auto-update: Change package.json to have "dmg" and "zip" for mac build targets, remove RenderTune.pkg we crated above if it exists since we don't want to package that inside our build, build & publish by running the command `npm run build-mac-publish`.
 - (win) win-auto-update / win-portable / win-store: On Windows, make sure env vars are set by running `echo %GH_TOKEN%` in command prompt terminal, build nsis-web/portable/appx targets with command `npm run build-win-publish`, sign nsis-web with powershell command and upload for review.
-- (linux): Sign into snap store, make sure linux build targets is "snap", and run `npm run build-linux-publish`, new version should now be on snap store.
+- (linux): Sign into snap store on terminal, make sure linux build targets is "snap", and run `$ npm run build-snap`, then run `$ snapcraft upload --release=stable dist/rendertune_0.3.23_amd64.snap` new version should now be on snap store.
 
 ## Releasing a new version for electron apps with auto-update:
 - Change version number in package.json (this is the bare minimum to change).
