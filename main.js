@@ -1,10 +1,9 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-//const { autoUpdater } = require('electron-updater');
+const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 var path = require('path');
 const sizeOf = require('image-size');
-require('dotenv').config();
-
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 let mainWindow;
 
 function createWindow() {
@@ -20,19 +19,25 @@ function createWindow() {
         frame: false,
         backgroundColor: '#FFF',
     });
-    mainWindow.loadFile('./src/newindex.html'); //digify mas-attempt-2
-    //mainWindow.loadFile('./src/index.html'); //digify mas-attempt-2
+    mainWindow.loadFile('./src/newindex.html'); 
     
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
 
-    // Open the DevTools. 
-    //mainWindow.webContents.openDevTools()
-
+    
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {
-        //autoUpdater.checkForUpdatesAndNotify();
+        autoUpdater.checkForUpdatesAndNotify();
+    });
+    //notify that update is available
+    autoUpdater.on('update-available', () => {
+        mainWindow.webContents.send('update_available');
+    });
+
+    //notify that update has downloaded
+    autoUpdater.on('update-downloaded', () => {
+        mainWindow.webContents.send('update_downloaded');
     });
 
 }
@@ -58,9 +63,9 @@ ipcMain.on('app_version', (event) => {
     event.sender.send('app_version', { version: app.getVersion() });
 });
 
-//auto-update quiet and install
+//auto-update quit and install
 ipcMain.on('restart_app', () => {
-    //autoUpdater.quitAndInstall();
+    autoUpdater.quitAndInstall();
 });
 
 //open folder dir picker window and return string of folder path

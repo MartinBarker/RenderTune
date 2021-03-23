@@ -5,6 +5,30 @@ const { join } = window.require('path');
 var path = require('path');
 const execa = window.require('execa');
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Auto-Update Event Handlers:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+const notification = document.getElementById('notification');
+const message = document.getElementById('message');
+//if restart button is clicked:
+const restartButton = document.getElementById('restart-button');ipcRenderer.on('update_available', () => {
+  ipcRenderer.removeAllListeners('update_available');
+  message.innerText = 'A new update is available. Downloading now...';
+  notification.classList.remove('hidden');
+});
+//if update has been downloaded:
+ipcRenderer.on('update_downloaded', () => {
+  ipcRenderer.removeAllListeners('update_downloaded');
+  message.innerText = 'Update Downloaded. It will be installed on restart. Restart now?';
+  restartButton.classList.remove('hidden');
+  notification.classList.remove('hidden');
+});
+function closeNotification() {
+  notification.classList.add('hidden');
+}function restartApp() {
+  ipcRenderer.send('restart_app');
+}
+
 //require datatables
 require('datatables.net-dt')();
 require('datatables.net-rowreorder-dt')();
@@ -1291,15 +1315,34 @@ function getFfPath(cmd) {
     const isDev = window.require('electron-is-dev');
     const os = window.require('os');
     const platform = os.platform();
-    console.log("getFfPath() platform = ", platform)
+    console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
+    let winInstallerBuild="";
+    let exeName = "";
     if (platform === 'darwin') {
       return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+    }else if(platform === 'win32'){
+      //for win installer build with auto-updating, it installs with 'app.asar.unpacked' filepath before node_modules
+      winInstallerBuild="app.asar.unpacked/"
+      exeName = `${cmd}.exe`;
+    }else{
+      exeName = cmd;
+    }
+    
+    if(isDev){
+      exeName=`node_modules/ffmpeg-ffprobe-static/${exeName}`;
+    }else{
+      exeName=join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
     }
 
-    const exeName = platform === 'win32' ? `${cmd}.exe` : cmd;
-    return isDev
-      ? `node_modules/ffmpeg-ffprobe-static/${exeName}`
-      : join(window.process.resourcesPath, `node_modules/ffmpeg-ffprobe-static/${exeName}`);
+    //if snap build downloaded from store has wrong ffmpeg filepath:
+    if(!isDev && platform==="linux" && exeName.match(/snap\/rendertune\/\d+(?=\/)\/resources/)){
+      console.log("getFfPath() snap linux path before: ", exeName)
+      exeName=exeName.replace(/snap\/rendertune\/\d+(?=\/)\/resources/, "/snap/rendertune/current/resources/app.asar.unpacked/")
+    }
+
+    console.log("getFfPath() returning exeName=", exeName);
+    return(exeName);
+
   } catch (err) {
     console.log('getFfPath cmd=', cmd, '. err = ', err)
     return ("")

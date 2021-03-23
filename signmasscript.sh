@@ -1,18 +1,19 @@
 #!/bin/bash
+CWD=$(pwd)
 
 # Name of your app.
 APP="RenderTune"
 # The path of your app to sign.
-APP_PATH="/Users/martinbarker/Documents/projects/RenderTune/dist/mas/RenderTune.app"
+APP_PATH="${CWD}/dist/mas/RenderTune.app"
 # The path to the location you want to put the signed package.
-RESULT_PATH="/Users/martinbarker/Documents/projects/RenderTune/$APP.pkg"
+RESULT_PATH="${CWD}/$APP.pkg"
 # The name of certificates you requested.
 APP_KEY="3rd Party Mac Developer Application: Martin Barker (LV6WXG529F)"
 INSTALLER_KEY="3rd Party Mac Developer Installer: Martin Barker (LV6WXG529F)"
 # The path of your plist files.
-CHILD_PLIST="/Users/martinbarker/Documents/projects/RenderTune/child.plist"
-PARENT_PLIST="/Users/martinbarker/Documents/projects/RenderTune/parent.plist"
-LOGINHELPER_PLIST="/Users/martinbarker/Documents/projects/RenderTune/loginhelper.plist"
+CHILD_PLIST="${CWD}/child.plist"
+PARENT_PLIST="${CWD}/parent.plist"
+LOGINHELPER_PLIST="${CWD}/loginhelper.plist"
 
 FRAMEWORKS_PATH="$APP_PATH/Contents/Frameworks"
 

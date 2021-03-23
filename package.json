@@ -1,16 +1,20 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.2.1",
+  "version": "0.4.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build-win": "electron-builder build --win --publish never",
-    "build": "electron-builder build --linux --mac --win --publish never",
-    "deploy": "electron-builder build --linux --mac --win --publish always",
-    "download-ffmpeg": "git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-mac && cd ffmpeg-mac && ./configure pkg_config='pkg-config --static' --pkg-config-flags='--static' --libdir=/usr/local/lib --extra-version=ntd_20150128 --disable-shared --disable-lzma --enable-gpl --enable-pthreads --enable-nonfree --disable-libass --enable-libfdk-aac  --enable-libmp3lame  --enable-libx264 --enable-static --enable-filters --enable-runtime-cpudetect  && make && cd ..",
-    "build-mas": "electron-builder build --mac"
+    "build-win-publish": "electron-builder build --win --publish always",
+    "build-mac": "electron-builder build --mac --publish never",
+    "build-mac-publish": "electron-builder build --mac --publish always",
+    "build-mas": "electron-builder build --mac && sh signmasscript.sh",
+    "build-linux": "electron-builder build --linux",
+    "build-snap": "electron-builder build --linux && echo 'run snapcraft upload command'",
+    "build-linux-publish": "electron-builder build --linux --publish always",
+    "download-ffmpeg": "sh buildffmpeg.sh"
   },
   "browserslist": {
     "production": [
@@ -24,6 +28,7 @@
     "extraMetadata": {
       "main": "main.js"
     },
+    "afterSign": "scripts/notarize.js",
     "directories": {
       "buildResources": "build"
     },
@@ -32,20 +37,38 @@
       "src/",
       "src/**/*",
       "build/**/*",
-      "!node_modules/ffmpeg-ffprobe-static/ffmpeg",
-      "!node_modules/ffmpeg-ffprobe-static/ffprobe"
+      "node_modules/ffmpeg-ffprobe-static/ffmpeg",
+      "node_modules/ffmpeg-ffprobe-static/ffprobe"
     ],
     "asar": {
-      "smartUnpack": false
+      "smartUnpack": true
     },
-    "appId": "com.martinbarker.digifyunique",
-    "artifactName": "${productName}-${os}.${ext}",
+    "win": {
+      "target": [
+        "nsis-web",
+        "portable",
+        "appx"
+      ]
+    },
+    "appx": {
+      "applicationId": "RenderTune",
+      "identityName": "1845martinbarker.digify",
+      "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
+      "publisherDisplayName": "martinbarker",
+      "backgroundColor": "#a0beeb"
+    },
     "mac": {
       "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
       "appId": "com.martinbarker.digifyunique",
+      "artifactName": "${productName}-${os}.${ext}",
       "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
       "target": [
-        "mas"
+        "dmg",
+        "zip"
       ],
       "asarUnpack": [
         "node_modules/trash/**"
@@ -63,7 +86,6 @@
           "to": "ffprobe"
         }
       ],
-      "icon": "build/icon.icns",
       "fileAssociations": [
         {
           "ext": [
@@ -171,123 +193,21 @@
         "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
       ]
     },
-    "win": {
+    "linux": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
       "target": [
-        "appx"
+        "AppImage",
+        "snap"
       ],
-      "extraResources": [
-        "node_modules/ffmpeg-ffprobe-static/ffmpeg.exe",
-        "node_modules/ffmpeg-ffprobe-static/ffprobe.exe"
-      ],
-      "icon": "build/icon.ico",
-      "fileAssociations": [
-        {
-          "ext": [
-            "webm",
-            "mkv",
-            "flv",
-            "vob",
-            "ogv",
-            "drc",
-            "gif",
-            "gifv",
-            "mng",
-            "avi",
-            "mts",
-            "m2ts",
-            "ts",
-            "mov",
-            "qt",
-            "wmv",
-            "yuv",
-            "rm",
-            "rmvb",
-            "asf",
-            "amv",
-            "mp4",
-            "m4v",
-            "mpg",
-            "mp2",
-            "mpeg",
-            "mpe",
-            "mpv",
-            "m2v",
-            "svi",
-            "3gp",
-            "3g2",
-            "mxf",
-            "roq",
-            "nsv",
-            "f4v",
-            "f4p",
-            "f4a",
-            "f4b"
-          ],
-          "name": "Video",
-          "description": "Video files",
-          "role": "Viewer"
-        },
-        {
-          "ext": [
-            "aa",
-            "aac",
-            "aax",
-            "act",
-            "aiff",
-            "alac",
-            "amr",
-            "ape",
-            "au",
-            "awb",
-            "dct",
-            "dss",
-            "dvf",
-            "flac",
-            "gsm",
-            "iklax",
-            "ivs",
-            "m4a",
-            "m4b",
-            "m4p",
-            "mmf",
-            "mp3",
-            "mpc",
-            "msv",
-            "nmf",
-            "nsf",
-            "ogg",
-            "oga",
-            "mogg",
-            "opus",
-            "ra",
-            "rf64",
-            "sln",
-            "tta",
-            "voc",
-            "vox",
-            "wav",
-            "wma",
-            "wv",
-            "8svx",
-            "cda"
-          ],
-          "name": "Audio",
-          "description": "Audio files",
-          "role": "Viewer"
-        }
+      "asarUnpack": [
+        "node_modules/trash/**"
       ]
-    },
-    "appx": {
-      "applicationId": "RenderTune",
-      "identityName": "1845martinbarker.digify",
-      "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
-      "publisherDisplayName": "martinbarker",
-      "backgroundColor": "#a0beeb"
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MartinBarker/digify.git"
+    "url": "https://github.com/MartinBarker/rendertune.git"
   },
   "keywords": [
     "ffmpeg"
@@ -303,8 +223,8 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron": "^11.1.0",
-    "electron-builder": "^22.9.1",
+    "electron": "^11.3.0",
+    "electron-builder": "^22.10.5",
     "electron-builder-notarize": "^1.1.2"
   },
   "dependencies": {
@@ -323,6 +243,7 @@
     "ffmpeg-static-electron": "^2.0.1",
     "ffprobe-static": "^3.0.0",
     "ffprobe-static-electron": "^2.0.0",
+    "find-config": "^1.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",
@@ -334,5 +255,8 @@
     "popper.js": "^1.16.1",
     "readline": "^1.3.0",
     "trash": "^6.1.1"
+  },
+  "resolutions": {
+    "electron-builder": "22.2.0"
   }
 }
