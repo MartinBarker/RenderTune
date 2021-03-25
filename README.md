@@ -46,9 +46,10 @@ RenderTune is a free, open-source electron app that can combine audio + image fi
 - Build the dist/win-unpacked folder by running the command `electron-builder build --win`
 - Once the windows build has finished, run the following powershell command to tag and create an .appx file:
 ```
-electron-windows-store --input-directory C:\Users\marti\Documents\projects\RenderTune\dist\win-unpacked --output-directory C:\Users\marti\Documents\projects\RenderTuneAppx --package-version 0.2.1.0 --package-name RenderTune --package-display-name 'RenderTune' --publisher-display-name 'martinbarker' --identity-name 1845martinbarker.digify -a C:\Users\marti\Documents\projects\RenderTune-cleanbuild\Resources\
-- Note: To be able to run this powershell command you need to have a Windows SDK downloaded: https://www.electronjs.org/docs/tutorial/windows-store-guide
+electron-windows-store --input-directory C:\Users\marti\Documents\projects\rendertune-v0.5.0\dist\win-unpacked --output-directory C:\Users\marti\Documents\projects\RenderTuneAppx --package-version 0.5.0.0 --package-name RenderTune --package-display-name 'RenderTune' --publisher-display-name 'martinbarker' --identity-name 1845martinbarker.digify -a C:\Users\marti\Documents\projects\rendertune-v0.5.0\Resources\
 ```
+- Note: To be able to run this powershell command you need to have a Windows SDK downloaded: https://www.electronjs.org/docs/tutorial/windows-store-guide
+
 - Take the outputted .appx file and submit it to the Windows Store (make sure to include app tile images in the submission)
 
 ## Release new build on linux snap store:
