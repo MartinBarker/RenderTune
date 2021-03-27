@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -11,8 +11,6 @@
     "build-mac": "electron-builder build --mac --publish never",
     "build-mac-publish": "electron-builder build --mac --publish always",
     "build-mas": "electron-builder build --mac && sh signmasscript.sh",
-    "build-linux": "electron-builder build --linux",
-    "build-snap": "electron-builder build --linux && echo 'run snapcraft upload command'",
     "build-linux-publish": "electron-builder build --linux --publish always",
     "download-ffmpeg": "sh buildffmpeg.sh"
   },
