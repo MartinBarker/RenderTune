@@ -22,11 +22,11 @@ If you want to download RenderTune without using the above stores, you can downl
 - Use the files table to reorder your songs by sorting the columns or dragging each song manually.
     <img src="./build/RenderTune-table.gif" style="float:left" alt="screenshot" />
 - Concatenate multiple audio files to play one after another in a single outputted video file.  
-    <img src="./build/RenderTune-screenshot-concat.png" style="float:left" alt="screenshot">
+    <img src="./build/RenderTune-screenshot-concat.PNG" >
 - Batch render multiple videos at once and customize options for each video.
-    <img src="./build/RenderTune-screenshot-batch.png" style="float:left" alt="screenshot">
+    <img src="./build/RenderTune-screenshot-batch.PNG" style="float:left" alt="screenshot">
 - Video Render Options:
-        <img src="./build/RenderTune-screenshot-options.png" style="float:left" alt="screenshot">
+        <img src="./build/RenderTune-screenshot-options.PNG" style="float:left" alt="screenshot">
     - Image: Change which image to render your video with.
     - Padding: Add white or black padding to the outputted video frame.
         <img src="./build/RenderTune-screenshot-padding.png" style="float:left" alt="screenshot">
