@@ -204,11 +204,11 @@ newUploadBox.addEventListener('dragleave', (event) => {
 
 //when new upload modal is hidden, clear input values
 $('#new-upload-modal').on('hidden.bs.modal', function (e) {
-  document.getElementById('newUploadImageFileList').innerHTML = ''
-  document.getElementById('newUploadAudioFileList').innerHTML = ''
+  document.getElementById('newUploadAudioFilesDisplay2').innerHTML='';
+  document.getElementById('newUploadImageFilesDisplay2').innerHTML='';
   haveNewFilesBeenAdded = false;
   newUploadFiles = {}
-  fileList = null;
+  NewUploadFiles = null;
   $(this)
     .find("input,textarea,select")
     .val('')
@@ -236,31 +236,32 @@ $('#new-upload-modal').on('shown.bs.modal', function (e) {
   $('input:text:visible:first', this).focus();
 })
 
-//when files are added to popup modal either by drag&drop or file selection
-let fileList = null;
+//create NewUploadFiles object to store files that the user is selecting
+let NewUploadFiles = null;
+//Call this function when files are added to a new upload in the popup modal either by drag&drop or file selection
 async function newUploadFileDropEvent(event, preventDefault) {
   let haveNewFilesBeenAdded = false;
   //reveal loading spinner
   document.getElementById('loadingFilesSpinner').style.display = "block";
-
+  //begin processing files
   if (preventDefault) {
     event.preventDefault();
     event.stopPropagation();
   }
-
-  //create fileList if it doesn't exist
-  if (!fileList) {
-    fileList = { 'images': [], 'audio': [] }
+  //create NewUploadFiles object to store the NewUploadFiles if it doesn't exist
+  if (!NewUploadFiles) {
+    NewUploadFiles = { 'images': [], 'audio': [] }
   }
-  console.log('event.dataTransfer.files = ', event.dataTransfer.files)
-  //sort all files into audio / images 
+  //console.log('event.dataTransfer.files = ', event.dataTransfer.files)
+
+  //sort all files into either audio or images 
   for (const f of event.dataTransfer.files) {
     // Using the path attribute to get absolute file path 
     if ((f.type).includes('image')) {
       //if image filepath does not already exist in newUploadTempFiles:
-      if (fileList.images.filter(e => e.path === `${f.path}`).length == 0) {
-        fileList.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
-        console.log('pushing image')
+      if (NewUploadFiles.images.filter(e => e.path === `${f.path}`).length == 0) {
+        NewUploadFiles.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+        //console.log('pushing image')
         haveNewFilesBeenAdded = true;
       }
 
@@ -270,7 +271,7 @@ async function newUploadFileDropEvent(event, preventDefault) {
       var splitType = (f.type).split('/')
       var audioFormat = splitType[1]
       audioFileInfo.format = audioFormat;
-
+      //get audio metadata
       const metadata = await getMetadata(f.path);
       audioFileInfo.album = metadata.common.album || "";
       audioFileInfo.year = metadata.common.year || "";
@@ -278,9 +279,9 @@ async function newUploadFileDropEvent(event, preventDefault) {
       audioFileInfo.trackNum = metadata.common.track.no || "";
       audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
 
-      //push results if that file isnt alread inside .audio
-      if (fileList.audio.filter(e => e.path === `${f.path}`).length == 0) {
-        fileList.audio.push({
+      //push results if that file isn't already inside .audio
+      if (NewUploadFiles.audio.filter(e => e.path === `${f.path}`).length == 0) {
+        NewUploadFiles.audio.push({
           'path': f.path,
           'type': audioFormat,
           'name': f.name,
@@ -291,37 +292,62 @@ async function newUploadFileDropEvent(event, preventDefault) {
           "artist": audioFileInfo.artist,
 
         })
-        console.log('pushing audio')
+        //console.log('pushing audio')
         haveNewFilesBeenAdded = true;
       }
     }
   }
 
-  console.log('newUploadFileDropEvent() fileList = ', fileList, '. haveNewFilesBeenAdded = ', haveNewFilesBeenAdded)
+  //console.log('newUploadFileDropEvent() NewUploadFiles = ', NewUploadFiles, '. haveNewFilesBeenAdded = ', haveNewFilesBeenAdded)
 
-  //if new files have been added, update UI
+  //if new files have been added, update UI to display contents of NewUploadFiles
   if (haveNewFilesBeenAdded) {
-    var imageFilesHtml = ''
-    var audioFilesHtml = ''
-    for (const [key, value] of Object.entries(fileList)) {
-      //console.log('DISPLAY IN UI: key = ', key, ', value = ', value)
+    var imageFilesHtml = '';
+    var imageFilesElem = document.createElement('div');
+    var audioFilesHtml = '';
+    //get img display parent <ul> element from html
+    //for each new file
+    for (const [key, value] of Object.entries(NewUploadFiles)) {
       if (key == 'images') {
+        //for each image file
         for (var i = 0; i < value.length; i++) {
-          imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`
+          console.log("display this image:", value)
+          //update text files display
+          //imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`;
+          
+          //check if img display parent <ul> if it contains an <li> element with matching imgFilePath 
+          //let doesLiExist = true;
+          //if(!doesLiExist){
+
+            //create new ul element for image that we can display to the user (add attribute imgFilePath)
+            var ul = document.createElement('ul');
+            ul.setAttribute('imgFilePath',`${value[i]['path']}`);
+            ul.innerHTML=`${value[i]['name']}<br>`
+            //create new img element we can add to that ul
+            var imgElem = document.createElement('img');
+            imgElem.setAttribute('src',`${value[i]['path']}`);
+            imgElem.style.width = "40%";
+            //imgElem.setAttribute('style',`max-width:50%;`);
+
+            ul.appendChild(imgElem);
+            imageFilesElem.appendChild(ul);
+            console.log("added this elem:", ul)
+          //}
         }
 
       } else if (key == 'audio') {
-        //for (const [audioFormat, audioFiles] of Object.entries(newUploadFiles['audio'])) {
+        //for each audio file
         for (var x = 0; x < value.length; x++) {
-          //console.log('f = ', audioFiles[x]['name'])
-          audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`
+          //update text files display
+          audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`;
         }
-        //}
       }
     }
-
-    document.getElementById('newUploadImageFileList').innerHTML = imageFilesHtml
-    document.getElementById('newUploadAudioFileList').innerHTML = audioFilesHtml
+    console.log('audioFilesHtml=', audioFilesHtml)
+    console.log("newUploadAudioFilesDisplay2=", newUploadAudioFilesDisplay2)
+    document.getElementById('newUploadAudioFilesDisplay2').innerHTML=audioFilesHtml;
+    document.getElementById('newUploadImageFilesDisplay2').innerHTML='';
+    document.getElementById('newUploadImageFilesDisplay2').appendChild(imageFilesElem);
   }
   //hide loading spinner
   document.getElementById('loadingFilesSpinner').style.display = "none";
@@ -335,11 +361,11 @@ async function getMetadata(filename) {
 
 //when you click 'create' in the new upload modal
 async function addNewUpload(uploadTitle) {
-  console.log('addNewUpload() uploadTitle=', uploadTitle, '. fileList=', fileList)
-  //if fileList exists:
-  if (fileList) {
+  console.log('addNewUpload() uploadTitle=', uploadTitle, '. NewUploadFiles=', NewUploadFiles)
+  //if NewUploadFiles exists:
+  if (NewUploadFiles) {
     //if there are no images:
-    if (fileList.images.length == 0) {
+    if (NewUploadFiles.images.length == 0) {
       document.getElementById('newUploadAlert').style.display = "block";
 
       //else if there are images:
@@ -365,7 +391,7 @@ async function addNewUpload(uploadTitle) {
       let outputDir = null;
       let outputFolder = "unset";
       //get default output dir from first image filepath for non-mac OS
-      let firstImgPath = fileList.images[0].path;
+      let firstImgPath = NewUploadFiles.images[0].path;
       const os = window.require('os');
       const platform = os.platform();
       if (platform === 'darwin') {
@@ -376,8 +402,8 @@ async function addNewUpload(uploadTitle) {
       }
 
       let uploadKey = `upload-${uploadNumber}`
-      let uploadObj = { 'title': uploadTitle, 'files': fileList, 'outputDir': outputDir, 'outputFolder': outputFolder }
-      fileList = null;
+      let uploadObj = { 'title': uploadTitle, 'files': NewUploadFiles, 'outputDir': outputDir, 'outputFolder': outputFolder }
+      NewUploadFiles = null;
 
       //add to uploadList obj
       await addToUploadList(uploadKey, uploadObj)
@@ -528,15 +554,18 @@ async function createUploadPage(upload, uploadId) {
   let imageFilesCount = upload.files.images.length;
   $("#upload-pages-container").append(`
     <div class="col-lg-12 upload">
+      <!-- Upload Header Details -->
       <div>
-        <a id='uploadTitle'><strong>${upload.title}</strong></a> <a>(${audioFilesCount} audio files | ${imageFilesCount} image files)</a>
-      
+        <!-- Upload Title -->
+        <a id='uploadTitle'><strong>${upload.title}</strong></a> 
+        <!-- Image FIles -->
+        <a>(${audioFilesCount} audio files | ${imageFilesCount} image files)</a>
       </div>
-
-      <hr>
-
-      <h4>Files Table:</h4>
-      <!-- files table -->
+      <!-- Upload Header Images -->
+      <div id="visibleUploadImagesDisplay" style="height: 200px;overflow-x: scroll;margin-right: 16px;">
+      </div>
+      <h4>Tracklist:</h4>
+      <!-- Tracklist table -->
       <div class='scroll'>
         <table id="${uploadId}_table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
@@ -657,7 +686,7 @@ async function createUploadPage(upload, uploadId) {
     width: 100%;
     margin-right: 50px;">
       <div class="card-header">
-        Combine <a class='${uploadId}-numSelected'>0</a> songs into 1 video <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="This will combine however many audio files you have selected in the Files Table into a single videofile."></i>
+        Combine <a class='${uploadId}-numSelected'>0</a> songs into 1 video <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="This will combine however many audio files you have selected in the Tracklist Table into a single video file."></i>
       </div>
       <div class="card-body">
         <p class="card-text">
@@ -750,7 +779,38 @@ async function createUploadPage(upload, uploadId) {
     document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
   }
 
-  //create files table
+  //create Images Display elem
+  let imgDisplayElemContainer = document.createElement('div');
+  imgDisplayElemContainer.setAttribute("class","container");
+  let imgDisplayElemRow = document.createElement('div');
+  imgDisplayElemRow.setAttribute("class","row");
+  //imgDisplayElemRow.setAttribute("style","overflow: scroll;");
+  //for each image
+  for(let i = 0; i < uploads[uploadId].files.images.length; i++){
+    let imgDisplayElemDiv=document.createElement('div');
+    imgDisplayElemDiv.setAttribute("class","col-sm");
+    imgDisplayElemDiv.setAttribute("style","position: relative;min-width: 200px;min-height: 200px;"); 
+
+  
+    let imgPath = uploads[uploadId].files.images[i].path;
+    let filename =  uploads[uploadId].files.images[i].name;
+    let imgElement = document.createElement('img');
+    imgElement.setAttribute("src",imgPath);
+    imgElement.setAttribute("style","max-width: 150px;min-width: 150px;");
+
+    let imgElementFilename = document.createElement('p');
+    imgElementFilename.innerText=filename;
+
+    imgDisplayElemDiv.appendChild(imgElement);
+    imgDisplayElemDiv.appendChild(imgElementFilename);
+    imgDisplayElemRow.appendChild(imgDisplayElemDiv)
+    imgDisplayElemContainer.appendChild(imgDisplayElemRow)
+  }
+
+  //add images display elem to upload 
+  document.getElementById('visibleUploadImagesDisplay').appendChild(imgDisplayElemContainer);
+
+  //create Tracklist table
   createFilesTable(upload, uploadId);
 
   //create individual renders table
@@ -1780,10 +1840,10 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
   //get upload
   let upload = uploads[uploadId];
-  //get and clear individualrenders table
+  //get and clear individual renders table
   var individualRendersTable = $(`#${uploadId}-individual-table`).DataTable();
   individualRendersTable.clear();
-  //get files table
+  //get Tracklist table
   var table = $(`#${uploadTableId}`).DataTable()
   //get number of selected rows
   var selectedRows = table.rows('.selected').data()

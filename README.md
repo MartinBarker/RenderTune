@@ -21,7 +21,7 @@ If you want to download RenderTune without using the above stores, you can downl
 <img src="./build/RenderTune-screenshot-full.png" style="float:left" alt="screenshot" />
 
 ## Features:
-- Use the files table to reorder your songs by sorting the columns or dragging each song manually.
+- Use the Tracklist Table to reorder your songs by sorting the columns or dragging each song manually.
     <img src="./build/RenderTune-table.gif" style="float:left" alt="screenshot" />
 - Concatenate multiple audio files to play one after another in a single outputted video file.  
     <img src="./build/RenderTune-screenshot-concat.PNG" >
