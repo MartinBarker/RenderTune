@@ -1,7 +1,7 @@
-### RenderTune
+### RenderTune 
 RenderTune is a free, open-source electron app that uses ffmpeg to combine audio + image file(s) into video files.
 <br>
-<img src="./build/icon.png" style="max-width:20%; float:center" alt="screenshot" />
+<img src="./build/icon.png" style="width:200px; float:center" alt="icon" />
 <br>
 
 ## Download
