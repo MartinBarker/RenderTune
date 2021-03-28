@@ -84,3 +84,11 @@ RenderTune.exe
 Source code (zip)
 Source code (tar.gz)
 ```
+
+## Roadmap:
+This list is of future updates / improvements I plan to make for RenderTune (If you can think of any features you would like, contact me and I will include them in the roadmap)
+- UI Improvements: Better render status options, more efficent code.
+- Add API to electron app so you can trigger renders using POST route.
+- New Feature: Append/Prepend video file to video we are rendering (Add MP4 intro/outro, add MP3 intro/outro)
+- New Feautre: Record, split, export and tag audio files.
+- New Feature: Upload files to YouTube / tag
