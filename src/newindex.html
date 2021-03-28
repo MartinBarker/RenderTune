@@ -38,7 +38,7 @@
             </div>
 
             <div id="window-title">
-                <img style="z-index: 3; height:30px; " src="../build/icon-white.png">
+                <img style="z-index: 3; height:30px; " src="../build/new-icon-white.png">
                 <span style="margin-left:30px;">RenderTune <span id="version"></span></span> <br>
             </div>
 
@@ -137,12 +137,26 @@
                                             or <input id='newUploadFileSelection' type="file" name="filefield"
                                                 multiple="multiple"></h5>
 
-                                        <strong>Image Files: </strong>
-                                        <div id='newUploadImageFileList'></div>
-
                                         <br>
-                                        <strong>Audio Files: </strong>
-                                        <div id='newUploadAudioFileList'></div>
+                                        
+                                        <!-- new files display 2 -->
+                                        <hr>
+                                        <div class="container">
+                                            <div class="row">
+                                              <div class="col-sm">
+                                                <strong>Audio Files:</strong>
+                                                <div id='newUploadAudioFilesDisplay2'>
+
+                                                </div>
+                                              </div>
+                                              <div class="col-sm">
+                                                <strong>Image Files:</strong>
+                                                <div id='newUploadImageFilesDisplay2'>
+
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
 
                                     </div>
                                 </div>
@@ -275,6 +289,7 @@
                                 onclick="openUrl('web')">https://martinbarker.me/rendertune</a></p>
                             <p>View code here:<a style='color: blue; cursor: pointer;'
                                 onclick="openUrl('github')">https://github.com/MartinBarker/rendertune</a></p>
+                            <p>Or email me directly at martinbarker99@gmail.com</p>
                             
                             <h1>Tutorial:</h1>
                             <p>Click the <svg 

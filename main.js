@@ -18,6 +18,7 @@ function createWindow() {
         //framless
         frame: false,
         backgroundColor: '#FFF',
+        icon: "./build/icon.png"
     });
     mainWindow.loadFile('./src/newindex.html'); 
     
