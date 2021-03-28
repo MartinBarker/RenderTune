@@ -3,6 +3,9 @@
 RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.
 <img src="./build/RenderTune-screenshot-small.png" style="float:left" alt="screenshot">
 
+## Tutorial Video (Click To Watch):
+<a target="_blank" href="https://www.youtube.com/watch?v=LVnacPxquT4"><img target="_blank" src="https://i.imgur.com/Hr2ThFG.png" width="400" height="400" style="float:left" alt="RenderTune Tutorial Video" /></a>
+
 ## Download
 RenderTune is available for free on the Mac Apple Store, Windows Store, and Linux Snap Store. Click any of the below badges to view the store page.
 
@@ -18,7 +21,7 @@ If you want to download RenderTune without using the above stores, you can downl
 - [Linux AppImage](https://github.com/martinbarker/rendertune/releases/latest/download/RenderTune.AppImage)
 - [More releases](https://github.com/martinbarker/rendertune/releases/latest)
 
-<img src="./build/RenderTune-screenshot-full.png" style="float:left" alt="screenshot" />
+<img src="./build/RenderTune-screenshot-full.png"=250x style="float:left" alt="screenshot" />
 
 ## Features:
 - Use the Tracklist Table to reorder your songs by sorting the columns or dragging each song manually.
