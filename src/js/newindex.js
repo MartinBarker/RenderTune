@@ -968,7 +968,11 @@ async function individRenderPrep(uploadId, uploadNumber) {
           outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
         }
         
-        await render(renderOptions)
+        try{
+          await render(renderOptions)
+        }catch(err){
+          console.log("error batch rendering videos: ", err)
+        }
         
       }
     }
@@ -1017,7 +1021,11 @@ async function concatRenderPrep(uploadId, uploadNumber) {
       imageFilepath: imageFilepath,
       outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
     }
-    await render(renderOptions)
+    try{
+      await render(renderOptions)
+    }catch(err){
+      console.log("error rendering concatAudio video: ", err)
+    }
   }
 }
 
@@ -1063,7 +1071,9 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
     }
 
     //if we need to combine audio, do it first
+    let audioConcatErr = null;
     if (renderOptions.concatAudio) {
+      console.log("concat audio first")
       let concatAudioFilepath = renderOptions.concatAudioFilepath;
       //add inputs
       let inputs = '';
@@ -1094,90 +1104,107 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
       }
       console.log('concatAudio: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
 
-      let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+      try{
+        let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+      }catch(err){
+        console.log("error running concat audio ffmpeg command: ", err)
+        displayErrInRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
+        audioConcatErr=err;
+      }
       concatAudioOutput = concatAudioFilepath;
     }
 
-    //render video
-    cmdArr = [];
-    console.log("render() concatAudioOutput=", concatAudioOutput)
-    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
-    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
-    let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    console.log("render() audioInput=", audioInput)
-    let videoOutput = renderOptions.outputVideoFilepath;
-    let imageFilepath = renderOptions.imageFilepath;
-    cmdArr.push('-loop')
-    cmdArr.push('1')
-    cmdArr.push('-framerate')
-    cmdArr.push('2')
-    cmdArr.push('-i')
-    cmdArr.push(`${imageFilepath}`)
-    cmdArr.push('-i')
-    cmdArr.push(`${audioInput}`)
-    cmdArr.push('-y')
-    cmdArr.push('-acodec')
-    cmdArr.push('copy')
-    cmdArr.push('-b:a')
-    cmdArr.push('320k')
-    cmdArr.push('-vcodec')
-    cmdArr.push('libx264')
-    cmdArr.push('-b:v')
-    cmdArr.push('8000k')
-    cmdArr.push('-maxrate')
-    cmdArr.push('8000k')
-    cmdArr.push('-minrate')
-    cmdArr.push('8000k')
-    cmdArr.push('-bufsize')
-    cmdArr.push('3M')
-    cmdArr.push('-filter:v')
-    if (padding.toLowerCase() == 'none') {
-      //console.log('NO PADDING')
-      let width=parseInt(renderOptions.resolution.split('x')[0]);
-      if(width % 2 !== 0){
-        //width not divisible by two, add one extra pixel of padding
-        width=width+1
+    //render video if there was no error with concatAudio
+    if(!audioConcatErr){
+      cmdArr = [];
+      console.log("render() concatAudioOutput=", concatAudioOutput)
+      console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
+      console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
+      let audioInput = concatAudioOutput || renderOptions.audioFilepath;
+      console.log("render() audioInput=", audioInput)
+      let videoOutput = renderOptions.outputVideoFilepath;
+      let imageFilepath = renderOptions.imageFilepath;
+      cmdArr.push('-loop')
+      cmdArr.push('1')
+      cmdArr.push('-framerate')
+      cmdArr.push('2')
+      cmdArr.push('-i')
+      cmdArr.push(`${imageFilepath}`)
+      cmdArr.push('-i')
+      cmdArr.push(`${audioInput}`)
+      cmdArr.push('-y')
+      cmdArr.push('-acodec')
+      cmdArr.push('copy')
+      cmdArr.push('-b:a')
+      cmdArr.push('320k')
+      cmdArr.push('-vcodec')
+      cmdArr.push('libx264')
+      cmdArr.push('-b:v')
+      cmdArr.push('8000k')
+      cmdArr.push('-maxrate')
+      cmdArr.push('8000k')
+      cmdArr.push('-minrate')
+      cmdArr.push('8000k')
+      cmdArr.push('-bufsize')
+      cmdArr.push('3M')
+      cmdArr.push('-filter:v')
+      if (padding.toLowerCase() == 'none') {
+        //console.log('NO PADDING')
+        let width=parseInt(renderOptions.resolution.split('x')[0]);
+        if(width % 2 !== 0){
+          //width not divisible by two, add one extra pixel of padding
+          width=width+1
+        }
+  
+        let height=parseInt(renderOptions.resolution.split('x')[1]);
+        if(height % 2 !== 0){
+          //width not divisible by two, add one extra pixel of padding
+          height=height+1
+        }
+  
+        //console.log(`NO PADDING final: width=${width}, height=${height}`)
+        cmdArr.push(`scale=w=${width}:h=${height}`)
+      } else {
+        //console.log('YES PADDING')
+        cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
       }
-
-      let height=parseInt(renderOptions.resolution.split('x')[1]);
-      if(height % 2 !== 0){
-        //width not divisible by two, add one extra pixel of padding
-        height=height+1
+      cmdArr.push('-preset')
+      cmdArr.push('medium')
+      cmdArr.push('-tune')
+      cmdArr.push('stillimage')
+      cmdArr.push('-crf')
+      cmdArr.push('18')
+      cmdArr.push('-pix_fmt')
+      cmdArr.push('yuv420p')
+      cmdArr.push('-shortest')
+      cmdArr.push(`${videoOutput}`)
+      //add to renderList
+      renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
+      addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+      //run ffmpeg command to render video
+      if(debugRenderVideoCmd){
+        console.log('setting debugRenderVideoCmd')
+        cmdArr=debugRenderVideoCmd;
       }
-
-      //console.log(`NO PADDING final: width=${width}, height=${height}`)
-      cmdArr.push(`scale=w=${width}:h=${height}`)
-    } else {
-      //console.log('YES PADDING')
-      cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
+      console.log('renderVideo: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
+      try{
+        let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+        //delete concatAudio filepath if needed
+        if (renderOptions.concatAudio) {
+          deleteFile(concatAudioOutput)
+        }
+        resolve(runFfmpegCommandResp)
+      }catch(err){
+        console.log("error running ffmpeg video command ")
+        displayErrInRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+        reject("error rendering video")
+      }
+    }else{
+      console.log("there was an error with audio concat so we can't render video")
+      reject("error concatenating audio")
     }
-    cmdArr.push('-preset')
-    cmdArr.push('medium')
-    cmdArr.push('-tune')
-    cmdArr.push('stillimage')
-    cmdArr.push('-crf')
-    cmdArr.push('18')
-    cmdArr.push('-pix_fmt')
-    cmdArr.push('yuv420p')
-    cmdArr.push('-shortest')
-    cmdArr.push(`${videoOutput}`)
-    //add to renderList
-    renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
-    addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
-    //run ffmpeg command to render video
-    if(debugRenderVideoCmd){
-      console.log('setting debugRenderVideoCmd')
-      cmdArr=debugRenderVideoCmd;
-    }
-    console.log('renderVideo: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
-    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+    
 
-    //delete concatAudio filepath if needed
-    if (renderOptions.concatAudio) {
-      deleteFile(concatAudioOutput)
-    }
-
-    resolve(runFfmpegCommandResp)
   })
 
 }
@@ -1194,6 +1221,29 @@ async function addToRenderList(renderType, durationSeconds, uploadName, outputDi
     renderStatusId: `${renderStatusId}`
   });
   updateRendersModal()
+}
+
+//update renders list to reflect an err and fail gracefully 
+async function displayErrInRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile, renderStatusId) {
+  console.log('displayErrInRenderList() renderList=', renderList)
+  //get render from renderList that had the error
+  for(var k = 0; k < renderList.length; k++){
+    if(renderList[k].renderStatusId == renderStatusId){
+      console.log("update this renderList render: ", renderList[k].renderStatusId)
+      renderList[k].status = 'error'
+    }
+  }
+  updateRendersModal()
+  //document.getElementById(`${renderStatusId}`).innerText='err'
+  /*
+  if (rendersInProgress > 0) {
+    document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "inline", "important");
+    document.getElementById('renderJobsCount').innerText = `${rendersInProgress}`
+  } else {
+    document.querySelector(`.renderJobsIconCircle`).style.setProperty("display", "none", "important");
+    document.getElementById('renderJobsCount').innerText = `0`
+  }
+  */
 }
 
 //delete file on the user's machine
@@ -1218,10 +1268,10 @@ async function updateRendersModal() {
   for (var i = 0; i < renderList.length; i++) {
     let data = renderList[i];
     let renderStatus = `<a id="${data.renderStatusId}"></a>`;
-    if (data.status != 'done') {
+    if (data.status != 'done' && data.status != 'error') {
       rendersInProgress++
     } else {
-      renderStatus = 'Done'
+      renderStatus = data.status;//'Done'
     }
     table.row.add({
       "selectAll": '<input type="checkbox">',
@@ -1313,6 +1363,7 @@ async function initRendersSetup() {
 //run ffmpeg command 
 async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId) {
   return new Promise(async function (resolve, reject) {
+    try{
     const getFfmpegPath = () => getFfPath('ffmpeg');
     //const getFfprobePath = () => getFfPath('ffprobe');
     const ffmpegPath = getFfmpegPath();
@@ -1320,6 +1371,10 @@ async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId) {
     handleProgress(process, cutDuration, renderStatusId);
     const result = await process;
     resolve(result);
+    }catch(err){
+      console.log("runFfmpegCommand() err=", err)
+      reject('err name i suppose')
+    }
   })
 }
 
