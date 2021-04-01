@@ -1066,17 +1066,19 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
     if (renderOptions.concatAudio) {
       let concatAudioFilepath = renderOptions.concatAudioFilepath;
       //add inputs
-      let inputs = '';
+      cmdArr.push('-y')
+      let filterMapStr='';
       for (var i = 0; i < selectedRows.length; i++) {
         cmdArr.push('-i')
-        cmdArr.push(`${selectedRows[i].audioFilepath}`)
-        inputs = `${inputs}-i "${selectedRows[i].audioFilepath}" `;
+        cmdArr.push(`${selectedRows[i].audioFilepath}`);
+        filterMapStr=`${filterMapStr}[${i}:a]`;
       }
 
       //add concat options
-      cmdArr.push("-y");
       cmdArr.push("-filter_complex")
-      cmdArr.push(`concat=n=${i}:v=0:a=1`)
+      cmdArr.push(`${filterMapStr}concat=n=${i}:v=0:a=1[a]`)
+      cmdArr.push(`-map`)
+      cmdArr.push(`[a]`)
       //add audio codec and quality 
       cmdArr.push("-c:a")
       cmdArr.push("libmp3lame")
