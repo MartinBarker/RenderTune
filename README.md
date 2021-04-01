@@ -15,10 +15,10 @@ RenderTune is available for free on the Mac Apple Store, Windows Store, and Linu
 
 If you want to download RenderTune without using the above stores, you can download RenderTune from the [most recent Github Release](https://github.com/martinbarker/rendertune/releases/latest/).
 
-- [Mac OS X Installer (auto-updates)](https://github.com/martinbarker/rendertune/releases/latest/download/RenderTune-mac.dmg)
-- [Windows Installer (auto-updates)](https://github.com/martinbarker/rendertune/releases/latest/download/RenderTune-Web-Setup.exe)
-- [Windows Portable](https://github.com/martinbarker/rendertune/releases/latest/download/RenderTune.exe)
-- [Linux AppImage](https://github.com/martinbarker/rendertune/releases/latest/download/RenderTune.AppImage)
+- [Mac OS X Installer (auto-updates): RenderTune-mac.dmg](https://github.com/martinbarker/rendertune/releases/latest/)
+- [Windows Installer (auto-updates): RenderTune-Web-Setup-#.#.#.exe](https://github.com/martinbarker/rendertune/releases/latest)
+- [Windows Portable: RenderTune-#.#.#.exe](https://github.com/martinbarker/rendertune/releases/latest)
+- [Linux AppImage: RenderTune-#.#.#.AppImage](https://github.com/martinbarker/rendertune/releases/latest)
 - [More releases](https://github.com/martinbarker/rendertune/releases/latest)
 
 <img src="./build/RenderTune-screenshot-full.png"=250x style="float:left" alt="screenshot" />
@@ -72,18 +72,7 @@ electron-windows-store --input-directory C:\Users\marti\Documents\projects\rende
 ```
 - Linux: 
     - Login to snap store from terminal: `$ snapcraft login`. Build & publish linux builds for snap and AppImage: `$ npm run build-linux-publish`. This will output a .snap file in the dist/ folder that you can upload using the command: `$ snapcraft upload --release=stable dist/rendertune_0.3.23_amd64.snap` (make sure your .snap filename is correct).
-- Once all of the following steps have been followed, there should be a new RenderTune version drafted on GitHub with files uploaded for Mac, Windows, and Linux. Before your publish this new version, rename the files to match this naming convention:
-```
-RenderTune-mac.dmg
-RenderTune-mac.zip
-RenderTune-Web-Setup.exe
-rendertune-x64.nsis.7z
-RenderTune.AppImage
-RenderTune.appx
-RenderTune.exe
-Source code (zip)
-Source code (tar.gz)
-```
+- Once all of the following steps have been followed, there should be a new RenderTune version drafted on GitHub with files uploaded for Mac, Windows, and Linux.
 
 ## Roadmap:
 This list is of future updates / improvements I plan to make for RenderTune (If you can think of any features you would like, contact me and I will include them in the roadmap)
