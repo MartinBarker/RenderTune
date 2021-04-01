@@ -21,7 +21,6 @@ If you want to download RenderTune without using the above stores, you can downl
 - [Linux AppImage: RenderTune-#.#.#.AppImage](https://github.com/martinbarker/rendertune/releases/latest)
 - [More releases](https://github.com/martinbarker/rendertune/releases/latest)
 
-<img src="./build/RenderTune-screenshot-full.png"=250x style="float:left" alt="screenshot" />
 
 ## Features:
 - Use the Tracklist Table to reorder your songs by sorting the columns or dragging each song manually.
