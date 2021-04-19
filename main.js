@@ -3,6 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 var path = require('path');
 const sizeOf = require('image-size');
+const fs = require('fs')
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 let mainWindow;
 
@@ -78,6 +79,51 @@ ipcMain.handle('choose-dir', async (event) => {
     });
     return dir.filePaths[0];
 });
+
+ipcMain.handle('read-folder-contents', async (event, myDir, slashVar) => {
+    return new Promise(async function (resolve, reject) {
+        
+        //console.log('read-folder-contents: ', myDir );
+        let files={'audio':[], 'images':[]};
+        /*
+        await fs.readdir(myDir, (err, dir) => {
+            for(let filePath of dir){
+                console.log('filepath=',filePath);
+                files.push('a')
+                //files.push(`${myDir}`, slashVar, `${filePath}`)
+                }
+            });
+        console.log('read-folder-contents: returning:', files );
+        return(files)
+        */
+        fs.readdir(myDir, function(err, result) {
+            if(err) console.log('error', err);
+            if (result === undefined) {
+            //  console.log('result=undefined');
+            } else {
+                //console.log('resolve result=', result);
+                for(var x = 0; x<=result.length; x++){
+                    let file=result[x]
+                    if(file != undefined){
+                        //console.log('file=', file, )
+                        if(strEndsWith(`${file.toLowerCase()}`, ".mp3") || strEndsWith(`${file.toLowerCase()}`, ".flac") || strEndsWith(`${file.toLowerCase()}`, ".wav") || strEndsWith(`${file.toLowerCase()}`, ".m4a")){
+                            files.audio.push({'audioFilepath':`${myDir}${slashVar}${file}`});
+                        }else if(strEndsWith(`${file.toLowerCase()}`, ".jpg") || strEndsWith(`${file.toLowerCase()}`, ".jpeg") || strEndsWith(`${file.toLowerCase()}`, ".png")){
+                            files.images.push(`${myDir}${slashVar}${file}`)
+                        }
+                    }
+                }
+                resolve(files)
+            }
+        });
+        //console.log('done')
+    });
+  
+});
+
+function strEndsWith(str, suffix) {
+    return str.match(suffix+"$")==suffix;
+}
 
 ipcMain.handle('get-audio-metadata', async (event, filename) => {
     //console.log(`Loading metadata from ${filename}...`);

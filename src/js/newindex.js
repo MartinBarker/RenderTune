@@ -1,5 +1,6 @@
 const { Console } = require('console');
 const { resolve } = require('path');
+const fs = require('fs')
 const { ipcRenderer } = window.require('electron');
 const { join } = window.require('path');
 var path = require('path');
@@ -178,18 +179,47 @@ async function deleteAllUploads() {
 */
 
 //if new upload files selection button is clicked
+$("#batchRenderFilesSelection").change(async function (e) {
+  var files = e.currentTarget.files;
+  console.log('batchRenderFilesSelection: ', files);
+
+  let event = { "dataTransfer": { "files": files } }
+  newUploadFileDropEvent(event, false, 'batchRenderFolders')
+});
+
+//if new upload files selection button is clicked
 $("#newUploadFileSelection").change(async function (e) {
   var files = e.currentTarget.files;
   console.log('newUploadFileSelection: ', files);
 
   let event = { "dataTransfer": { "files": files } }
-  newUploadFileDropEvent(event, false)
+  newUploadFileDropEvent(event, false, 'new-upload')
 });
 
-//get new upload drag&drop box
+/*
+    drag and drop files boxes:
+*/
+//~~
+//batch render folders input hover box
+var batchRenderFoldersBox = document.getElementById('batchRenderFoldersInputBox')
+//add event listener when files get dropped into it
+batchRenderFoldersBox.addEventListener('drop', () => newUploadFileDropEvent(event, true, 'batchRenderFolders'))
+//drag&drop events
+batchRenderFoldersBox.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+});
+batchRenderFoldersBox.addEventListener('dragenter', (event) => {
+  //console.log('NEWUPLOAD File is in the Drop Space');
+});
+batchRenderFoldersBox.addEventListener('dragleave', (event) => {
+  //console.log('NEWUPLOAD File has left the Drop Space');
+});
+
+//~~new upload drag&drop box
 var newUploadBox = document.getElementById('newUploadFilesInput')
 //add event listener when files get dropped into it
-newUploadBox.addEventListener('drop', () => newUploadFileDropEvent(event, true))
+newUploadBox.addEventListener('drop', () => newUploadFileDropEvent(event, true, 'new-upload'))
 //drag&drop events
 newUploadBox.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -237,120 +267,231 @@ $('#new-upload-modal').on('shown.bs.modal', function (e) {
 })
 
 //create NewUploadFiles object to store files that the user is selecting
-let NewUploadFiles = null;
+let batchRenderFoldersFiles = null;
 //Call this function when files are added to a new upload in the popup modal either by drag&drop or file selection
-async function newUploadFileDropEvent(event, preventDefault) {
-  let haveNewFilesBeenAdded = false;
-  //reveal loading spinner
-  document.getElementById('loadingFilesSpinner').style.display = "block";
-  //begin processing files
-  if (preventDefault) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  //create NewUploadFiles object to store the NewUploadFiles if it doesn't exist
-  if (!NewUploadFiles) {
-    NewUploadFiles = { 'images': [], 'audio': [] }
-  }
-  //console.log('event.dataTransfer.files = ', event.dataTransfer.files)
-
+async function newUploadFileDropEvent(event, preventDefault, type) {
+  if(type=='new-upload'){
+    let haveNewFilesBeenAdded = false;
+    //reveal loading spinner
+    document.getElementById('loadingFilesSpinner').style.display = "block";
+    //begin processing files
+    if (preventDefault) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    //create NewUploadFiles object to store the NewUploadFiles if it doesn't exist
+    if (!NewUploadFiles) {
+      NewUploadFiles = { 'images': [], 'audio': [] }
+    }
+    //console.log('event.dataTransfer.files = ', event.dataTransfer.files)
+  
+    //sort all files into either audio or images 
   //sort all files into either audio or images 
-  for (const f of event.dataTransfer.files) {
+    //sort all files into either audio or images 
+    for (const f of event.dataTransfer.files) {
+      // Using the path attribute to get absolute file path 
     // Using the path attribute to get absolute file path 
-    if ((f.type).includes('image')) {
-      //if image filepath does not already exist in newUploadTempFiles:
-      if (NewUploadFiles.images.filter(e => e.path === `${f.path}`).length == 0) {
-        NewUploadFiles.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
-        //console.log('pushing image')
-        haveNewFilesBeenAdded = true;
-      }
-
-    } else if ((f.type).includes('audio')) {
-      let audioFileInfo = {};
-      //get audio file format
-      var splitType = (f.type).split('/')
-      var audioFormat = splitType[1]
-      audioFileInfo.format = audioFormat;
-      //get audio metadata
-      const metadata = await getMetadata(f.path);
-      audioFileInfo.album = metadata.common.album || "";
-      audioFileInfo.year = metadata.common.year || "";
-      audioFileInfo.artist = metadata.common.artist || "";
-      audioFileInfo.trackNum = metadata.common.track.no || "";
-      audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
-
-      //push results if that file isn't already inside .audio
-      if (NewUploadFiles.audio.filter(e => e.path === `${f.path}`).length == 0) {
-        NewUploadFiles.audio.push({
-          'path': f.path,
-          'type': audioFormat,
-          'name': f.name,
-          'length': audioFileInfo.length,
-          'trackNum': audioFileInfo.trackNum,
-          "album": audioFileInfo.album,
-          "year": audioFileInfo.year,
-          "artist": audioFileInfo.artist,
-
-        })
-        //console.log('pushing audio')
-        haveNewFilesBeenAdded = true;
+      // Using the path attribute to get absolute file path 
+      if ((f.type).includes('image')) {
+        //if image filepath does not already exist in newUploadTempFiles:
+        if (NewUploadFiles.images.filter(e => e.path === `${f.path}`).length == 0) {
+          NewUploadFiles.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+          //console.log('pushing image')
+          haveNewFilesBeenAdded = true;
+        }
+  
+      } else if ((f.type).includes('audio')) {
+        let audioFileInfo = {};
+        //get audio file format
+        var splitType = (f.type).split('/')
+        var audioFormat = splitType[1]
+        audioFileInfo.format = audioFormat;
+        //get audio metadata
+        const metadata = await getMetadata(f.path);
+        audioFileInfo.album = metadata.common.album || "";
+        audioFileInfo.year = metadata.common.year || "";
+        audioFileInfo.artist = metadata.common.artist || "";
+        audioFileInfo.trackNum = metadata.common.track.no || "";
+        audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
+  
+        //push results if that file isn't already inside .audio
+        if (NewUploadFiles.audio.filter(e => e.path === `${f.path}`).length == 0) {
+          NewUploadFiles.audio.push({
+            'path': f.path,
+            'type': audioFormat,
+            'name': f.name,
+            'length': audioFileInfo.length,
+            'trackNum': audioFileInfo.trackNum,
+            "album": audioFileInfo.album,
+            "year": audioFileInfo.year,
+            "artist": audioFileInfo.artist,
+  
+          })
+          //console.log('pushing audio')
+          haveNewFilesBeenAdded = true;
+        }
       }
     }
-  }
-
-  //console.log('newUploadFileDropEvent() NewUploadFiles = ', NewUploadFiles, '. haveNewFilesBeenAdded = ', haveNewFilesBeenAdded)
-
-  //if new files have been added, update UI to display contents of NewUploadFiles
-  if (haveNewFilesBeenAdded) {
-    var imageFilesHtml = '';
-    var imageFilesElem = document.createElement('div');
-    var audioFilesHtml = '';
-    //get img display parent <ul> element from html
-    //for each new file
-    for (const [key, value] of Object.entries(NewUploadFiles)) {
-      if (key == 'images') {
-        //for each image file
-        for (var i = 0; i < value.length; i++) {
-          console.log("display this image:", value)
-          //update text files display
-          //imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`;
-          
+  
+    //console.log('newUploadFileDropEvent() NewUploadFiles = ', NewUploadFiles, '. haveNewFilesBeenAdded = ', haveNewFilesBeenAdded)
+  
+    //if new files have been added, update UI to display contents of NewUploadFiles
+    if (haveNewFilesBeenAdded) {
+      var imageFilesHtml = '';
+      var imageFilesElem = document.createElement('div');
+      var audioFilesHtml = '';
+      //get img display parent <ul> element from html
+      //for each new file
+      for (const [key, value] of Object.entries(NewUploadFiles)) {
+        if (key == 'images') {
+          //for each image file
+          for (var i = 0; i < value.length; i++) {
+            console.log("display this image:", value)
+            //update text files display
+            //imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`;
+            
+            //check if img display parent <ul> if it contains an <li> element with matching imgFilePath 
           //check if img display parent <ul> if it contains an <li> element with matching imgFilePath 
-          //let doesLiExist = true;
-          //if(!doesLiExist){
-
-            //create new ul element for image that we can display to the user (add attribute imgFilePath)
-            var ul = document.createElement('ul');
-            ul.setAttribute('imgFilePath',`${value[i]['path']}`);
-            ul.innerHTML=`${value[i]['name']}<br>`
-            //create new img element we can add to that ul
-            var imgElem = document.createElement('img');
-            imgElem.setAttribute('src',`${value[i]['path']}`);
-            imgElem.style.width = "40%";
-            //imgElem.setAttribute('style',`max-width:50%;`);
-
-            ul.appendChild(imgElem);
-            imageFilesElem.appendChild(ul);
-            console.log("added this elem:", ul)
-          //}
-        }
-
-      } else if (key == 'audio') {
-        //for each audio file
-        for (var x = 0; x < value.length; x++) {
-          //update text files display
-          audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`;
+            //check if img display parent <ul> if it contains an <li> element with matching imgFilePath 
+            //let doesLiExist = true;
+            //if(!doesLiExist){
+  
+              //create new ul element for image that we can display to the user (add attribute imgFilePath)
+              var ul = document.createElement('ul');
+              ul.setAttribute('imgFilePath',`${value[i]['path']}`);
+              ul.innerHTML=`${value[i]['name']}<br>`
+              //create new img element we can add to that ul
+              var imgElem = document.createElement('img');
+              imgElem.setAttribute('src',`${value[i]['path']}`);
+              imgElem.style.width = "40%";
+              //imgElem.setAttribute('style',`max-width:50%;`);
+  
+              ul.appendChild(imgElem);
+              imageFilesElem.appendChild(ul);
+              console.log("added this elem:", ul)
+            //}
+          }
+  
+        } else if (key == 'audio') {
+          //for each audio file
+          for (var x = 0; x < value.length; x++) {
+            //update text files display
+            audioFilesHtml = audioFilesHtml + `${value[x]['name']} <br>`;
+          }
         }
       }
+      console.log('audioFilesHtml=', audioFilesHtml)
+      console.log("newUploadAudioFilesDisplay2=", newUploadAudioFilesDisplay2)
+      document.getElementById('newUploadAudioFilesDisplay2').innerHTML=audioFilesHtml;
+      document.getElementById('newUploadImageFilesDisplay2').innerHTML='';
+      document.getElementById('newUploadImageFilesDisplay2').appendChild(imageFilesElem);
     }
-    console.log('audioFilesHtml=', audioFilesHtml)
-    console.log("newUploadAudioFilesDisplay2=", newUploadAudioFilesDisplay2)
-    document.getElementById('newUploadAudioFilesDisplay2').innerHTML=audioFilesHtml;
-    document.getElementById('newUploadImageFilesDisplay2').innerHTML='';
-    document.getElementById('newUploadImageFilesDisplay2').appendChild(imageFilesElem);
+    //hide loading spinner
+    document.getElementById('loadingFilesSpinner').style.display = "none";
+  }else if(type=='batchRenderFolders'){
+    
+    //begin processing files
+    if (preventDefault) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    //if it doesn't exist, create batchRenderFoldersFiles object to store files
+    if (!batchRenderFoldersFiles) {
+      batchRenderFoldersFiles = { 'folders':[], 'images': [], 'audio': [] }
+    }
+    console.log('event.dataTransfer.files=',event.dataTransfer.files)
+    //sort all files into either audio or images 
+    for (const f of event.dataTransfer.files) {
+      //read dir
+      var dirFiles = await ipcRenderer.invoke('read-folder-contents', f.path, path.sep);
+      //store folder metadata
+      batchRenderFoldersFiles.folders.push({ 'path': f.path, 'folderName': f.name , 'files':dirFiles})
+      
+      /*
+      // Using the path attribute to get absolute file path 
+      if ((f.type).includes('image')) {
+        //if image filepath does not already exist in newUploadTempFiles, store img data:
+        if (batchRenderFoldersFiles.images.filter(e => e.path === `${f.path}`).length == 0) {
+          batchRenderFoldersFiles.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+        }
+  
+      } else if ((f.type).includes('audio')) {
+        let audioFileInfo = {};
+        //get audio file format
+        var splitType = (f.type).split('/')
+        var audioFormat = splitType[1]
+        audioFileInfo.format = audioFormat;
+        //get audio metadata
+        const metadata = await getMetadata(f.path);
+        audioFileInfo.album = metadata.common.album || "";
+        audioFileInfo.year = metadata.common.year || "";
+        audioFileInfo.artist = metadata.common.artist || "";
+        audioFileInfo.trackNum = metadata.common.track.no || "";
+        audioFileInfo.length = metadata.format.duration ? new Date(metadata.format.duration * 1000).toISOString().substr(11, 8) : 0;
+  
+        //push results if that file isn't already inside .audio
+        if (batchRenderFoldersFiles.audio.filter(e => e.path === `${f.path}`).length == 0) {
+          batchRenderFoldersFiles.audio.push({
+            'path': f.path,
+            'type': audioFormat,
+            'name': f.name,
+            'length': audioFileInfo.length,
+            'trackNum': audioFileInfo.trackNum,
+            "album": audioFileInfo.album,
+            "year": audioFileInfo.year,
+            "artist": audioFileInfo.artist,
+  
+          })
+        }
+      }
+      */
+    }
+    console.log('batchRenderFoldersFiles',batchRenderFoldersFiles)
   }
-  //hide loading spinner
-  document.getElementById('loadingFilesSpinner').style.display = "none";
+  batchRenderFolders(batchRenderFoldersFiles)
+  
+  batchRenderFoldersFiles=null;
+}
+
+async function batchRenderFolders(batchRenderFoldersFiles){
+  console.log('batchRenderFolders()')
+  for(var x = 0; x<batchRenderFoldersFiles.folders.length; x++){
+    let value = batchRenderFoldersFiles.folders[x];
+    console.log(`batchRenderFolders() begin render for `, value.folderName, ` folder`);
+    //get files
+    let files=value.files;
+    //get img to use
+    let img = files.images[0]
+    //get resolution of that img
+    let [width, height] = await ipcRenderer.invoke('get-image-resolution', img);
+    //get 1920x1080 resolution
+    let [res_width, res_height] = calculateResolution(width, height, 1920);
+    let resolution=`${res_width}x${res_height}`
+    console.log('batchRenderFolders() resolution: ', resolution)
+
+    let outputDir= `${value.path}`;
+    let uploadName = `${value.folderName}-folder-full-album`;
+
+    let renderOptions = {
+      concatAudio: true,
+      outputDir: outputDir,
+      resolution: resolution,
+      padding: 'none',
+      selectedRows: files.audio,
+      calculateTime:false,
+  //    uploadNumber: uploadNumber,
+  //    uploadId: `${uploadName}-id`,
+      uploadName: uploadName,
+      concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
+      imageFilepath: img,
+      outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
+    }
+    console.log('batchRenderFolders() begin full album render')
+    await render(renderOptions)
+    console.log('batchRenderFolders() end full album render')
+
+    //batchRenderFolders(
+  }
 }
 
 //call electron main.js to get audio metadata 
@@ -1044,22 +1185,29 @@ async function debugDir(){
 //render using ffmpeg
 async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoCmd=null) {
   return new Promise(async function (resolve, reject) {
-    console.log('render*() options=', renderOptions)
-    var selectedRows = renderOptions.selectedRows;
+    console.log('render() options=', renderOptions)
+    let renderStatusId=null;
+    var selectedRows = renderOptions.selectedRows || null;
     var outputDir = renderOptions.outputDir;
     var uploadName = renderOptions.uploadName;
     var uploadId = renderOptions.uploadId;
     var padding = renderOptions.padding;
+    var calculateTime = renderOptions.calculateTime || true;
+    console.log('render() calculateTime=',calculateTime)
     var concatAudioOutput = '';
     let cmdArr = [];
     //calculate duration
     let outputDuration = 0;
-    for (var i = 0; i < selectedRows.length; i++) {
-      //calculate total time
-      var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
-      // minutes are worth 60 seconds. Hours are worth 60 minutes.
-      var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
-      outputDuration = outputDuration + seconds;
+    if(calculateTime){
+      for (var i = 0; i < selectedRows.length; i++) {
+        //calculate total time
+        try{
+        var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
+        // minutes are worth 60 seconds. Hours are worth 60 minutes.
+        var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+        outputDuration = outputDuration + seconds;
+        }catch(err){}
+      }
     }
 
     //if we need to combine audio, do it first
@@ -1067,6 +1215,7 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
       let concatAudioFilepath = renderOptions.concatAudioFilepath;
       //add inputs
       cmdArr.push('-y')
+      console.log('render() concatAudio, selectedRows.length=', selectedRows.length, ', selectedRows=',selectedRows)
       let filterMapStr='';
       for (var i = 0; i < selectedRows.length; i++) {
         cmdArr.push('-i')
@@ -1087,8 +1236,10 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
       //set output 
       cmdArr.push(concatAudioFilepath);
       //add to renderList
-      let renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
-      addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
+      if(uploadId){
+        renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
+        addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
+      }
       //run ffmpeg command to concat audio
       if(debugConcatAudioCmd){
         console.log('setting debugConcatAudioCmd')
@@ -1102,11 +1253,11 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
 
     //render video
     cmdArr = [];
-    console.log("render() concatAudioOutput=", concatAudioOutput)
-    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
-    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
+    //console.log("render() concatAudioOutput=", concatAudioOutput)
+    //console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
+    //console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
     let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    console.log("render() audioInput=", audioInput)
+    //console.log("render() audioInput=", audioInput)
     let videoOutput = renderOptions.outputVideoFilepath;
     let imageFilepath = renderOptions.imageFilepath;
     cmdArr.push('-loop')
@@ -1164,8 +1315,10 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
     cmdArr.push('-shortest')
     cmdArr.push(`${videoOutput}`)
     //add to renderList
-    renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
-    addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+    if(uploadId){
+      renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
+      addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+    }
     //run ffmpeg command to render video
     if(debugRenderVideoCmd){
       console.log('setting debugRenderVideoCmd')
@@ -1198,6 +1351,19 @@ async function addToRenderList(renderType, durationSeconds, uploadName, outputDi
   updateRendersModal()
 }
 
+//read folder contents
+function readDir(myDir){
+  myDir=`${myDir}`+`\\`;
+  console.log('READ THIS: ',myDir)
+  fs.readDir(myDir, function(dir) {
+
+    // es6
+    for(let filePath of dir) {
+      console.log('x:',filePath);
+    }
+  });
+}
+
 //delete file on the user's machine
 function deleteFile(path) {
   const fs = require('fs')
@@ -1206,7 +1372,10 @@ function deleteFile(path) {
       console.error("err deleting file = ", err)
       return
     }
-  })
+  });
+
+
+
 }
 
 //update renders modal that displays in progress/completed/failed renders
@@ -1313,13 +1482,15 @@ async function initRendersSetup() {
 }
 
 //run ffmpeg command 
-async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId) {
+async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId=null) {
   return new Promise(async function (resolve, reject) {
     const getFfmpegPath = () => getFfPath('ffmpeg');
     //const getFfprobePath = () => getFfPath('ffprobe');
     const ffmpegPath = getFfmpegPath();
     const process = execa(ffmpegPath, ffmpegArgs);
-    handleProgress(process, cutDuration, renderStatusId);
+    if(renderStatusId){
+      handleProgress(process, cutDuration, renderStatusId);
+    }
     const result = await process;
     resolve(result);
   })
