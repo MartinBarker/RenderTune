@@ -1,6 +1,5 @@
 .env
 node_modules/
 dist/
-ffmpeg-mac/
 RenderTune.pkg
 Digify-mac.pkg
