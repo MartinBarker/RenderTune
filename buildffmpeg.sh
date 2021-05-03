@@ -56,9 +56,7 @@ MACOS_MIN="10.10"
 		--enable-filters \
 		--disable-libxcb \
 		--enable-gpl \
-		--enable-nonfree \
 		--disable-libass \
-		--enable-libfdk-aac \
 		--enable-libmp3lame \
 		--enable-libx264 
 
