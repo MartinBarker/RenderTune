@@ -98,31 +98,20 @@ $('#render-jobs-modal').on('hide.bs.modal', function () {
   }
 })
 
-//when you click the Uploads list button
+// ----------------------------------------------------------------------------------
+// jQuery event handler for when the menu-toggle icon is clicked
+// Either expand or collapse the sidebar menu based on its current state
+// ----------------------------------------------------------------------------------
 $("#menu-toggle").click(function (e) {
-  console.log('menu-toggle clicked')
   e.preventDefault();
+  //toggle sidebar wrapper
   $("#wrapper").toggleClass("toggled");
-
-  //if uploads-list is already open
-  if ($("#menu-toggle").hasClass("svg-selected")) {
-
-    //else if uploads-list is not currently open when we click it
-  } else {
-
-    //if 'selected' is on for newUploadButton, toggle it off
-    if ($("#newUploadButton").hasClass('page-selected')) {
-      $("#newUploadButton").toggleClass("page-selected");
-    }
-  }
-
+  //toggle icon selected 
   $("#menu-toggle").toggleClass("svg-selected");
-  console.log('menu-toggle selected')
 });
 
 //if newUpload modal is closed:
 $('#new-upload-modal').on('hide.bs.modal', function () {
-  console.log("'#new-upload-modal').on('hidden.bs.modal',")
   if ($("#newUploadButton").hasClass("page-selected")) {
     console.log('toggle new upload button on')
     $("#newUploadButton").toggleClass("page-selected");
@@ -174,7 +163,7 @@ async function deleteAllUploads() {
 }
 
 /*
-    NEW UPLOAD MODAL EVENT HANDLING:
+    NEW UPLOAD EVENT HANDLING:
 */
 
 //if new upload files selection button is clicked
@@ -311,14 +300,6 @@ async function newUploadFileDropEvent(event, preventDefault) {
       if (key == 'images') {
         //for each image file
         for (var i = 0; i < value.length; i++) {
-          console.log("display this image:", value)
-          //update text files display
-          //imageFilesHtml = imageFilesHtml + `${value[i]['name']} <br>`;
-          
-          //check if img display parent <ul> if it contains an <li> element with matching imgFilePath 
-          //let doesLiExist = true;
-          //if(!doesLiExist){
-
             //create new ul element for image that we can display to the user (add attribute imgFilePath)
             var ul = document.createElement('ul');
             ul.setAttribute('imgFilePath',`${value[i]['path']}`);
@@ -327,12 +308,8 @@ async function newUploadFileDropEvent(event, preventDefault) {
             var imgElem = document.createElement('img');
             imgElem.setAttribute('src',`${value[i]['path']}`);
             imgElem.style.width = "40%";
-            //imgElem.setAttribute('style',`max-width:50%;`);
-
             ul.appendChild(imgElem);
             imageFilesElem.appendChild(ul);
-            console.log("added this elem:", ul)
-          //}
         }
 
       } else if (key == 'audio') {
@@ -343,8 +320,6 @@ async function newUploadFileDropEvent(event, preventDefault) {
         }
       }
     }
-    console.log('audioFilesHtml=', audioFilesHtml)
-    console.log("newUploadAudioFilesDisplay2=", newUploadAudioFilesDisplay2)
     document.getElementById('newUploadAudioFilesDisplay2').innerHTML=audioFilesHtml;
     document.getElementById('newUploadImageFilesDisplay2').innerHTML='';
     document.getElementById('newUploadImageFilesDisplay2').appendChild(imageFilesElem);
@@ -464,30 +439,29 @@ async function addToUploadList(uploadKey, uploadValue) {
   })
 }
 
-//upload where we display all the uploads
+// ----------------------------------------------------------------------------------
+// Update the left-hand sidebar view UploadList to display a the user's uploads
+// ----------------------------------------------------------------------------------
 async function updateUploadListDisplay() {
   return new Promise(async function (resolve, reject) {
-    console.log('updateUploadListDisplay()')
-    //reset
+    //clear sidebar html
     document.getElementById('sidebar-uploads').innerHTML = "";
     //get uploadList from localstorage
     var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
-    console.log('updateUploadListDisplay() uploadList = ', uploadList)
-
     //if uploadList exists
     if (uploadList != null) {
       //update numberOfUploads display
       document.getElementById('numberOfUploads').innerText = Object.keys(uploadList).length;
-      //for each object in uploadList
+      //for each item in uploadList
       for (const [key, value] of Object.entries(uploadList)) {
+        //get vars from upload
         let uploadId = key
         let uploadTitle = value.title
         let uploadFiles = value.files
-        //get image from files
+        //use first image for display
         let imgPath = uploadFiles.images[0].path;
         uploadNumber = key.split('-')[1];
-
-        //update sidebar display
+        //prepend upload to sidebar display
         $("#sidebar-uploads").prepend(`
           <li>
             <a class='sidebarText' href="#" id='${uploadId}-sidebar' onClick='displayUpload("${uploadId}")'>
@@ -495,15 +469,17 @@ async function updateUploadListDisplay() {
              ${uploadTitle}
             </a>
           </li>
-            `);
-
+        `);
       }
     }
     resolve()
   })
 }
 
-//display an upload to the user
+// ----------------------------------------------------------------------------------
+// Call this function if the user clicks an upload in the sidebar UploadsList menu
+// Retrieve info for the upload, create html element, and display it to the user
+// ----------------------------------------------------------------------------------
 async function displayUpload(uploadId) {
   //if home icon is selected, unselect it
   if ($("#homeButton").hasClass("page-selected")) {
@@ -517,7 +493,6 @@ async function displayUpload(uploadId) {
   var uploadList = await JSON.parse(localStorage.getItem('uploadList'))
   //get upload we want to display
   var upload = uploadList[uploadId]
-  console.log('display this upload: ', upload)
   //clear upload display
   document.getElementById("upload-pages-container").innerHTML = "";
   //create upload page
@@ -537,6 +512,7 @@ async function unselectAllUploads() {
   }
 }
 
+//create html for Upload view
 async function createUploadPage(upload, uploadId) {
   //create image gallery container
   let images = [];
@@ -545,11 +521,10 @@ async function createUploadPage(upload, uploadId) {
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
 
-  //create <select> for images
+  //create <select> element for images
   let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
 
   //add html to page
-  console.log('upload = ', upload)
   let audioFilesCount = upload.files.audio.length;
   let imageFilesCount = upload.files.images.length;
   $("#upload-pages-container").append(`
@@ -851,10 +826,6 @@ async function createUploadPage(upload, uploadId) {
 
     //get padding info
     let paddingChoice = $(`#${uploadId}-paddingSelect`).val();
-    console.log('img changed paddingChoice = ', paddingChoice)
-
-
-    console.log(`image changed to: ${newImageName}, paddingChoice= ${paddingChoice}`)
 
     //generate new resolution options
     let uploadImageResolutions = await getResolutionOptions(upload.files.images);
@@ -870,7 +841,7 @@ async function createUploadPage(upload, uploadId) {
 
   //if output dir changes
   $(`${uploadId}-outputSelect`).bind("change paste keyup", function () {
-    console.log('output dir changed: ', $(this).val())
+    
   });
 
 }
@@ -917,19 +888,50 @@ async function individRenderPrep(uploadId, uploadNumber) {
       for (var x = 0; x < rows.length; x++) {
         var row = rows[x]
         console.log(`individPrep() rows[${x}] = `, row)
+        //
+        // get audio for that row
+        //
         //get audio input filepath
         let audioInputPath = row.audioFilepath;
         console.log('audioInputPath=', audioInputPath)
+
+        //
+        // get image choice for that row
+        //
+        //GET ID WE WILL USE TO GET IMAGE SELECTON RESULT FOR THAT ROW
+        let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
+        imageLocationId = imageLocationId.substring(0, imageLocationId.indexOf(`'`)).trim()
+
+        //get image selection form:
+        //console.log(` get row at index: ${x} imageSelection: `, document.querySelector(`#${uploadId}-individual-table-image-row-${x}`))
+
         //get image input filepath
-        let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${x}`).value
+        let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
+        console.log('indexValueImgChoice=', indexValueImgChoice)
+
+        console.log('upload.files.images=', upload.files.images)
+
+
         //get img name
         let imageFilepath = upload.files.images[indexValueImgChoice].path
         console.log('imageFilepath=', imageFilepath)
-        //get resolution
-        let resolution = ($(`#${uploadId}-individual-table-resolution-row-${x} :selected`).text()).split(" ")[0];
-        console.log('resolution=', resolution)
-        //get padding
-        let padding = $(`#${uploadId}-individual-table-padding-row-${x}`).val();
+
+        //
+        //get resolution choice for that row
+        //
+        let resolutionLocationId = row.resolution.split(`id=`)[1].substring(1)
+        resolutionLocationId = resolutionLocationId.substring(0, resolutionLocationId.indexOf(`'`)).trim()
+        console.log('resolutionLocationId=',resolutionLocationId)
+        let resolution = ($(`#${resolutionLocationId} :selected`).text()).split(" ")[0];
+        console.log('chosen resolution=', resolution)
+
+        //
+        //get padding choice
+        //
+        let paddingLocationId = row.padding.split(`id=`)[1].substring(1)
+        paddingLocationId = paddingLocationId.substring(0, paddingLocationId.indexOf(`'`)).trim()
+        console.log('paddingLocationId=',paddingLocationId)
+        let padding = $(`#${paddingLocationId}`).val();
         console.log('padding=', padding)
         //get outputDir and uploadName
         let outputDir = uploads[uploadId].outputDir;
@@ -1042,9 +1044,9 @@ async function debugDir(){
 }
 
 //render using ffmpeg
-async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoCmd=null) {
+async function render(renderOptions, debugConcatAudioCmd=null) {
   return new Promise(async function (resolve, reject) {
-    console.log('render*() options=', renderOptions)
+    console.log('render() function called. options=', renderOptions)
     var selectedRows = renderOptions.selectedRows;
     var outputDir = renderOptions.outputDir;
     var uploadName = renderOptions.uploadName;
@@ -1094,7 +1096,7 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
         console.log('setting debugConcatAudioCmd')
         cmdArr=debugConcatAudioCmd;
       }
-      console.log('concatAudio: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
+      console.log('concatAudio: cmdArr=',cmdArr );
 
       let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
       concatAudioOutput = concatAudioFilepath;
@@ -1102,11 +1104,7 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
 
     //render video
     cmdArr = [];
-    console.log("render() concatAudioOutput=", concatAudioOutput)
-    console.log("render() renderOptions.audioFilepath=", renderOptions.audioFilepath)
-    console.log("render() concatAudioOutput || renderOptions.audioFilepath=", concatAudioOutput || renderOptions.audioFilepath)
     let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    console.log("render() audioInput=", audioInput)
     let videoOutput = renderOptions.outputVideoFilepath;
     let imageFilepath = renderOptions.imageFilepath;
     cmdArr.push('-loop')
@@ -1167,11 +1165,8 @@ async function render(renderOptions, debugConcatAudioCmd=null, debugRenderVideoC
     renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
     addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
     //run ffmpeg command to render video
-    if(debugRenderVideoCmd){
-      console.log('setting debugRenderVideoCmd')
-      cmdArr=debugRenderVideoCmd;
-    }
-    console.log('renderVideo: cmdArr=',cmdArr,'\n JSON.stringify(cmdArr)=',JSON.stringify(cmdArr) );
+
+    console.log('renderVideo: cmdArr=',cmdArr );
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
 
     //delete concatAudio filepath if needed
