@@ -1096,7 +1096,7 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
         console.log('setting debugConcatAudioCmd')
         cmdArr=debugConcatAudioCmd;
       }
-      console.log('concatAudio: cmdArr=',cmdArr );
+      console.log('concatAudio: cmdArr=',cmdArr.join(" ") );
 
       let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
       concatAudioOutput = concatAudioFilepath;
@@ -1166,7 +1166,7 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
     //run ffmpeg command to render video
 
-    console.log('renderVideo: cmdArr=',cmdArr );
+    console.log('renderVideo: cmdArr=',cmdArr.join(" ") );
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
 
     //delete concatAudio filepath if needed
@@ -1891,12 +1891,16 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       prevTime = fullAlbumLength
     }
     var currTime = selectedRows[i].length
+    console.log('currTime=',currTime)
     startTime = prevTime;
     endTime = sum(startTime, currTime);
+    console.log(`startTime=${startTime}, endTime=${endTime}`)
     //calculate sum
     fullAlbumLength = sum(prevTime, currTime);
+    console.log(`fullAlbumLength=${fullAlbumLength}`)
     //update tracklist
     fullAlbumTracklist = `${fullAlbumTracklist}${selectedRows[i].audio} ${startTime}-${endTime}<br>`
+    console.log(`fullAlbumTracklist=${fullAlbumTracklist} \n`)
   }
 
   //if selected padding option for row changes, update resolution for that row
