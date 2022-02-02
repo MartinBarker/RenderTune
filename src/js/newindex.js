@@ -593,8 +593,10 @@ async function createUploadPage(upload, uploadId) {
       <div style='margin-right: 20px;'>
       <div class="row">
         
+        <!------------------------------ 
+        Image Selection Option
+        ------------------------------->
         <div class="col settingsCol">
-          <!-- Image Selection -->
           <div class="form-group">
             <span>
               <label for="size">Image:
@@ -605,58 +607,102 @@ async function createUploadPage(upload, uploadId) {
           </div>
         </div>
 
-          <div class="col settingsCol" >
-            <!-- Padding -->
-            <div class="form-group">
-              <span>
-                <label for="size">Padding:
-                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="If a padding option is selected, than the image will be padded to reach its resolution."></i>
-                </label>
-                <select id='${uploadId}-paddingSelect' class="form-control">
-                  <option value="none">None</option>
-                  <option value="white">White</option>
-                  <option value="black">Black</option>
-                </select>
-              </span>
-            </div>
+        <!------------------------------ 
+        Padding Selection Option
+        ------------------------------->
+        <div class="col settingsCol" >
+          <div class="form-group">
+            <span>
+              <label for="size">Padding:
+                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="If a padding option is selected, than the image will be padded to reach its resolution."></i>
+              </label>
+              <select id='${uploadId}-paddingSelect' class="form-control">
+                <option value="none">None</option>
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="custom">Custom</option>
+              </select>
+            </span>
           </div>
+        </div>
 
-          <div class="col settingsCol" >
-            <!-- Resolution -->
-            <div class="form-group">
-              <span>
-                <label for="size">Resolution:
-                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output resolution for the rendered video."></i>
-                </label>
-                <select id='${uploadId}-resolutionSelect' class="form-control">
-                </select>
-              </span>
-            </div>
+        <!------------------------------ 
+        Resolution Selection Option
+        ------------------------------->
+        <div class="col settingsCol" >
+          <div class="form-group">
+            <span>
+              <label for="size">Resolution:
+                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output resolution for the rendered video."></i>
+              </label>
+              <select id='${uploadId}-resolutionSelect' class="form-control">
+              </select>
+            </span>
           </div>
+        </div>
 
-          <div class="col settingsCol changeDirButton" id='${uploadId}-changeDirDiv' onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
-            <!-- Output Folder -->
-            <div class="form-group">
-              <span>
-                <label for="size">Output Dir: 
-                  <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
-                </label>
-                <div id='${uploadId}-dirText' class="changeDir">
-                  <i class="fa fa-folder" aria-hidden="true"></i>  ${upload.outputFolder}
-                </div>
-              </span>
-            </div>
+        <!------------------------------ 
+        Output Folder Option
+        ------------------------------->
+        <div class="col settingsCol changeDirButton" id='${uploadId}-changeDirDiv' onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
+          <div class="form-group">
+            <span>
+              <label for="size">Output Dir: 
+                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
+              </label>
+              <div id='${uploadId}-dirText' class="changeDir">
+                <i class="fa fa-folder" aria-hidden="true"></i>  ${upload.outputFolder}
+              </div>
+            </span>
           </div>
+        </div>
+
+        <!------------------------------ 
+        Output Video Format Option [mkv / mp4]
+        ------------------------------->
+        <div class="col settingsCol" >
+          <div class="form-group">
+            <span>
+              <label for="size">Output Vid:
+                <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Choose what file type you want the outputted video(s) to be. Mkv will have higher quality audio."></i>
+              </label>
+              <select id='${uploadId}-vidFormatSelect' class="form-control">
+                <option value="none">mkv</option>
+                <option value="white">mp4</option>
+              </select>
+            </span>
+          </div>
+        </div>
+        <!-- /settings -->
+
+
         </div>
       </div>
 
-
-    <h4>Renders:</h4>
-
     </div> 
     
-    
-    <!-- Full Album Upload -->
+    <!-- Padding Color Picker Card (hidden by default) -->
+      <div id='${uploadId}-paddingColorPicker'  class="card" style="
+      left: 15px;
+      width: 100%;
+      display:none;
+      margin-right: 50px;">
+        <div class="card-header">
+          Padding Color Picker <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Pick a custom hexadecimal color to fill in your video background."></i>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+           main card content
+          </p>
+        </div>
+      </div>
+      <br>
+      <br>
+
+      
+    <h4 style='padding-left: 15px;'>Renders:</h4>
+
+    <!-- Full Album Upload Card -->
     <div class="card" style="left: 15px;
     width: 100%;
     margin-right: 50px;">
@@ -683,7 +729,7 @@ async function createUploadPage(upload, uploadId) {
     </div>
     <br>
 
-    <!-- Individual Upload(s) -->
+    <!-- Individual Upload(s) Card -->
     <div class="card" style="left: 15px;
     width: 100%;
     margin-right: 50px;">
@@ -796,11 +842,21 @@ async function createUploadPage(upload, uploadId) {
   //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
   createResolutionSelect(uploadImageResolutions, upload.files.images[0].name, `${uploadId}-resolutionSelect`);
 
+  //
+  //  jQurey code to handle when certain options change on an upload page
+  //
+
   //if padding option changes, update resolution options
   $(`#${uploadId}-paddingSelect`).on('change', async function () {
 
     //get padding choice
     let paddingChoice = $(this).val();
+
+    //if padding choice is custom; open color picker:
+    if(paddingChoice.toLowerCase()=='custom'){
+      console.log('custom padding chosen')
+      document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='block';
+    }
 
     //get image choice
     let newImageNum = $(`#${uploadId}-imgSelect`).val();
@@ -979,23 +1035,37 @@ async function individRenderPrep(uploadId, uploadNumber) {
 
 //call when 'Render' button for concat full album is clicked
 async function concatRenderPrep(uploadId, uploadNumber) {
-  //get uploads
+  //get all uploads
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
-  //get upload
+  //get upload info we will be rendering
   let upload = uploads[uploadId];
-  //get resolution
+  //get selected resolution
   let resolution = $(`#${uploadId}-resolutionSelect option:selected`).text();
   resolution = (resolution.split(" ")[0]).trim()
-  //get padding
+  //get selected padding 
   let padding = $(`#${uploadId}-paddingSelect option:selected`).text();
-  //get image
+  //get selected image filepath
   let imgChoice = document.getElementById(`${uploadId}-imgSelect`).value
   let imageFilepath = upload.files.images[imgChoice].path
-  //get table
+  //get tracks table
   var table = $(`#${uploadId}_table`).DataTable()
-  //get all selected rows
+  //get all selected rows from main table
   var selectedRows = table.rows('.selected').data()
-  //get outputDir
+  //get audio filepath for each selected row and calculate output video duration seconds
+  var inputAudioFilepaths = []
+  var outputDuration = 0
+  for(var x = 0; x < selectedRows.length; x++) {
+    //push audio input filepath
+    inputAudioFilepaths.push(`${selectedRows[x].audioFilepath}`);
+    //calculate total time
+    var lengthSplit = selectedRows[x].length.split(':'); // split length at the colons
+    // minutes are worth 60 seconds. Hours are worth 60 minutes.
+    var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+    outputDuration = outputDuration + seconds;
+  }
+  //get selected video output format 
+  let vidFormat = $(`#${uploadId}-vidFormatSelect option:selected`).text();
+  //get selected outputDir
   let outputDir = uploads[uploadId].outputDir;
   //if outputDir == unset, turn button red and reveal err message to user
   if(!outputDir){
@@ -1003,21 +1073,25 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
     //reveal message
     document.querySelector(`#${uploadId}-concatRenderMsg`).style.visibility='visible';
-  }else{
+  }else{ //else if outputDir is set
     //get uploadName
     let uploadName = uploads[uploadId].title;
+    //create renderOptions object we will send to render() function
     let renderOptions = {
-      concatAudio: true,
-      outputDir: outputDir,
-      resolution: resolution,
-      padding: padding,
-      selectedRows: selectedRows,
       uploadNumber: uploadNumber,
       uploadId: uploadId,
       uploadName: uploadName,
-      concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
-      imageFilepath: imageFilepath,
-      outputVideoFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.mp4`
+
+      inputImage: imageFilepath,
+      inputAudioFilepaths: inputAudioFilepaths,
+
+      resolution: resolution,
+      padding: padding,
+
+      outputDuration: outputDuration,
+      outputDir: outputDir,
+      outputFormat: vidFormat,
+      outputFilepath: `${outputDir}${path.sep}concatVideo-${(Date.now().toString()).substring(7)}.${vidFormat}`
     }
     await render(renderOptions)
   }
@@ -1046,14 +1120,21 @@ async function debugDir(){
 //render using ffmpeg
 async function render(renderOptions, debugConcatAudioCmd=null) {
   return new Promise(async function (resolve, reject) {
-    console.log('render() function called. options=', renderOptions)
-    var selectedRows = renderOptions.selectedRows;
+    console.log('render() function called. renderOptions=', renderOptions)
+    /*
+    var outputDuration = renderOptions.outputDuration;
+    var inputAudioFilepaths = renderOptions.inputAudioFilepaths;
+    //var selectedRows = renderOptions.selectedRows;
     var outputDir = renderOptions.outputDir;
     var uploadName = renderOptions.uploadName;
     var uploadId = renderOptions.uploadId;
     var padding = renderOptions.padding;
-    var concatAudioOutput = '';
-    let cmdArr = [];
+    */
+
+
+    //var concatAudioOutput = '';
+    //let cmdArr = [];
+    /*
     //calculate duration
     let outputDuration = 0;
     for (var i = 0; i < selectedRows.length; i++) {
@@ -1063,9 +1144,11 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
       var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
       outputDuration = outputDuration + seconds;
     }
+    */
 
     //if we need to combine audio, do it first
-    if (renderOptions.concatAudio) {
+    /*
+    if (false) {
       let concatAudioFilepath = renderOptions.concatAudioFilepath;
       //add inputs
       cmdArr.push('-y')
@@ -1101,7 +1184,80 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
       let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
       concatAudioOutput = concatAudioFilepath;
     }
+    */
+    ///////////////////////////////////
+    //create video rendering command
+    let cmdArr = []
+    cmdArr.push('-loop')
+    cmdArr.push('1')
+    cmdArr.push('-framerate')
+    cmdArr.push('2')
+    //image input
+    cmdArr.push('-i')
+    cmdArr.push(`${renderOptions.inputImage}`)
+    //audio input(s)
+    for(var x=0; x < renderOptions.inputAudioFilepaths.length; x++){
+      cmdArr.push('-i')
+      cmdArr.push(`${renderOptions.inputAudioFilepaths[x]}`)
+    }
+    //audio codec depending on output video format
+    if(renderOptions.outputFormat == 'mkv'){
+      cmdArr.push('-c:a')
+      cmdArr.push('pcm_s32le')
+    }else if(renderOptions.outputFormat == 'mp4'){
+      cmdArr.push('-c:a')
+      cmdArr.push('libmp3lame')
+      cmdArr.push('-b:a')
+      cmdArr.push('320k')
+    }else{
+      throw 'invalid output video format selected'
+    }
+    //filter to concatenate audio
+    cmdArr.push('-filter_complex')
+    cmdArr.push(`concat=n=${renderOptions.inputAudioFilepaths.length}:v=0:a=1`)
+    //video codec
+    cmdArr.push('-vcodec')
+    cmdArr.push('libx264')
+    //buffer size
+    cmdArr.push('-bufsize')
+    cmdArr.push('3M')
+    //filter to set resolution/padding
+    cmdArr.push('-filter:v')
+    //if user has no padding option selected, render vid to exact width/height resolution 
+    if(renderOptions.padding == 'None'){
+      cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
+    //else padding will be padding hex(#966e6e) color 
+    }else{ 
+      //get hex color
+      var paddingColor = '';
+      if(renderOptions.padding.toLowerCase()=='white'){
+        paddingColor='#ffffff'
+      }else if(renderOptions.padding.toLowerCase()=='black'){
+        paddingColor='#000000'
+      }
+      cmdArr.push(`format=rgb24,scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${paddingColor}`)
+    }
+    //crf
+    cmdArr.push('-crf')
+    cmdArr.push('18')
+    //pix_fmt
+    cmdArr.push('-pix_fmt')
+    cmdArr.push('yuv420p')
+    //shortest
+    cmdArr.push('-shortest')
+    //stillimage
+    cmdArr.push('-tune')
+    cmdArr.push('stillimage')
+    //set video length (seconds) to trim ending
+    cmdArr.push('-t')
+    cmdArr.push(`${renderOptions.outputDuration}`)
+    //output
+    cmdArr.push(`${renderOptions.outputFilepath}`)
+    
 
+
+    /*
+    ///////////////////////////////////
     //render video
     cmdArr = [];
     let audioInput = concatAudioOutput || renderOptions.audioFilepath;
@@ -1161,18 +1317,23 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     cmdArr.push('yuv420p')
     cmdArr.push('-shortest')
     cmdArr.push(`${videoOutput}`)
+    */
+
+    console.log('cmdArr = ', cmdArr)
+
+
     //add to renderList
-    renderStatusId = `${uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
-    addToRenderList('video', outputDuration, uploadName, outputDir, videoOutput, renderStatusId)
+    var renderStatusId = `${renderOptions.uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
+    addToRenderList('video', renderOptions.outputDuration, renderOptions.uploadName, renderOptions.outputDir, renderOptions.outputFilepath, renderStatusId)
     //run ffmpeg command to render video
 
-    console.log('renderVideo: cmdArr=',cmdArr.join(" ") );
-    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
+    //console.log('renderVideo: cmdArr=',cmdArr.join(" ") );
+    let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, renderOptions.outputDuration, renderStatusId);
 
     //delete concatAudio filepath if needed
-    if (renderOptions.concatAudio) {
-      deleteFile(concatAudioOutput)
-    }
+    //if (renderOptions.concatAudio) {
+    //  deleteFile(concatAudioOutput)
+    //}
 
     resolve(runFfmpegCommandResp)
   })

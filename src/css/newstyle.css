@@ -41,6 +41,10 @@
 
 }
 
+label{
+  min-width: 100px;
+}
+
 .renderJobsIconCircle{
   right: 3px;
   height: 20px!important;

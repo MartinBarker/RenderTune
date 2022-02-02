@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "1.0.3",
+  "version": "1.2.0",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
