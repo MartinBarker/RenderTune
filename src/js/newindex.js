@@ -249,7 +249,28 @@ async function newUploadFileDropEvent(event, preventDefault) {
     if ((f.type).includes('image')) {
       //if image filepath does not already exist in newUploadTempFiles:
       if (NewUploadFiles.images.filter(e => e.path === `${f.path}`).length == 0) {
-        NewUploadFiles.images.push({ 'path': f.path, 'type': f.type, 'name': f.name })
+        
+        //calculate image file size and display as either kb or mb
+        let imgSize = '';
+        if(f.size/1000000 >= 1){
+          //display as mb rounded to 1 digit
+          imgSize=`${(f.size/1000000).toFixed(1)} mb`
+        }else{
+          //display as kb rounded to 1 digit
+          imgSize=`${(f.size/100).toFixed(1)} mb`
+        }
+
+        //get image resolution
+        let [width, height] = await ipcRenderer.invoke('get-image-resolution', f.path);
+        let imgResolution = `${width}x${height}`
+
+        NewUploadFiles.images.push({ 
+          'path': f.path, 
+          'type': f.type, 
+          'name': f.name, 
+          'size': imgSize, 
+          'resolution': imgResolution 
+        })
         //console.log('pushing image')
         haveNewFilesBeenAdded = true;
       }
@@ -512,6 +533,24 @@ async function unselectAllUploads() {
   }
 }
 
+//handle when user changes their selected image in the main upload view
+var mainImageIndex = '';
+async function handleMainImageOptionChange(upload, uploadId, imageName, imgIndex){
+    //store chosen img index as global var
+    mainImageIndex=imgIndex;
+    //get padding choice
+    let paddingChoice = $(`#${uploadId}-paddingSelect`).val();
+    //generate new resolution options
+    let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+    //determine if we need to act upon the padding choice
+    if (!paddingChoice.includes('none')) {
+      createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
+    } else {
+      //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
+      createResolutionSelect(uploadImageResolutions, imageName, `${uploadId}-resolutionSelect`);
+    }
+}
+
 //create html for Upload view
 async function createUploadPage(upload, uploadId) {
   //create image gallery container
@@ -522,7 +561,10 @@ async function createUploadPage(upload, uploadId) {
   }
 
   //create <select> element for images
-  let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
+  //let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
+
+  //create new image <select> with img previews
+  let imageSelectionHTML = await createImgSelectPreview(upload.files.images, `${uploadId}-imgSelect`)
 
   //add html to page
   let audioFilesCount = upload.files.audio.length;
@@ -644,13 +686,13 @@ async function createUploadPage(upload, uploadId) {
         <!------------------------------ 
         Output Folder Option
         ------------------------------->
-        <div class="col settingsCol changeDirButton" id='${uploadId}-changeDirDiv' onClick='changeDir("${uploadId}-dirText", "${uploadId}")'>
+        <div class="col settingsCol changeDirButton" id='${uploadId}-changeDirDiv' >
           <div class="form-group">
             <span>
               <label for="size">Output Dir: 
                 <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Output folder where we will render the video."></i>
               </label>
-              <div id='${uploadId}-dirText' class="changeDir">
+              <div id='${uploadId}-dirText' onClick='changeDir("${uploadId}-dirText", "${uploadId}")' class="changeDir">
                 <i class="fa fa-folder" aria-hidden="true"></i>  ${upload.outputFolder}
               </div>
             </span>
@@ -684,6 +726,7 @@ async function createUploadPage(upload, uploadId) {
     <!-- Padding Color Picker Card (hidden by default) -->
       <div id='${uploadId}-paddingColorPicker'  class="card" style="
       left: 15px;
+      margin-bottom: 10px;
       width: 100%;
       display:none;
       margin-right: 50px;">
@@ -691,12 +734,76 @@ async function createUploadPage(upload, uploadId) {
           Padding Color Picker <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Pick a custom hexadecimal color to fill in your video background."></i>
         </div>
         <div class="card-body">
+
           <p class="card-text">
-           main card content
+            Pick a custom hex color to use in the background of your video, and add it as a custom option
           </p>
+
+          <h4>Suggested Colors:</h4>
+          
+
+          <!-- To select the color -->
+          Color Picker: <input type="color" id="colorPicker" value="#6a5acd">
+    
+          <!-- To display hex code of the color -->
+          Hex Code:  <input type="text" value='#6a5acd' id="hexColorBox">
+            
+          <!-- color picker code -->
+          <script>
+
+            
+
+              //function to call when hex text input changes
+              function hexColorBoxChanged(){
+                console.log('hexColorBoxChanged()')
+                //set color picker value to hexColorBox value
+                document.getElementById('colorPicker').value = document.getElementById('hexColorBox').value;
+              }
+              
+              //function to call when hex color picker value changes
+              function myColor() {
+                  // Get the value return by color picker
+                  var color = document.getElementById('colorPicker').value;
+        
+                  // Take the hex code
+                  document.getElementById('hexColorBox').value = color;
+              }
+        
+              // add event listener so that when user clicks over color picker, myColor() function is called
+              document.getElementById('colorPicker').addEventListener('input', myColor);
+
+              // add event listener so that when user changes color hex value, hexColorBoxChanged() function is called
+              document.getElementById('hexColorBox').addEventListener('input', hexColorBoxChanged);
+
+          </script>
+          
+          <!-- color picker style -->
+          <style>
+            #colorPicker {
+                background-color: none;
+                outline: none;
+                border: none;
+                height: 40px;
+                width: 60px;
+                cursor: pointer;
+            }
+              
+            #hexColorBox {
+              outline: none;
+              border: 1px solid #333;
+              height: 25px;
+              width: 120px;
+              padding: 0 10px;
+              padding-top: 8px;
+              padding-bottom: 10px;
+              bottom: 23px !important;
+              position: absolute;
+            }
+          </style>
+
+
         </div>
       </div>
-      <br>
       <br>
 
       
@@ -792,7 +899,7 @@ async function createUploadPage(upload, uploadId) {
     </div>
 
     </div>
-    `);
+  `);
 
   //if output folder == null, set color of changeDir button to red
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
@@ -805,7 +912,6 @@ async function createUploadPage(upload, uploadId) {
   imgDisplayElemContainer.setAttribute("class","container");
   let imgDisplayElemRow = document.createElement('div');
   imgDisplayElemRow.setAttribute("class","row");
-  //imgDisplayElemRow.setAttribute("style","overflow: scroll;");
   //for each image
   for(let i = 0; i < uploads[uploadId].files.images.length; i++){
     let imgDisplayElemDiv=document.createElement('div');
@@ -846,45 +952,38 @@ async function createUploadPage(upload, uploadId) {
   //  jQurey code to handle when certain options change on an upload page
   //
 
+  //jQuery setup to display images inside <select> <option> elements for main image selection
+  $(`#${uploadId}-imgSelect`).ddslick({
+    width:'flex',
+    background: '#FFFFFF',
+    
+    onSelected: async function(selectedData){
+      handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
+    }   
+  });
+
   //if padding option changes, update resolution options
   $(`#${uploadId}-paddingSelect`).on('change', async function () {
 
     //get padding choice
     let paddingChoice = $(this).val();
 
-    //if padding choice is custom; open color picker:
-    if(paddingChoice.toLowerCase()=='custom'){
-      console.log('custom padding chosen')
+    //if padding choice is custom; reveal color picker, else hide it
+    if(paddingChoice.toLowerCase()!='none'){
       document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='block';
+    }else{
+      document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='none';
     }
 
-    //get image choice
-    let newImageNum = $(`#${uploadId}-imgSelect`).val();
+    //get image choice index from global var
+    let newImageNum = mainImageIndex;
+    console.log('newImageNum=',newImageNum)
+    console.log('upload.files.images=',upload.files.images)
     let newImageName = upload.files.images[newImageNum].name;
 
     //generate new resolution options
     let uploadImageResolutions = await getResolutionOptions(upload.files.images);
-
-    if (!paddingChoice.includes('none')) {
-      createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
-    } else {
-      //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
-      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-resolutionSelect`);
-    }
-
-  });
-
-  //if image selection changes, update resolution options
-  $(`#${uploadId}-imgSelect`).on('change', async function () {
-    //get image info
-    let newImageNum = $(this).val();
-    let newImageName = upload.files.images[newImageNum].name;
-
-    //get padding info
-    let paddingChoice = $(`#${uploadId}-paddingSelect`).val();
-
-    //generate new resolution options
-    let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+    console.log('new image resolutions: ', uploadImageResolutions)
 
     if (!paddingChoice.includes('none')) {
       createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
@@ -2263,6 +2362,48 @@ async function createResolutionSelectIndividualCol(selectId, includeLabel, selec
 
     //return html
     resolve(selectForm)
+  })
+}
+
+//create select html element for each image with img previews
+async function createImgSelectPreview(images, selectId) {
+  return new Promise(async function (resolve, reject) {
+    
+    //create each individual <option> element
+    var imgSelectOptions = ``;
+  
+    for(var x = 0; x < images.length; x++){
+      var imageFilename = `${images[x].name}`;
+      console.log('img=', images[x])
+      var imageFilepath = `${images[x].path}`
+      console.log('images[x]=',images[x])
+      var imageSize = `${images[x].size}`
+      var imageResolution = `${images[x].resolution}`
+
+      imgSelectOptions = imgSelectOptions + `<option 
+        value="${x}"
+        id='tempOptionIdVal'
+        data-imagesrc="${imageFilepath}" 
+        data-description="${imageSize}, ${imageResolution}"
+        height="100px"
+        style='background:white!important;'
+        >
+        ${imageFilename}
+        </option>`
+    }
+
+    //create the full <select> element
+    console.log('selectId=',selectId)
+    var imgSelectElem = `
+    <select 
+    id='${selectId}'
+    style='background:white!important; display:flex!important;'
+    >
+      ${imgSelectOptions}
+    </select>
+    `;
+
+    resolve(imgSelectElem)
   })
 }
 
