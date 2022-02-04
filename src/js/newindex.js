@@ -638,7 +638,7 @@ async function createUploadPage(upload, uploadId) {
         <!------------------------------ 
         Image Selection Option
         ------------------------------->
-        <div class="col settingsCol">
+        <div class="col-lg-4 settingsCol">
           <div class="form-group">
             <span>
               <label for="size">Image:
@@ -1143,8 +1143,9 @@ async function concatRenderPrep(uploadId, uploadNumber) {
   resolution = (resolution.split(" ")[0]).trim()
   //get selected padding 
   let padding = $(`#${uploadId}-paddingSelect option:selected`).text();
-  //get selected image filepath
-  let imgChoice = document.getElementById(`${uploadId}-imgSelect`).value
+  //get selected main image index from global var
+  let imgChoice = mainImageIndex
+  //get selected main image filepath
   let imageFilepath = upload.files.images[imgChoice].path
   //get tracks table
   var table = $(`#${uploadId}_table`).DataTable()
