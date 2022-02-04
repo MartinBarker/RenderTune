@@ -560,8 +560,8 @@ async function createUploadPage(upload, uploadId) {
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
 
-  //create <select> element for images
-  //let imageSelectionHTML = await createImgSelect(upload.files.images, `${uploadId}-imgSelect`, false)
+  //create recomended hex colors image picker for padding
+  let imgColorRecomendations = '';
 
   //create new image <select> with img previews
   let imageSelectionHTML = await createImgSelectPreview(upload.files.images, `${uploadId}-imgSelect`)
@@ -575,7 +575,7 @@ async function createUploadPage(upload, uploadId) {
       <div>
         <!-- Upload Title -->
         <a id='uploadTitle'><strong>${upload.title}</strong></a> 
-        <!-- Image FIles -->
+        <!-- Image Files -->
         <a>(${audioFilesCount} audio files | ${imageFilesCount} image files)</a>
       </div>
       <!-- Upload Header Images -->
@@ -736,22 +736,30 @@ async function createUploadPage(upload, uploadId) {
         <div class="card-body">
 
           <p class="card-text">
-            Pick a custom hex color to use in the background of your video, and add it as a custom option
+            Pick a color to add as a padding option for this upload.
           </p>
-
-          <h4>Suggested Colors:</h4>
           
+          <!-- image based color recomendations -->
+          ${imgColorRecomendations}
 
-          <!-- To select the color -->
-          Color Picker: <input type="color" id="colorPicker" value="#6a5acd">
-    
-          <!-- To display hex code of the color -->
-          Hex Code:  <input type="text" value='#6a5acd' id="hexColorBox">
-            
+          <!-- color picker -->
+          <div>
+            <!-- To select the color -->
+            Color Picker: <input type="color" id="colorPicker" value="#6a5acd">
+      
+            <!-- To display hex code of the color -->
+            Hex Code:  <input type="text" value='#6a5acd' id="hexColorBox"> 
+          </div>
+          <br>
+
+          <!-- color adder button -->
+          <div class='border addCustomColor' >
+            <i href="#" class="fa fa-plus-circle" aria-hidden="true"></i>
+            Add custom color padding option
+          </div>
+
           <!-- color picker code -->
           <script>
-
-            
 
               //function to call when hex text input changes
               function hexColorBoxChanged(){
@@ -797,7 +805,7 @@ async function createUploadPage(upload, uploadId) {
               padding-top: 8px;
               padding-bottom: 10px;
               bottom: 23px !important;
-              position: absolute;
+              position: block;
             }
           </style>
 

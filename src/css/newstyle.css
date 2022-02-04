@@ -66,7 +66,15 @@ label{
   overflow: hidden;
 }
 
+.addCustomColor{
+  padding:1px;
+  cursor:pointer;
+  max-width: 300px;
+}
 
+.addCustomColor:hover{
+  background:rgb(202, 202, 202);
+}
 
 .cursorPointer{
   cursor:pointer;
