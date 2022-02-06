@@ -3,6 +3,8 @@ const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 var path = require('path');
 const sizeOf = require('image-size');
+const getColors = require('get-image-colors');
+const { resolve } = require('dns');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 let mainWindow;
 
@@ -14,6 +16,8 @@ function createWindow() {
             enableRemoteModule: true,
             nodeIntegration: true,
             contextIsolation: false,
+            //debug tools
+            showDevTools: true
         },
         //framless
         frame: false,
@@ -79,8 +83,40 @@ ipcMain.handle('choose-dir', async (event) => {
     return dir.filePaths[0];
 });
 
+//convert rgb string to hex
+function rgbToHex(color) {
+    return "#" + componentToHex(parseInt(color[0])) + componentToHex(parseInt(color[1])) + componentToHex(parseInt(color[2]));
+}
+//convert to int to hex
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+//get colors using vibrant.js for image file
+ipcMain.handle('get-image-colors', async (event, filename) => {
+    return new Promise(async function (resolve, reject) {
+        var colorData = []
+        try{
+            //get color data from image
+            //await getColors(path.join(__dirname, 'img.jpg')).then(colors => {
+            await getColors(filename).then(colors => {
+                //convert each swatch from rgb to hex and add to colorData{}
+                for(var x =0; x < colors.length; x++){
+                    let rgbColor = colors[x]._rgb
+                    let hexColor = rgbToHex(rgbColor)
+                    colorData.push(hexColor)
+                }
+            })
+            resolve(colorData);
+        }catch(err){
+            reject(err)
+        }
+    })
+})
+
+//get metadata for audio file
 ipcMain.handle('get-audio-metadata', async (event, filename) => {
-    //console.log(`Loading metadata from ${filename}...`);
     const metadata = await musicMetadata.parseFile(filename, {duration: true});
     //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
     return metadata;

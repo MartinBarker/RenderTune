@@ -355,6 +355,19 @@ async function getMetadata(filename) {
   return metadata;
 }
 
+//call electron main.js to get image colors
+async function getImageColors(filename) {
+  console.log('getImageColors() filename=',filename)
+  var swatches = '';
+  try{
+    swatches = await ipcRenderer.invoke('get-image-colors', filename);
+  }catch(err){
+    console.log('getImageColors err=',err)
+  }
+  
+
+  return swatches;
+}
 //when you click 'create' in the new upload modal
 async function addNewUpload(uploadTitle) {
   console.log('addNewUpload() uploadTitle=', uploadTitle, '. NewUploadFiles=', NewUploadFiles)
@@ -533,15 +546,34 @@ async function unselectAllUploads() {
   }
 }
 
-//handle when user changes their selected image in the main upload view
-var mainImageIndex = '';
+async function getSelectedImageIndex(uploadId){
+  return new Promise(async function (resolve, reject) {
+    let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+    console.log('getSelectedImageIndex() uploads=',uploads)
+    //if no image is selected, set zero as default
+
+    resolve(uploads[uploadId].selectedImgIndex ? uploads[uploadId].selectedImgIndex : 0); 
+  })
+}
+
+
+//when main image choice for uploads[uploadId] is changed
 async function handleMainImageOptionChange(upload, uploadId, imageName, imgIndex){
-    //store chosen img index as global var
-    mainImageIndex=imgIndex;
+    console.log('handleMainImageOptionChange(), setting selected img to ',imgIndex)  
+    //retrieve uploads and set selected image
+    let tmpUploads = await JSON.parse(localStorage.getItem('uploadList'))
+    tmpUploads[uploadId].selectedImgIndex = imgIndex
+    await setLocalStorage('uploadList', tmpUploads)
     //get padding choice
     let paddingChoice = $(`#${uploadId}-paddingSelect`).val();
     //generate new resolution options
     let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+    
+    //create image hex color choices html
+    var [imgColorRecomendationsHTML, colorData] = await createPaddingImgColors(upload.files.images, uploadId, `${uploadId}-paddingImgColors`)
+    //update html
+    document.getElementById(`${uploadId}-paddingImgColors`).innerHTML=imgColorRecomendationsHTML
+
     //determine if we need to act upon the padding choice
     if (!paddingChoice.includes('none')) {
       createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
@@ -551,8 +583,10 @@ async function handleMainImageOptionChange(upload, uploadId, imageName, imgIndex
     }
 }
 
+
 //create html for Upload view
 async function createUploadPage(upload, uploadId) {
+  console.log('upload=',upload)
   //create image gallery container
   let images = [];
   for (var z = 0; z < upload.files.images.length; z++) {
@@ -560,8 +594,14 @@ async function createUploadPage(upload, uploadId) {
     images.push(`<img src="${img.path}" data-caption="${img.name}">`)
   }
 
-  //create recomended hex colors image picker for padding
-  let imgColorRecomendations = '';
+  //create image hex color choices html
+  var [imgColorRecomendations, coloData] = await createPaddingImgColors(upload.files.images, uploadId, `${uploadId}-paddingImgColors`)
+  console.log('createUploadPage() imgColorRecomendations=',imgColorRecomendations)
+  console.log('coloData=',coloData)
+
+  //set default padding color picker value
+  let defaultColorPickerValue = coloData[0];
+  console.log('defaultColorPickerValue=',defaultColorPickerValue)
 
   //create new image <select> with img previews
   let imageSelectionHTML = await createImgSelectPreview(upload.files.images, `${uploadId}-imgSelect`)
@@ -569,7 +609,7 @@ async function createUploadPage(upload, uploadId) {
   //add html to page
   let audioFilesCount = upload.files.audio.length;
   let imageFilesCount = upload.files.images.length;
-  $("#upload-pages-container").append(`
+  await $("#upload-pages-container").append(`
     <div class="col-lg-12 upload">
       <!-- Upload Header Details -->
       <div>
@@ -658,7 +698,7 @@ async function createUploadPage(upload, uploadId) {
               <label for="size">Padding:
                 <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="If a padding option is selected, than the image will be padded to reach its resolution."></i>
               </label>
-              <select id='${uploadId}-paddingSelect' class="form-control">
+              <select onChange='paddingOptionChanged("${uploadId}")' id='${uploadId}-paddingSelect' class="form-control">
                 <option value="none">None</option>
                 <option value="white">White</option>
                 <option value="black">Black</option>
@@ -745,16 +785,23 @@ async function createUploadPage(upload, uploadId) {
           <!-- color picker -->
           <div>
             <!-- To select the color -->
-            Color Picker: <input type="color" id="colorPicker" value="#6a5acd">
+            Color Picker: <input type="color" class='colorPicker' id="${uploadId}-colorPicker" value="${defaultColorPickerValue}">
       
             <!-- To display hex code of the color -->
-            Hex Code:  <input type="text" value='#6a5acd' id="hexColorBox"> 
+            Hex Code:  <input type="text" class='hexColorBox' value='${defaultColorPickerValue}' id="${uploadId}-hexColorBox"> 
           </div>
           <br>
 
           <!-- color adder button -->
-          <div class='border addCustomColor' >
-            <i href="#" class="fa fa-plus-circle" aria-hidden="true"></i>
+          <div 
+            class='border addCustomColor' 
+            onClick='addCustomColorOption("${uploadId}")'
+          >
+            <i 
+              href="#" 
+              class="fa fa-plus-circle" 
+              aria-hidden="true"
+            ></i>
             Add custom color padding option
           </div>
 
@@ -763,31 +810,30 @@ async function createUploadPage(upload, uploadId) {
 
               //function to call when hex text input changes
               function hexColorBoxChanged(){
-                console.log('hexColorBoxChanged()')
                 //set color picker value to hexColorBox value
-                document.getElementById('colorPicker').value = document.getElementById('hexColorBox').value;
+                document.getElementById('${uploadId}-colorPicker').value = document.getElementById('${uploadId}-hexColorBox').value;
               }
               
               //function to call when hex color picker value changes
-              function myColor() {
+              function hexColorPickerValueChanged() {
                   // Get the value return by color picker
-                  var color = document.getElementById('colorPicker').value;
+                  var color = document.getElementById('${uploadId}-colorPicker').value;
         
                   // Take the hex code
-                  document.getElementById('hexColorBox').value = color;
+                  document.getElementById('${uploadId}-hexColorBox').value = color;
               }
         
-              // add event listener so that when user clicks over color picker, myColor() function is called
-              document.getElementById('colorPicker').addEventListener('input', myColor);
+              // add event listener so that when user clicks over color picker, hexColorPickerValueChanged() function is called
+              document.getElementById('${uploadId}-colorPicker').addEventListener('input', hexColorPickerValueChanged);
 
               // add event listener so that when user changes color hex value, hexColorBoxChanged() function is called
-              document.getElementById('hexColorBox').addEventListener('input', hexColorBoxChanged);
+              document.getElementById('${uploadId}-hexColorBox').addEventListener('input', hexColorBoxChanged);
 
           </script>
           
           <!-- color picker style -->
           <style>
-            #colorPicker {
+            .colorPicker {
                 background-color: none;
                 outline: none;
                 border: none;
@@ -796,7 +842,7 @@ async function createUploadPage(upload, uploadId) {
                 cursor: pointer;
             }
               
-            #hexColorBox {
+            .hexColorBox {
               outline: none;
               border: 1px solid #333;
               height: 25px;
@@ -960,6 +1006,16 @@ async function createUploadPage(upload, uploadId) {
   //  jQurey code to handle when certain options change on an upload page
   //
 
+  //if user changes color box text value, remove green border
+  $(`#${uploadId}-hexColorBox`).keyup(function () { 
+    $(".colorBox").removeClass("selectedColorBox");
+  });
+
+   //if user sets color using color picker, remove green border
+  $(`#${uploadId}-colorPicker`).on('change', async function () {
+    $(".colorBox").removeClass("selectedColorBox");
+  });
+
   //jQuery setup to display images inside <select> <option> elements for main image selection
   $(`#${uploadId}-imgSelect`).ddslick({
     width:'flex',
@@ -977,17 +1033,15 @@ async function createUploadPage(upload, uploadId) {
     let paddingChoice = $(this).val();
 
     //if padding choice is custom; reveal color picker, else hide it
-    if(paddingChoice.toLowerCase()!='none'){
+    if (['none', 'black', 'white'].indexOf(paddingChoice.toLowerCase()) < 0) {
       document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='block';
     }else{
       document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='none';
     }
 
     //get image choice index from global var
-    let newImageNum = mainImageIndex;
-    console.log('newImageNum=',newImageNum)
-    console.log('upload.files.images=',upload.files.images)
-    let newImageName = upload.files.images[newImageNum].name;
+    let selectedImgIndex = await getSelectedImageIndex(uploadId) 
+    let newImageName = upload.files.images[selectedImgIndex].name;
 
     //generate new resolution options
     let uploadImageResolutions = await getResolutionOptions(upload.files.images);
@@ -1007,6 +1061,58 @@ async function createUploadPage(upload, uploadId) {
     
   });
 
+}
+
+async function paddingOptionChanged(uploadId){
+  //if padding option changes, set css if it is a custom color
+  console.log('paddingOptionChanged() ')
+  //get css
+  let cssValue = document.getElementById(`${uploadId}-paddingSelect`).value
+  console.log('cssValue=',cssValue)
+  if (['none', 'black', 'white'].indexOf(cssValue.toLowerCase()) < 0) {
+    //set css of main select element only for custom choices
+    //document.getElementById(`${uploadId}-paddingSelect`).style['text-shadow']='rgb(0, 0, 0) 1px 0px 0px, rgb(0, 0, 0) 0px -1px 0px, rgb(0, 0, 0) 0px 1px 0px, rgb(0, 0, 0) -1px 0px 0px;'
+    //document.getElementById(`${uploadId}-paddingSelect`).style['color']=' rgb(255, 255, 255)';
+    //document.getElementById(`${uploadId}-paddingSelect`).style['background']=`${cssValue}`;
+  }
+
+  
+  /*
+background: rgb(205, 201, 194); 
+color: rgb(255, 255, 255); 
+text-shadow: 
+  */
+}
+
+async function addCustomColorOption(uploadId){
+  //get selected color
+  let selectedColor = document.getElementById(`${uploadId}-hexColorBox`).value;
+  console.log('addCustomColorOption() selectedColor=',selectedColor)
+  //create new padding color option
+  var o = new Option(`${selectedColor}`, `${selectedColor}`);
+  $(o).html(`${selectedColor}`);
+  //set css of option 
+  $(o).css("outline", "#cc4242 11px -13px 10px");
+  $(o).css("background", `${selectedColor}`);
+  $(o).css("color", "#fff");
+  $(o).css("text-shadow", `1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000`);
+
+
+  $(`#${uploadId}-paddingSelect`).append(o);
+
+  //save to uploadsList
+  //notify user that new color has been added
+}
+
+async function colorBoxClicked(element, uploadId){
+  $(".colorBox").removeClass("selectedColorBox");
+  element.classList.add("selectedColorBox");
+  let selectedColor = element.getAttribute('title')
+  console.log('selectedColor=',selectedColor)
+  //set hex color box value
+  document.getElementById(`${uploadId}-hexColorBox`).value = selectedColor;
+  //set hex color picker text  
+  document.getElementById(`${uploadId}-colorPicker`).value = selectedColor;
 }
 
 async function changeDir(displayTextID, uploadId) {
@@ -1034,109 +1140,109 @@ async function individRenderPrep(uploadId, uploadNumber) {
   //get upload
   let upload = uploads[uploadId];
 
-    //get outputDir
-    let outputDir = uploads[uploadId].outputDir;
-    //if outputDir == unset, turn button red and reveal err message to user
-    if(!outputDir){
-      //set color of changeDir button
-      //document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
-      //reveal message
-      document.querySelector(`#${uploadId}-individRenderMsg`).style.visibility='visible';
-    }else{
-      //get table
-      var table = $(`#${uploadId}-individual-table`).DataTable()
-      //get all rows
-      var rows = table.rows().data()
-      //for each row
-      for (var x = 0; x < rows.length; x++) {
-        var row = rows[x]
-        console.log(`individPrep() rows[${x}] = `, row)
-        //
-        // get audio for that row
-        //
-        //get audio input filepath
-        let audioInputPath = row.audioFilepath;
-        console.log('audioInputPath=', audioInputPath)
+  //get outputDir
+  let outputDir = uploads[uploadId].outputDir;
+  //if outputDir == unset, turn button red and reveal err message to user
+  if(!outputDir){
+    //set color of changeDir button
+    //document.querySelector(`#${uploadId}-dirText`).style.backgroundColor = "#fc3535";
+    //reveal message
+    document.querySelector(`#${uploadId}-individRenderMsg`).style.visibility='visible';
+  }else{
+    //get table
+    var table = $(`#${uploadId}-individual-table`).DataTable()
+    //get all rows
+    var rows = table.rows().data()
+    //for each row
+    for (var x = 0; x < rows.length; x++) {
+      var row = rows[x]
+      console.log(`individPrep() rows[${x}] = `, row)
+      //
+      // get audio for that row
+      //
+      //get audio input filepath
+      let audioInputPath = row.audioFilepath;
+      console.log('audioInputPath=', audioInputPath)
 
-        //
-        // get image choice for that row
-        //
-        //GET ID WE WILL USE TO GET IMAGE SELECTON RESULT FOR THAT ROW
-        let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
-        imageLocationId = imageLocationId.substring(0, imageLocationId.indexOf(`'`)).trim()
+      //
+      // get image choice for that row
+      //
+      //GET ID WE WILL USE TO GET IMAGE SELECTON RESULT FOR THAT ROW
+      let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
+      imageLocationId = imageLocationId.substring(0, imageLocationId.indexOf(`'`)).trim()
 
-        //get image selection form:
-        //console.log(` get row at index: ${x} imageSelection: `, document.querySelector(`#${uploadId}-individual-table-image-row-${x}`))
+      //get image selection form:
+      //console.log(` get row at index: ${x} imageSelection: `, document.querySelector(`#${uploadId}-individual-table-image-row-${x}`))
 
-        //get image input filepath
-        let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
-        console.log('indexValueImgChoice=', indexValueImgChoice)
+      //get image input filepath
+      let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
+      console.log('indexValueImgChoice=', indexValueImgChoice)
 
-        console.log('upload.files.images=', upload.files.images)
+      console.log('upload.files.images=', upload.files.images)
 
 
-        //get img name
-        let imageFilepath = upload.files.images[indexValueImgChoice].path
-        console.log('imageFilepath=', imageFilepath)
+      //get img name
+      let imageFilepath = upload.files.images[indexValueImgChoice].path
+      console.log('imageFilepath=', imageFilepath)
 
-        //
-        //get resolution choice for that row
-        //
-        let resolutionLocationId = row.resolution.split(`id=`)[1].substring(1)
-        resolutionLocationId = resolutionLocationId.substring(0, resolutionLocationId.indexOf(`'`)).trim()
-        console.log('resolutionLocationId=',resolutionLocationId)
-        let resolution = ($(`#${resolutionLocationId} :selected`).text()).split(" ")[0];
-        console.log('chosen resolution=', resolution)
+      //
+      //get resolution choice for that row
+      //
+      let resolutionLocationId = row.resolution.split(`id=`)[1].substring(1)
+      resolutionLocationId = resolutionLocationId.substring(0, resolutionLocationId.indexOf(`'`)).trim()
+      console.log('resolutionLocationId=',resolutionLocationId)
+      let resolution = ($(`#${resolutionLocationId} :selected`).text()).split(" ")[0];
+      console.log('chosen resolution=', resolution)
 
-        //
-        //get padding choice
-        //
-        let paddingLocationId = row.padding.split(`id=`)[1].substring(1)
-        paddingLocationId = paddingLocationId.substring(0, paddingLocationId.indexOf(`'`)).trim()
-        console.log('paddingLocationId=',paddingLocationId)
-        let padding = $(`#${paddingLocationId}`).val();
-        console.log('padding=', padding)
-        //get outputDir and uploadName
-        let outputDir = uploads[uploadId].outputDir;
-        let uploadName = uploads[uploadId].title;
+      //
+      //get padding choice
+      //
+      let paddingLocationId = row.padding.split(`id=`)[1].substring(1)
+      paddingLocationId = paddingLocationId.substring(0, paddingLocationId.indexOf(`'`)).trim()
+      console.log('paddingLocationId=',paddingLocationId)
+      let padding = $(`#${paddingLocationId}`).val();
+      console.log('padding=', padding)
+      //get outputDir and uploadName
+      let outputDir = uploads[uploadId].outputDir;
+      let uploadName = uploads[uploadId].title;
 
-        //if audio file is not of type mp3, then convert to mp3:
-        let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
-        console.log('audioType=', audioType)
-        let concatAudioChoice = false
-        if(audioType!='mp3'){
-          console.log('not mp3 so convert')
-          concatAudioChoice = true
-        }
-
-        //create outputFilename from row audio
-        let filename = row.audio
-        //remove filename ending
-        filename=filename.substr(0, filename.lastIndexOf("."))
-        //clean audio filename to make sure there aren't any special chars
-        filename.replace(/[/\\?%*:|"<>]/g, '-');
-        console.log('filename=', filename)
-
-        //create render options
-        let renderOptions = {
-          audioFilepath:audioInputPath,
-          concatAudio: concatAudioChoice,
-          outputDir: outputDir,
-          resolution: resolution,
-          padding: padding,
-          selectedRows: [row],
-          uploadNumber: uploadNumber,
-          uploadId: uploadId,
-          uploadName: uploadName,
-          concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
-          imageFilepath: imageFilepath,
-          outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
-        }
-        
-        await render(renderOptions)
-        
+      //if audio file is not of type mp3, then convert to mp3:
+      let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
+      console.log('audioType=', audioType)
+      let concatAudioChoice = false
+      if(audioType!='mp3'){
+        console.log('not mp3 so convert')
+        concatAudioChoice = true
       }
+
+      //create outputFilename from row audio
+      let filename = row.audio
+      //remove filename ending
+      filename=filename.substr(0, filename.lastIndexOf("."))
+      //clean audio filename to make sure there aren't any special chars
+      filename.replace(/[/\\?%*:|"<>]/g, '-');
+      console.log('filename=', filename)
+
+      //create render options
+      let renderOptions = {
+        audioFilepath:audioInputPath,
+        concatAudio: concatAudioChoice,
+        outputDir: outputDir,
+        resolution: resolution,
+        padding: padding,
+        selectedRows: [row],
+        uploadNumber: uploadNumber,
+        uploadId: uploadId,
+        uploadName: uploadName,
+        concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
+        imageFilepath: imageFilepath,
+        outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
+      }
+      
+      await render(renderOptions)
+      
     }
+  }
 
 }
 
@@ -1152,7 +1258,7 @@ async function concatRenderPrep(uploadId, uploadNumber) {
   //get selected padding 
   let padding = $(`#${uploadId}-paddingSelect option:selected`).text();
   //get selected main image index from global var
-  let imgChoice = mainImageIndex
+  let imgChoice = await getSelectedImageIndex(uploadId)
   //get selected main image filepath
   let imageFilepath = upload.files.images[imgChoice].path
   //get tracks table
@@ -1342,6 +1448,8 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
         paddingColor='#ffffff'
       }else if(renderOptions.padding.toLowerCase()=='black'){
         paddingColor='#000000'
+      }else{
+        paddingColor=renderOptions.padding
       }
       cmdArr.push(`format=rgb24,scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${paddingColor}`)
     }
@@ -2371,6 +2479,43 @@ async function createResolutionSelectIndividualCol(selectId, includeLabel, selec
 
     //return html
     resolve(selectForm)
+  })
+}
+
+//create html element and assign event listener to always display chosen image hex color values (vibrant.js)
+async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
+  return new Promise(async function (resolve, reject) {
+    try{
+      //get current image from upload object
+      let selectedImgIndex = await getSelectedImageIndex(uploadId) 
+      //get current image
+      let uploads = await JSON.parse(localStorage.getItem('uploadList'))
+      let selectedImage = uploads[uploadId].files.images[selectedImgIndex]
+      //get current image colors
+      let currentImageColors = await getImageColors(selectedImage.path);
+      //create small box for each color
+      let colorBoxesHTML = '';
+      for(var x = 0; x < currentImageColors.length; x++){
+        console.log(currentImageColors[x])
+        colorBoxesHTML=`${colorBoxesHTML} 
+        <div 
+          id="${uploadId}-color-${x}" 
+          title="${currentImageColors[x]}" 
+          class="colorBox" 
+          onClick="colorBoxClicked(this, '${uploadId}')"
+          style="background: ${currentImageColors[x]}"
+        ></div>`
+      }
+      //create html
+      let colorPaddingHTML = `
+        <div id='${paddingImgColorsId}'>
+          ${colorBoxesHTML}
+        </div>`;
+      //add event listener that calls fucntion when img changes
+      resolve([colorPaddingHTML, currentImageColors])
+    }catch(err){
+      reject(err)
+    }
   })
 }
 

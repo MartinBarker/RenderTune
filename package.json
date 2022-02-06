@@ -243,6 +243,7 @@
     "ffprobe-static-electron": "^2.0.0",
     "find-config": "^1.0.0",
     "fluent-ffmpeg": "^2.1.2",
+    "get-image-colors": "^4.0.1",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",
     "moment": "^2.29.1",
