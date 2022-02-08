@@ -5,7 +5,12 @@ var path = require('path');
 const sizeOf = require('image-size');
 const getColors = require('get-image-colors');
 const { resolve } = require('dns');
+const { createServer } = require('http');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+const PORT = 8080
+
+
+
 let mainWindow;
 
 function createWindow() {
@@ -24,12 +29,32 @@ function createWindow() {
         backgroundColor: '#FFF',
         icon: "./build/icon.png"
     });
+    //load html
     mainWindow.loadFile('./src/newindex.html'); 
-    
+    //open devtools
+    mainWindow.webContents.openDevTools()
+    //setup server
+    mainWindow.webContents.once("did-finish-load", function () {
+        var http = require("http");
+        var server = http.createServer(function (req, res) {
+          console.log(req.url)
+          console.log('req.body=',req.body)
+          if (req.url == '/123') {
+            res.end(`ah, you send 123.`);
+          } else {
+            const remoteAddress = res.socket.remoteAddress;
+            const remotePort = res.socket.remotePort;
+            res.end(`Your IP address is ${remoteAddress} and your source port is ${remotePort}.`);  
+          }
+        });
+        server.listen(PORT);
+        console.log("http://localhost:"+PORT);
+      });
+
+
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
-
     
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {

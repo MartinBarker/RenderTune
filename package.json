@@ -227,6 +227,8 @@
   },
   "dependencies": {
     "bootstrap": "^4.6.0",
+    "browser-window": "^0.4.0",
+    "crypto": "^1.0.1",
     "datatables.net-dt": "^1.10.21",
     "datatables.net-rowreorder-dt": "^1.2.7",
     "dotenv": "^8.2.0",
@@ -244,6 +246,7 @@
     "find-config": "^1.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "get-image-colors": "^4.0.1",
+    "http": "^0.0.1-security",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",
     "moment": "^2.29.1",

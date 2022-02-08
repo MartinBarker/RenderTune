@@ -1273,9 +1273,30 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     inputAudioFilepaths.push(`${selectedRows[x].audioFilepath}`);
     //calculate total time
     var lengthSplit = selectedRows[x].length.split(':'); // split length at the colons
+
     // minutes are worth 60 seconds. Hours are worth 60 minutes.
+    /*
+    var lengthSplitCopy = lengthSplit;
+    var trackLengthSeconds = 0;
+    trackLengthSeconds = (parseFloat(lengthSplitCopy[0])*3600)
+    console.log('newTime trackLengthSeconds=',trackLengthSeconds)
+    //remove first item of list (hours)
+    console.log('newTime lengthSplitCopy=',lengthSplitCopy)
+    lengthSplitCopy.shift();
+    console.log('newTime lengthSplitCopy=',lengthSplitCopy)
+    //calcualte minutes+seconds
+    let minsSecondsFloat = parseFloat(lengthSplitCopy.join('.'))
+    console.log('newTime minsSecondsFloat=',minsSecondsFloat)
+    trackLengthSeconds=trackLengthSeconds+(minsSecondsFloat*60)
+    console.log('newTime trackLengthSeconds=',trackLengthSeconds)
+    */
+
     var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
+    console.log(`selectedRows[${x}].length = ${selectedRows[x].length}, \n lengthSplit=${lengthSplit} \n seconds=${seconds}, \n outputDuration=${outputDuration} \n \n `)
     outputDuration = outputDuration + seconds;
+    //outputDuration = outputDuration + trackLengthSeconds;
+    console.log('newTime outputDuration=',outputDuration)
+
   }
   //get selected video output format 
   let vidFormat = $(`#${uploadId}-vidFormatSelect option:selected`).text();
@@ -1439,7 +1460,7 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     cmdArr.push('-filter:v')
     //if user has no padding option selected, render vid to exact width/height resolution 
     if(renderOptions.padding == 'None'){
-      cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}`)
+      cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]},pad=ceil(iw/2)*2:ceil(ih/2)*2`)
     //else padding will be padding hex(#966e6e) color 
     }else{ 
       //get hex color
@@ -1464,9 +1485,11 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     //stillimage
     cmdArr.push('-tune')
     cmdArr.push('stillimage')
+    
     //set video length (seconds) to trim ending
     cmdArr.push('-t')
     cmdArr.push(`${renderOptions.outputDuration}`)
+
     //output
     cmdArr.push(`${renderOptions.outputFilepath}`)
     
@@ -2268,16 +2291,18 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       prevTime = fullAlbumLength
     }
     var currTime = selectedRows[i].length
-    console.log('currTime=',currTime)
+    //console.log('currTime=',currTime)
     startTime = prevTime;
     endTime = sum(startTime, currTime);
-    console.log(`startTime=${startTime}, endTime=${endTime}`)
+    //console.log(`startTime=${startTime}, endTime=${endTime}`)
+    
     //calculate sum
     fullAlbumLength = sum(prevTime, currTime);
-    console.log(`fullAlbumLength=${fullAlbumLength}`)
+    //console.log(`fullAlbumLength=${fullAlbumLength}`)
+    
     //update tracklist
     fullAlbumTracklist = `${fullAlbumTracklist}${selectedRows[i].audio} ${startTime}-${endTime}<br>`
-    console.log(`fullAlbumTracklist=${fullAlbumTracklist} \n`)
+    //console.log(`fullAlbumTracklist=${fullAlbumTracklist} \n`)
   }
 
   //if selected padding option for row changes, update resolution for that row
