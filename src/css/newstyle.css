@@ -76,6 +76,13 @@ label{
   background:rgb(202, 202, 202);
 }
 
+/*
+.card{
+  height: 40vh;
+  overflow: scroll;
+}
+*/
+
 .colorBox{
   cursor:pointer;
   width: 25px;

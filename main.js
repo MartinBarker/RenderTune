@@ -9,7 +9,9 @@ const { createServer } = require('http');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 const PORT = 8080
 
+const express = require('express')
 
+const app2 = express()
 
 let mainWindow;
 
@@ -30,32 +32,35 @@ function createWindow() {
         icon: "./build/icon.png"
     });
     //load html
-    mainWindow.loadFile('./src/newindex.html'); 
+    mainWindow.loadFile('./src/newindex.html');
     //open devtools
     mainWindow.webContents.openDevTools()
     //setup server
+    /*
     mainWindow.webContents.once("did-finish-load", function () {
         var http = require("http");
         var server = http.createServer(function (req, res) {
-          console.log(req.url)
-          console.log('req.body=',req.body)
-          if (req.url == '/123') {
-            res.end(`ah, you send 123.`);
-          } else {
-            const remoteAddress = res.socket.remoteAddress;
-            const remotePort = res.socket.remotePort;
-            res.end(`Your IP address is ${remoteAddress} and your source port is ${remotePort}.`);  
-          }
+            console.log(req.url)
+            console.log('req.body=', req.body)
+            if (req.url == '/123') {
+                res.end(`ah, you send 123.`);
+            } else {
+                const remoteAddress = res.socket.remoteAddress;
+                const remotePort = res.socket.remotePort;
+                res.end(`Your IP address is ${remoteAddress} and your source port is ${remotePort}.`);
+            }
         });
         server.listen(PORT);
-        console.log("http://localhost:"+PORT);
-      });
+        console.log("http://localhost:" + PORT);
+    });
+    */
+
 
 
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
-    
+
     // check if there are any updates availiable once main window is ready. if there are, automatically download 
     mainWindow.once('ready-to-show', () => {
         autoUpdater.checkForUpdatesAndNotify();
@@ -78,7 +83,7 @@ app.on('ready', () => {
 
 app.on('window-all-closed', function () {
     //if (process.platform !== 'darwin') {
-        app.quit();
+    app.quit();
     //}
 });
 
@@ -122,19 +127,19 @@ function componentToHex(c) {
 ipcMain.handle('get-image-colors', async (event, filename) => {
     return new Promise(async function (resolve, reject) {
         var colorData = []
-        try{
+        try {
             //get color data from image
             //await getColors(path.join(__dirname, 'img.jpg')).then(colors => {
             await getColors(filename).then(colors => {
                 //convert each swatch from rgb to hex and add to colorData{}
-                for(var x =0; x < colors.length; x++){
+                for (var x = 0; x < colors.length; x++) {
                     let rgbColor = colors[x]._rgb
                     let hexColor = rgbToHex(rgbColor)
                     colorData.push(hexColor)
                 }
             })
             resolve(colorData);
-        }catch(err){
+        } catch (err) {
             reject(err)
         }
     })
@@ -142,22 +147,22 @@ ipcMain.handle('get-image-colors', async (event, filename) => {
 
 //get metadata for audio file
 ipcMain.handle('get-audio-metadata', async (event, filename) => {
-    const metadata = await musicMetadata.parseFile(filename, {duration: true});
+    const metadata = await musicMetadata.parseFile(filename, { duration: true });
     //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
     return metadata;
 });
 
 ipcMain.handle('set-dir', async (event) => {
     let defaultPath = path.dirname('/Users');
-        const { filePaths } = await dialog.showOpenDialog({
-          properties: ['openDirectory', 'createDirectory'],
-          defaultPath,
-          title: 'title',
-          message: 'message',
-          buttonLabel: 'buttonLabel'
-        });
-        return (filePaths && filePaths.length === 1) ? filePaths[0] : undefined;
-      
+    const { filePaths } = await dialog.showOpenDialog({
+        properties: ['openDirectory', 'createDirectory'],
+        defaultPath,
+        title: 'title',
+        message: 'message',
+        buttonLabel: 'buttonLabel'
+    });
+    return (filePaths && filePaths.length === 1) ? filePaths[0] : undefined;
+
 });
 
 
@@ -166,17 +171,17 @@ ipcMain.handle('get-image-resolution', async (event, filename) => {
     let width = '';
     let height = '';
     [width, height] = await getResolution(filename)
-    return [width,height];
+    return [width, height];
 });
 
-async function getResolution(filename){
+async function getResolution(filename) {
     return new Promise(async function (resolve, reject) {
         sizeOf(filename, function (err, dimensions) {
-            if(!err){
-                width=dimensions.width;
-                height=dimensions.height
-                resolve([width,height]);
-            }else{
+            if (!err) {
+                width = dimensions.width;
+                height = dimensions.height
+                resolve([width, height]);
+            } else {
                 console.log('err getting img dimmensions:', err)
                 reject(err)
             }

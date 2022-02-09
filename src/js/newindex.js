@@ -749,8 +749,8 @@ async function createUploadPage(upload, uploadId) {
                 <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Choose what file type you want the outputted video(s) to be. Mkv will have higher quality audio."></i>
               </label>
               <select id='${uploadId}-vidFormatSelect' class="form-control">
-                <option value="none">mkv</option>
-                <option value="white">mp4</option>
+                <option value="mkv">mkv</option>
+                <option value="mp4">mp4</option>
               </select>
             </span>
           </div>
@@ -936,6 +936,13 @@ async function createUploadPage(upload, uploadId) {
                   <th class='left-align-col' >
                     <div id='${uploadId}-individual-table-resolution-col' >
                       <label>Resolution:</label>
+                    </div>
+                  </th>
+                  
+                  <!-- Output Video Format Option [mkv / mp4] -->
+                  <th class='left-align-col' >
+                    <div id='${uploadId}-individual-table-output-vid-col' >
+                      <label>Output Vid:</label>
                     </div>
                   </th>
 
@@ -1158,14 +1165,14 @@ async function individRenderPrep(uploadId, uploadNumber) {
       var row = rows[x]
       console.log(`individPrep() rows[${x}] = `, row)
       //
-      // get audio for that row
+      // get audio filepath for that row
       //
       //get audio input filepath
       let audioInputPath = row.audioFilepath;
       console.log('audioInputPath=', audioInputPath)
 
       //
-      // get image choice for that row
+      // get image filepath for that row
       //
       //GET ID WE WILL USE TO GET IMAGE SELECTON RESULT FOR THAT ROW
       let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
@@ -1176,42 +1183,37 @@ async function individRenderPrep(uploadId, uploadNumber) {
 
       //get image input filepath
       let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
-      console.log('indexValueImgChoice=', indexValueImgChoice)
-
-      console.log('upload.files.images=', upload.files.images)
-
 
       //get img name
       let imageFilepath = upload.files.images[indexValueImgChoice].path
-      console.log('imageFilepath=', imageFilepath)
 
       //
       //get resolution choice for that row
       //
       let resolutionLocationId = row.resolution.split(`id=`)[1].substring(1)
       resolutionLocationId = resolutionLocationId.substring(0, resolutionLocationId.indexOf(`'`)).trim()
-      console.log('resolutionLocationId=',resolutionLocationId)
       let resolution = ($(`#${resolutionLocationId} :selected`).text()).split(" ")[0];
-      console.log('chosen resolution=', resolution)
 
       //
       //get padding choice
       //
       let paddingLocationId = row.padding.split(`id=`)[1].substring(1)
       paddingLocationId = paddingLocationId.substring(0, paddingLocationId.indexOf(`'`)).trim()
-      console.log('paddingLocationId=',paddingLocationId)
       let padding = $(`#${paddingLocationId}`).val();
-      console.log('padding=', padding)
+
+      //get output vid format choice
+      let outputVidLocationId = row.outputVid.split(`id=`)[1].substring(1)
+      outputVidLocationId = outputVidLocationId.substring(0, outputVidLocationId.indexOf(`'`)).trim()
+      let outputVid = $(`#${outputVidLocationId}`).val();
+
       //get outputDir and uploadName
       let outputDir = uploads[uploadId].outputDir;
       let uploadName = uploads[uploadId].title;
 
       //if audio file is not of type mp3, then convert to mp3:
       let audioType = audioInputPath.substr(audioInputPath.lastIndexOf('.'))
-      console.log('audioType=', audioType)
       let concatAudioChoice = false
       if(audioType!='mp3'){
-        console.log('not mp3 so convert')
         concatAudioChoice = true
       }
 
@@ -1221,25 +1223,37 @@ async function individRenderPrep(uploadId, uploadNumber) {
       filename=filename.substr(0, filename.lastIndexOf("."))
       //clean audio filename to make sure there aren't any special chars
       filename.replace(/[/\\?%*:|"<>]/g, '-');
-      console.log('filename=', filename)
+      
+      //get audio file length
+      let hms = row['length'];
+      console.log('hms=',hms)
+      var [hours, minutes, seconds] = `${hms}`.split(':');
+      console.log(`hours, minutes, seconds ${hours} ${minutes} ${seconds}`)
+      var outputDuration = (+hours) * 60 * 60 + (+minutes) * 60 + (+seconds);
+      console.log(`outputDuration = ${outputDuration}`);
 
-      //create render options
-      let renderOptions = {
-        audioFilepath:audioInputPath,
-        concatAudio: concatAudioChoice,
-        outputDir: outputDir,
-        resolution: resolution,
-        padding: padding,
-        selectedRows: [row],
+      //create renderOptions object we will send to render() function
+      let renderOptions2 = {
+        //upload data
         uploadNumber: uploadNumber,
         uploadId: uploadId,
         uploadName: uploadName,
-        concatAudioFilepath: `${outputDir}${path.sep}output-${(Date.now().toString()).substring(7)}.mp3`,
-        imageFilepath: imageFilepath,
-        outputVideoFilepath: `${outputDir}${path.sep}${(Date.now().toString()).substring(7)}-${filename}.mp4`
+        //input files data
+        inputImage: imageFilepath,
+        inputAudioFilepaths: [audioInputPath],
+        //video options 
+        resolution: resolution,
+        padding: padding,
+        //output data
+        
+        outputDuration: outputDuration, ////////
+
+        outputDir: outputDir,
+        outputFormat: outputVid,
+        outputFilepath: `${outputDir}${path.sep}${filename}-${(Date.now().toString()).substring(7)}.${outputVid}`
       }
-      
-      await render(renderOptions)
+
+      await render(renderOptions2)
       
     }
   }
@@ -1274,23 +1288,6 @@ async function concatRenderPrep(uploadId, uploadNumber) {
     //calculate total time
     var lengthSplit = selectedRows[x].length.split(':'); // split length at the colons
 
-    // minutes are worth 60 seconds. Hours are worth 60 minutes.
-    /*
-    var lengthSplitCopy = lengthSplit;
-    var trackLengthSeconds = 0;
-    trackLengthSeconds = (parseFloat(lengthSplitCopy[0])*3600)
-    console.log('newTime trackLengthSeconds=',trackLengthSeconds)
-    //remove first item of list (hours)
-    console.log('newTime lengthSplitCopy=',lengthSplitCopy)
-    lengthSplitCopy.shift();
-    console.log('newTime lengthSplitCopy=',lengthSplitCopy)
-    //calcualte minutes+seconds
-    let minsSecondsFloat = parseFloat(lengthSplitCopy.join('.'))
-    console.log('newTime minsSecondsFloat=',minsSecondsFloat)
-    trackLengthSeconds=trackLengthSeconds+(minsSecondsFloat*60)
-    console.log('newTime trackLengthSeconds=',trackLengthSeconds)
-    */
-
     var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
     console.log(`selectedRows[${x}].length = ${selectedRows[x].length}, \n lengthSplit=${lengthSplit} \n seconds=${seconds}, \n outputDuration=${outputDuration} \n \n `)
     outputDuration = outputDuration + seconds;
@@ -1311,18 +1308,20 @@ async function concatRenderPrep(uploadId, uploadNumber) {
   }else{ //else if outputDir is set
     //get uploadName
     let uploadName = uploads[uploadId].title;
+
     //create renderOptions object we will send to render() function
     let renderOptions = {
+      //upload data
       uploadNumber: uploadNumber,
       uploadId: uploadId,
       uploadName: uploadName,
-
+      //input files data
       inputImage: imageFilepath,
       inputAudioFilepaths: inputAudioFilepaths,
-
+      //video options 
       resolution: resolution,
       padding: padding,
-
+      //output data
       outputDuration: outputDuration,
       outputDir: outputDir,
       outputFormat: vidFormat,
@@ -1356,70 +1355,6 @@ async function debugDir(){
 async function render(renderOptions, debugConcatAudioCmd=null) {
   return new Promise(async function (resolve, reject) {
     console.log('render() function called. renderOptions=', renderOptions)
-    /*
-    var outputDuration = renderOptions.outputDuration;
-    var inputAudioFilepaths = renderOptions.inputAudioFilepaths;
-    //var selectedRows = renderOptions.selectedRows;
-    var outputDir = renderOptions.outputDir;
-    var uploadName = renderOptions.uploadName;
-    var uploadId = renderOptions.uploadId;
-    var padding = renderOptions.padding;
-    */
-
-
-    //var concatAudioOutput = '';
-    //let cmdArr = [];
-    /*
-    //calculate duration
-    let outputDuration = 0;
-    for (var i = 0; i < selectedRows.length; i++) {
-      //calculate total time
-      var lengthSplit = selectedRows[i].length.split(':'); // split length at the colons
-      // minutes are worth 60 seconds. Hours are worth 60 minutes.
-      var seconds = (+lengthSplit[0]) * 60 * 60 + (+lengthSplit[1]) * 60 + (+lengthSplit[2]);
-      outputDuration = outputDuration + seconds;
-    }
-    */
-
-    //if we need to combine audio, do it first
-    /*
-    if (false) {
-      let concatAudioFilepath = renderOptions.concatAudioFilepath;
-      //add inputs
-      cmdArr.push('-y')
-      let filterMapStr='';
-      for (var i = 0; i < selectedRows.length; i++) {
-        cmdArr.push('-i')
-        cmdArr.push(`${selectedRows[i].audioFilepath}`);
-        filterMapStr=`${filterMapStr}[${i}:a]`;
-      }
-
-      //add concat options
-      cmdArr.push("-filter_complex")
-      cmdArr.push(`${filterMapStr}concat=n=${i}:v=0:a=1[a]`)
-      cmdArr.push(`-map`)
-      cmdArr.push(`[a]`)
-      //add audio codec and quality 
-      cmdArr.push("-c:a")
-      cmdArr.push("libmp3lame")
-      cmdArr.push("-b:a")
-      cmdArr.push("320k")
-      //set output 
-      cmdArr.push(concatAudioFilepath);
-      //add to renderList
-      let renderStatusId = `${uploadId}-render-${(Date.now().toString()).substring(7)}`;
-      addToRenderList('concatAudio', outputDuration, uploadName, outputDir, concatAudioFilepath, renderStatusId)
-      //run ffmpeg command to concat audio
-      if(debugConcatAudioCmd){
-        console.log('setting debugConcatAudioCmd')
-        cmdArr=debugConcatAudioCmd;
-      }
-      console.log('concatAudio: cmdArr=',cmdArr.join(" ") );
-
-      let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, outputDuration, renderStatusId);
-      concatAudioOutput = concatAudioFilepath;
-    }
-    */
     ///////////////////////////////////
     //create video rendering command
     let cmdArr = []
@@ -1459,15 +1394,15 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     //filter to set resolution/padding
     cmdArr.push('-filter:v')
     //if user has no padding option selected, render vid to exact width/height resolution 
-    if(renderOptions.padding == 'None'){
+    if(renderOptions.padding.toLowerCase().trim() == 'none'){
       cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]},pad=ceil(iw/2)*2:ceil(ih/2)*2`)
     //else padding will be padding hex(#966e6e) color 
     }else{ 
       //get hex color
       var paddingColor = '';
-      if(renderOptions.padding.toLowerCase()=='white'){
+      if(renderOptions.padding.toLowerCase().trim()=='white'){
         paddingColor='#ffffff'
-      }else if(renderOptions.padding.toLowerCase()=='black'){
+      }else if(renderOptions.padding.toLowerCase().trim()=='black'){
         paddingColor='#000000'
       }else{
         paddingColor=renderOptions.padding
@@ -1492,74 +1427,8 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
 
     //output
     cmdArr.push(`${renderOptions.outputFilepath}`)
-    
-
-
-    /*
-    ///////////////////////////////////
-    //render video
-    cmdArr = [];
-    let audioInput = concatAudioOutput || renderOptions.audioFilepath;
-    let videoOutput = renderOptions.outputVideoFilepath;
-    let imageFilepath = renderOptions.imageFilepath;
-    cmdArr.push('-loop')
-    cmdArr.push('1')
-    cmdArr.push('-framerate')
-    cmdArr.push('2')
-    cmdArr.push('-i')
-    cmdArr.push(`${imageFilepath}`)
-    cmdArr.push('-i')
-    cmdArr.push(`${audioInput}`)
-    cmdArr.push('-y')
-    cmdArr.push('-acodec')
-    cmdArr.push('copy')
-    cmdArr.push('-b:a')
-    cmdArr.push('320k')
-    cmdArr.push('-vcodec')
-    cmdArr.push('libx264')
-    cmdArr.push('-b:v')
-    cmdArr.push('8000k')
-    cmdArr.push('-maxrate')
-    cmdArr.push('8000k')
-    cmdArr.push('-minrate')
-    cmdArr.push('8000k')
-    cmdArr.push('-bufsize')
-    cmdArr.push('3M')
-    cmdArr.push('-filter:v')
-    if (padding.toLowerCase() == 'none') {
-      //console.log('NO PADDING')
-      let width=parseInt(renderOptions.resolution.split('x')[0]);
-      if(width % 2 !== 0){
-        //width not divisible by two, add one extra pixel of padding
-        width=width+1
-      }
-
-      let height=parseInt(renderOptions.resolution.split('x')[1]);
-      if(height % 2 !== 0){
-        //width not divisible by two, add one extra pixel of padding
-        height=height+1
-      }
-
-      //console.log(`NO PADDING final: width=${width}, height=${height}`)
-      cmdArr.push(`scale=w=${width}:h=${height}`)
-    } else {
-      //console.log('YES PADDING')
-      cmdArr.push(`scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${padding.toLowerCase()}`)
-    }
-    cmdArr.push('-preset')
-    cmdArr.push('medium')
-    cmdArr.push('-tune')
-    cmdArr.push('stillimage')
-    cmdArr.push('-crf')
-    cmdArr.push('18')
-    cmdArr.push('-pix_fmt')
-    cmdArr.push('yuv420p')
-    cmdArr.push('-shortest')
-    cmdArr.push(`${videoOutput}`)
-    */
 
     console.log('cmdArr = ', cmdArr)
-
 
     //add to renderList
     var renderStatusId = `${renderOptions.uploadId}-render-${((Date.now().toString()).substring(7).toString()).substring(7)}`;
@@ -1568,11 +1437,6 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
 
     //console.log('renderVideo: cmdArr=',cmdArr.join(" ") );
     let runFfmpegCommandResp = await runFfmpegCommand(cmdArr, renderOptions.outputDuration, renderStatusId);
-
-    //delete concatAudio filepath if needed
-    //if (renderOptions.concatAudio) {
-    //  deleteFile(concatAudioOutput)
-    //}
 
     resolve(runFfmpegCommandResp)
   })
@@ -1728,7 +1592,6 @@ function handleProgress(process, cutDuration, renderStatusId) {
   //read progress from process
   const rl = readline.createInterface({ input: process.stderr });
   rl.on('line', (line) => {
-
     try {
       let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
       // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
@@ -1834,6 +1697,7 @@ async function createIndividualRendersTable(upload, uploadId) {
       { "data": "imgSelection" },
       { "data": "padding" },
       { "data": "resolution" },
+      { "data": "outputVid" },
     ],
     columnDefs: [
       //audio filename
@@ -1853,6 +1717,7 @@ async function createIndividualRendersTable(upload, uploadId) {
       { targets: 3, sortable: false },
       { targets: 4, sortable: false },
       { targets: 5, sortable: false },
+      { targets: 6, sortable: false },
 
     ],
     "language": {
@@ -1871,7 +1736,10 @@ async function createIndividualRendersTable(upload, uploadId) {
   //create resolution selection col header and add it to table
   let resolutionSelect = await createResolutionSelectIndividualCol(`${uploadId}-individual-table-padding-col`, true, 'max-width: 50px;', 4)
   document.getElementById(`${uploadId}-individual-table-resolution-col`).innerHTML = resolutionSelect;
-
+  //create output video format selection col header and add it to table
+  let outputVid = await createOutputVidSelectIndividualCol(`${uploadId}-individual-table-output-vid-col`, true, 'max-width: 100px;', 4)
+  document.getElementById(`${uploadId}-individual-table-output-vid-col`).innerHTML = outputVid;
+  
   //draw table
   table.draw();
 
@@ -1936,6 +1804,24 @@ async function createIndividualRendersTable(upload, uploadId) {
     //set all rows in table to have new resolution value
     table.rows().eq(0).each(function (index) {
       document.getElementById(`${uploadId}-individual-table-resolution-row-${index}`).selectedIndex = `${indexValueResolutionChoice}`
+    });
+  });
+
+  //if output video format selection col header changes, update each row
+  $(`#${uploadId}-individual-table-output-vid-col`).on('change', async function () {
+    //get new video format choice
+    let outputVidChoice = document.querySelector(`#${uploadId}-individual-table-output-vid-col select`).value;
+    //set all table rows to have new vid value
+    table.rows().eq(0).each(function (index) {
+      console.log('change for ', `${uploadId}-individual-table-output-vid-row-${index}`)
+      let indexOutputVidChoice = 0;
+      if(outputVidChoice.toLowerCase().trim() == 'mp4'){
+        indexOutputVidChoice=1
+      }else if(outputVidChoice.toLowerCase().trim() == 'mkv'){
+        indexOutputVidChoice=0
+      }
+
+      document.getElementById(`${uploadId}-individual-table-output-vid-row-${index}`).selectedIndex = `${indexOutputVidChoice}`
     });
   });
 
@@ -2264,6 +2150,16 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     let rowImgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, false, 'max-width:150px', 'rowImg')
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
+    //create output vid select
+    let rowOutputVidSelect = `
+    <form class="form-inline">
+      <div class="form-group">
+          <select id='${uploadId}-individual-table-output-vid-row-${i}' class="form-control rowOutputVid" style="max-width:100px"> 
+            <option value="mkv">mkv</option>
+            <option value="mp4">mp4</option>
+          </select> 
+      </div>
+    </form>`;
 
     //add row to individualRenders table
     individualRendersTable.row.add({
@@ -2273,6 +2169,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       "imgSelection": rowImgSelect,
       "padding": rowPaddingSelect,
       "resolution": `<select id='${uploadId}-individual-table-resolution-row-${i}' class="form-control rowRes"></select>`,
+      "outputVid": rowOutputVidSelect
     })
 
     //draw individual renders table
@@ -2507,6 +2404,32 @@ async function createResolutionSelectIndividualCol(selectId, includeLabel, selec
   })
 }
 
+//create output video selection div
+async function createOutputVidSelectIndividualCol(selectId, includeLabel, selectStyle = "") {
+  return new Promise(async function (resolve, reject) {
+    //include label if we want to 
+    let label = "";
+    if (includeLabel) {
+      label = "<label>Output Vid:⠀</label>"
+    }
+
+    //create selection form
+    var selectForm = `
+          <form class="form-inline">
+            <div class="form-group">
+                ${label}
+                <select id='${selectId}' class="form-control" style="${selectStyle}"> 
+                  <option value="mkv">mkv</option>
+                  <option value="mp4">mp4</option>
+                </select> 
+            </div>
+          </form>`;
+
+    //return html
+    console.log('createOutputVidSelectIndividualCol(): ', selectForm)
+    resolve(selectForm)
+  })
+}
 //create html element and assign event listener to always display chosen image hex color values (vibrant.js)
 async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
   return new Promise(async function (resolve, reject) {
