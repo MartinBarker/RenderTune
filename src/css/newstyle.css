@@ -40,6 +40,33 @@
 
 
 
+.dd-option-image{
+  max-height: 200px;
+  max-width: 200px;
+  overflow: hidden;
+}
+
+.dd-selected{
+  max-height:100px;
+  min-height:100px;
+  height:100px;
+  } 
+  
+  .dd-options{
+    max-width: 200px;
+    overflow: scroll;
+  }
+
+  .dd-container{
+    max-width: 200px;
+  }
+  
+ 
+  table.display {
+      /* border: 2px solid red; */
+      align: top;
+  }
+
 .dd-container{
   display:block;
 }

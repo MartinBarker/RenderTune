@@ -572,7 +572,7 @@ async function getSelectedImageIndex(uploadId){
 
 
 //when main image choice for uploads[uploadId] is changed
-async function handleMainImageOptionChange(upload, uploadId, imageName, imgIndex){
+async function handleMainImageOptionChange(upload, uploadId, imageFilepath, imgIndex){
     console.log('handleMainImageOptionChange(), setting selected img to ',imgIndex)  
     //retrieve uploads and set selected image
     let tmpUploads = await JSON.parse(localStorage.getItem('uploadList'))
@@ -593,7 +593,7 @@ async function handleMainImageOptionChange(upload, uploadId, imageName, imgIndex
       createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
     } else {
       //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
-      createResolutionSelect(uploadImageResolutions, imageName, `${uploadId}-resolutionSelect`);
+      createResolutionSelect(uploadImageResolutions, imageFilepath, `${uploadId}-resolutionSelect`);
     }
 }
 
@@ -645,7 +645,7 @@ async function createUploadPage(upload, uploadId) {
                   <th>sequence</th>
 
                   <!-- draggable number display col -->
-                  <th style='min-width: 25px;'>#</th>
+                  <th style='min-width: 25px!important; width: 25px!important; max-width:25px;!important'>#</th>
                   
                   <!-- select box -->
                   <th style="min-width: 20px;">
@@ -907,19 +907,20 @@ async function createUploadPage(upload, uploadId) {
     <!-- Individual Upload(s) Card -->
     <div class="card" style="left: 15px;
     width: 100%;
+    z-index: 1;
     margin-right: 50px;">
       <div class="card-header">
         Render <a class='${uploadId}-numSelected'>0</a> individual videos <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Keep everything as default or use the Batch Render Options to change any settings before clicking the 'Render' button to batch render multiple videos"></i>
       </div>
-      <div class="card-body">
+      <div class="card-body" style="overflow: overlay;">
       
       <p class="card-text">
       Batch Render Options:
       </p>
 
       <!-- individual renders table -->
-      <div class='scroll'>
-        <table id="${uploadId}-individual-table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
+      <div class=''>
+        <table id="${uploadId}-individual-table" class="individTable table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
             <thead> 
                 <tr>
 
@@ -934,27 +935,28 @@ async function createUploadPage(upload, uploadId) {
                   
                   <!-- Image Selection -->
                   <th class='left-align-col' style="min-width:200px !important" >
+                    <label>Img:</label><br>
                     <div id='${uploadId}-individual-table-image-col'>
-                        <label>Img:</label>
+                        
                     </div>
                   </th>
 
                   <!-- Padding Selection -->
-                  <th class='left-align-col' style="width:200px" >
+                  <th class='left-align-col' style="width:20px!important" >
                     <div id='${uploadId}-individual-table-padding-col' >
                       <label>Padding:</label>
                     </div>
                   </th>
 
                   <!-- Resolution Selection -->
-                  <th class='left-align-col' >
+                  <th class='left-align-col' style="width: 150px !important;" >
                     <div id='${uploadId}-individual-table-resolution-col' >
-                      <label>Resolution:</label>
+                      <label>Resolution:</label><br>
                     </div>
                   </th>
                   
                   <!-- Output Video Format Option [mkv / mp4] -->
-                  <th class='left-align-col' >
+                  <th class='left-align-col' style='width:20px!important;' >
                     <div id='${uploadId}-individual-table-output-vid-col' >
                       <label>Output Vid:</label>
                     </div>
@@ -1021,7 +1023,7 @@ async function createUploadPage(upload, uploadId) {
   //generate resolutions for each image
   let uploadImageResolutions = await getResolutionOptions(upload.files.images);
   //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
-  createResolutionSelect(uploadImageResolutions, upload.files.images[0].name, `${uploadId}-resolutionSelect`);
+  createResolutionSelect(uploadImageResolutions, upload.files.images[0].path, `${uploadId}-resolutionSelect`);
 
   //
   //  jQurey code to handle when certain options change on an upload page
@@ -1043,7 +1045,7 @@ async function createUploadPage(upload, uploadId) {
     background: '#FFFFFF',
     
     onSelected: async function(selectedData){
-      handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
+      handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].path, selectedData.selectedIndex);
     }   
   });
 
@@ -1062,7 +1064,7 @@ async function createUploadPage(upload, uploadId) {
 
     //get image choice index from global var
     let selectedImgIndex = await getSelectedImageIndex(uploadId) 
-    let newImageName = upload.files.images[selectedImgIndex].name;
+    let newImagePath = upload.files.images[selectedImgIndex].path;
 
     //generate new resolution options
     let uploadImageResolutions = await getResolutionOptions(upload.files.images);
@@ -1072,7 +1074,7 @@ async function createUploadPage(upload, uploadId) {
       createResolutionSelect(null, null, `${uploadId}-resolutionSelect`);
     } else {
       //newResOptions = generateResolutionOptions(uploadImageResolutions, newImageName);
-      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-resolutionSelect`);
+      createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-resolutionSelect`);
     }
 
   });
@@ -1105,11 +1107,19 @@ text-shadow:
   */
 }
 
+//add custom padding color option to full album render AND indvidual render padding options
 async function addCustomColorOption(uploadId){
   //get selected color
   let selectedColor = document.getElementById(`${uploadId}-hexColorBox`).value;
   console.log('addCustomColorOption() selectedColor=',selectedColor)
   //create new padding color option
+  var newPaddingOption = `<option style="
+    outline:#cc4242 11px -13px 10px;
+    background:${selectedColor};
+    color:#fff;
+    text-shadow:1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+  " value="${selectedColor}">${selectedColor}</option>`
+
   var o = new Option(`${selectedColor}`, `${selectedColor}`);
   $(o).html(`${selectedColor}`);
   //set css of option 
@@ -1118,8 +1128,20 @@ async function addCustomColorOption(uploadId){
   $(o).css("color", "#fff");
   $(o).css("text-shadow", `1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000`);
 
+  //add new color option to full album padding select
+  $(`#${uploadId}-paddingSelect`).append(newPaddingOption);
 
-  $(`#${uploadId}-paddingSelect`).append(o);
+  
+  //add to individ renders padding col header
+  $(`#${uploadId}-individual-table-padding-col select`).append(newPaddingOption);
+  //add to each row in individ table 
+  var table = $(`#${uploadId}-individual-table`).DataTable()
+  var rows = table.rows().data()
+  //set all values 
+  for(var x = 0; x < rows.length; x++){
+    $(`#${uploadId}-individual-table-padding-row-${x}`).append(newPaddingOption);
+  }
+ 
 
   //save to uploadsList
   //notify user that new color has been added
@@ -1189,14 +1211,15 @@ async function individRenderPrep(uploadId, uploadNumber) {
       // get image filepath for that row
       //
       //GET ID WE WILL USE TO GET IMAGE SELECTON RESULT FOR THAT ROW
-      let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
-      imageLocationId = imageLocationId.substring(0, imageLocationId.indexOf(`'`)).trim()
+      //let imageLocationId = row.imgSelection.split(`id=`)[1].substring(1)
+      //imageLocationId = imageLocationId.substring(0, imageLocationId.indexOf(`'`)).trim()
 
       //get image selection form:
       //console.log(` get row at index: ${x} imageSelection: `, document.querySelector(`#${uploadId}-individual-table-image-row-${x}`))
 
       //get image input filepath
-      let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
+      //let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
+      let indexValueImgChoice = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
 
       //get img name
       let imageFilepath = upload.files.images[indexValueImgChoice].path
@@ -1749,6 +1772,10 @@ async function createIndividualRendersTable(upload, uploadId) {
   var table = $(`#${uploadId}-individual-table`).DataTable({
     "autoWidth": true,
     "pageLength": 5000,
+    
+    scrollResize: true,
+    //scrollY: 100,
+    scrollCollapse: true,
 
     columns: [
       { "data": "audio" },
@@ -1788,13 +1815,34 @@ async function createIndividualRendersTable(upload, uploadId) {
   });
 
   //create img selection col header and add it to table
-  let imgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-col`, true, 'max-width: 150px;')
-  document.getElementById(`${uploadId}-individual-table-image-col`).innerHTML = imgSelect;
+  //let imgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-col`, true, 'max-width: 150px;')
+  
+  let newImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-col`)
+  document.getElementById(`${uploadId}-individual-table-image-col`).innerHTML = newImgSelect;
+  //jQuery setup to display images inside <select> <option> elements for main image selection
+  $(`#${uploadId}-individual-table-image-col`).ddslick({
+    width:'flex',
+    background: '#FFFFFF',
+    onSelected: async function(selectedData){
+      //get current value
+      let selectedIndex = selectedData.selectedIndex
+      console.log('individ table image col changed: ', selectedIndex)
+      //get the number of selected rows
+      var table = $(`#${uploadId}-individual-table`).DataTable()
+      var rows = table.rows().data()
+      //set all values 
+      for(var x = 0; x < rows.length; x++){
+        $(`#${uploadId}-individual-table-image-row-${x}`).ddslick('select', {index: selectedIndex });
+      }
+      //handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
+    }   
+  });
+  
   //create padding selection col header and add it to table
   let paddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-col`, true, 'max-width: 100px;')
   document.getElementById(`${uploadId}-individual-table-padding-col`).innerHTML = paddingSelect;
   //create resolution selection col header and add it to table
-  let resolutionSelect = await createResolutionSelectIndividualCol(`${uploadId}-individual-table-padding-col`, true, 'max-width: 50px;', 4)
+  let resolutionSelect = await createResolutionSelectIndividualCol(`${uploadId}-individual-table-resolution-col`, true, 'max-width: 50px;', 4)
   document.getElementById(`${uploadId}-individual-table-resolution-col`).innerHTML = resolutionSelect;
   //create output video format selection col header and add it to table
   let outputVid = await createOutputVidSelectIndividualCol(`${uploadId}-individual-table-output-vid-col`, true, 'max-width: 100px;', 4)
@@ -1811,7 +1859,7 @@ async function createIndividualRendersTable(upload, uploadId) {
     //get new image choice
     let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-col select`).value
     //get img name
-    let imgInfo = upload.files.images[indexValueImgChoice]
+    let newImgPath = upload.files.images[indexValueImgChoice].path
 
     //set all rows in table to have new image value
     table.rows().eq(0).each(async function (index) {
@@ -1824,7 +1872,7 @@ async function createIndividualRendersTable(upload, uploadId) {
       if (!rowPaddingChoice.includes('none')) {
         createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${index}`);
       } else {
-        createResolutionSelect(uploadImageResolutions, imgInfo.name, `${uploadId}-individual-table-resolution-row-${index}`);
+        createResolutionSelect(uploadImageResolutions, newImgPath, `${uploadId}-individual-table-resolution-row-${index}`);
       }
 
     });
@@ -1833,17 +1881,44 @@ async function createIndividualRendersTable(upload, uploadId) {
   //if padding selection col header changes, update each row
   $(`#${uploadId}-individual-table-padding-col`).on('change', async function () {
     //get new padding choice
-    let indexValuePaddingChoice = document.querySelector(`#${uploadId}-individual-table-padding-col select`).value
+    let newPaddingChoice = document.querySelector(`#${uploadId}-individual-table-padding-col select`).value
+    console.log('newPaddingChoice: ',newPaddingChoice)
     //set all rows in table to have new padding value
+
+
+      var table = $(`#${uploadId}-individual-table`).DataTable()
+      var rows = table.rows().data()
+      //set all values 
+      for(var x = 0; x < rows.length; x++){
+        let rowImgIndex = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
+        let rowImgPath = upload.files.images[rowImgIndex].path
+        //update that rows selected padding
+        document.getElementById(`${uploadId}-individual-table-padding-row-${x}`).value = `${newPaddingChoice}`
+        //if padding is not 'none', generate dropdown with static resolutions
+        if (!newPaddingChoice.toLowerCase().trim().includes('none')) {
+          createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${x}`);
+        } else {
+          createResolutionSelect(uploadImageResolutions, rowImgPath, `${uploadId}-individual-table-resolution-row-${x}`);
+        }
+      }
+    /*
     table.rows().eq(0).each(async function (index) {
 
       //get image choice for row
-      let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-row-${index}`).value
+      let rowImgIndex = $(`#${uploadId}-individual-table-image-row-${index}`).find('input[type=hidden]:first').val()
+      console.log('rowImgIndex=',rowImgIndex)
+      //console.log(`upload-1-individual-table-image-row-0 img index value = `, $(`#upload-1-individual-table-image-row-0`).find('input[type=hidden]:first').val())
+      //console.log(`upload-1-individual-table-image-row-1 img index value = `, $(`#upload-1-individual-table-image-row-1`).find('input[type=hidden]:first').val())
+      //console.log(`upload-1-individual-table-image-row-2 img index value = `, $(`#upload-1-individual-table-image-row-2`).find('input[type=hidden]:first').val())
+
       //get img name
-      let imgInfo = upload.files.images[indexValueImgChoice]
-      console.log('img name for this row: ', imgInfo.name)
+      //let imgInfo = upload.files.images[indexValueImgChoice]
+      //console.log(`imgInfo=${imgInfo}`)
 
       //update selected padding choice for row
+      //$('#upload-1-individual-table-image-row-0').ddslick('select', {index: 2 });
+
+     
       document.getElementById(`${uploadId}-individual-table-padding-row-${index}`).value = `${indexValuePaddingChoice}`
       //get padding choice for this row
       let rowPaddingChoice = $(`#${uploadId}-individual-table-padding-row-${index}`).val()
@@ -1853,11 +1928,13 @@ async function createIndividualRendersTable(upload, uploadId) {
       } else {
         createResolutionSelect(uploadImageResolutions, imgInfo.name, `${uploadId}-individual-table-resolution-row-${index}`);
       }
+     
     });
+    */
   });
 
   //if resolution selection col header changes, update each row
-  $(`#${uploadId}-individual-table-resolution-col`).on('change', async function () {
+  $(`#${uploadId}-individual-table-resolution-col select`).on('change', async function () {
     //get new resolution choice
     let indexValueResolutionChoice = document.querySelector(`#${uploadId}-individual-table-resolution-col select`).value - 1;
     console.log('indexValueResolutionChoice = ', indexValueResolutionChoice)
@@ -2207,8 +2284,14 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
   for (var i = 0; i < selectedRowsCount; i++) {
     //get data for individualRenderTable
     var row = selectedRows[i];
+    
     //create imgSelect
-    let rowImgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, false, 'max-width:150px', 'rowImg')
+    //let rowImgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, false, 'max-width:150px', 'rowImg')
+  
+    let rowImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-row-${i}`)
+
+   
+    
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
@@ -2233,8 +2316,19 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     })
     //draw individual renders table
     individualRendersTable.draw();
+
+    //add jQuery setup to display images inside <select> <option> elements for main image selection
+    $(`#${uploadId}-individual-table-image-row-${i}`).ddslick({
+      width:'flex',
+      background: '#FFFFFF',
+      //onSelected: async function(selectedData){
+      //  console.log('row img option changed')
+      //  //handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
+      //}   
+    });
+
     //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
-    createResolutionSelect(uploadImageResolutions, upload.files.images[0].name, `${uploadId}-individual-table-resolution-row-${i}`);
+    createResolutionSelect(uploadImageResolutions, upload.files.images[0].path, `${uploadId}-individual-table-resolution-row-${i}`);
     // -----------------------------------------
     //generate tracklist and length display text
     // -----------------------------------------
@@ -2267,15 +2361,15 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     let rowId = $(this)[0].id
     let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
     //get image info
-    let newImageNum = $(`#${uploadId}-individual-table-image-row-${rowNum}`).val();
-    let newImageName = upload.files.images[newImageNum].name;
+    let newImageNum = $(`#${uploadId}-individual-table-image-row-${rowNum}`).find('input[type=hidden]:first').val()
+    let newImagePath = upload.files.images[newImageNum].path;
     //get padding info
     let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${rowNum}`).val();
     //if padding is not 'none', generate dropdown with static resolutions
     if (!paddingChoice.includes('none')) {
       createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     } else {
-      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+      createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     }
   })
 
@@ -2288,7 +2382,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
 
     //get image info
     let newImageNum = $(`#${rowId}`).val();
-    let newImageName = upload.files.images[newImageNum].name;
+    let newImagePath = upload.files.images[newImageNum].path;
     //console.log('newImageName:', newImageName)
     //get padding info
     let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${rowNum}`).val()
@@ -2298,7 +2392,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     if (!paddingChoice.includes('none')) {
       createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     } else {
-      createResolutionSelect(uploadImageResolutions, newImageName, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+      createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     }
 
   })
@@ -2357,7 +2451,7 @@ async function getResolutionOptions(images) {
         let temp = {
           'resolutions': resolutions
         }
-        returnVar[images[x].name] = temp;
+        returnVar[images[x].path] = temp;
       }
       resolve(returnVar)
     } catch (err) {
@@ -2368,7 +2462,7 @@ async function getResolutionOptions(images) {
 
 //generate resolution dropdown html
 function createResolutionSelect(uploadImageResolutions, imageName, selectId) {
-
+  console.log(`createResolutionSelect() uploadImageResolutions=`,uploadImageResolutions,`, imageName=${imageName}, selectId=${selectId}`)
   //clear options 
   document.getElementById(`${selectId}`).textContent = ``;
 
