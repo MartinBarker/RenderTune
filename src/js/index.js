@@ -371,7 +371,7 @@ async function setCustomPort(port) {
 
 //call electron main.js to get image colors
 async function getImageColors(filename) {
-  console.log('getImageColors() filename=',filename)
+  //console.log('getImageColors() filename=',filename)
   var swatches = '';
   try{
     swatches = await ipcRenderer.invoke('get-image-colors', filename);
@@ -608,7 +608,7 @@ function determineBackgroundColor(item){
 
 //create html for Upload view
 async function createUploadPage(upload, uploadId) {
-  console.log('upload=',upload)
+  console.log('createUploadPage() begin, upload=',upload)
   //create image gallery container
   let images = [];
   for (var z = 0; z < upload.files.images.length; z++) {
@@ -725,7 +725,7 @@ async function createUploadPage(upload, uploadId) {
                 (this.value!='custom'&&this.value!='Custom'&&this.value!='white'&&this.value!='White'&&this.value!='none'&&this.value!='None')?(this.style.backgroundColor=this.value):(this.style.backgroundColor='white');
               
                 this.style.backgroundColor=this.value;
-                paddingOptionChanged('${uploadId}')
+                
               
                 " id='${uploadId}-paddingSelect' class="form-control">
                 
@@ -1071,15 +1071,19 @@ async function createUploadPage(upload, uploadId) {
 
   //if padding changes for main upload:
   //update resolution options, update css for padding options
+  let runOnlyOnce=true;
   $(`#${uploadId}-paddingSelect`).on('change', async function () {
-    console.log('padding changed')
+    console.log(`#${uploadId}-paddingSelect on change`)
     //get new chosen padding (string)
     let paddingChoice = $(this).val();
     console.log('main padding changed. paddingChoice=',paddingChoice)
     //go through each option and update css:
     if (['none', 'black', 'white'].indexOf(paddingChoice.toLowerCase().trim()) < 0) {
-      //select first color default value
-      $(".colorBox")[0].click()
+      //select first color default value if selectedColorBox class does not exit anywhere
+      if(document.querySelectorAll('.selectedColorBox').length==0 && runOnlyOnce){
+        $(".colorBox")[0].click();
+        runOnlyOnce=false;
+      }
       
       //reveal custom HEX color picker
       document.querySelector(`#${uploadId}-paddingColorPicker`).style.display='block';
@@ -1128,69 +1132,49 @@ async function createUploadPage(upload, uploadId) {
   //update main padding css
   updatePaddingSelectCss(`${uploadId}-paddingSelect`)
 
+  console.log('createUploadPage() end, upload=',upload)
+
 }
 
-//
-// fire event once main paddng becomes visible
-//
-//hookup the event
-/*
-$(`#${selectId}-paddingSelect`).bind('isVisible', isVisible);
-//show div and trigger custom event in callback when div is visible
-$(`#${selectId}-paddingSelect`).show('slow', function(){
-    $(this).trigger('isVisible');
-});
-*/
-
-
 async function updatePaddingSelectCss(selectId){
-  console.log('calling updatePaddingSelectCss() selectId=',selectId)
-
-  let mostVisibleTextColor = await getMostReadableTextColor(this.value)
-
- 
-  var selectedDisplayOption = $(`#${selectId}`).val()
-  console.log('updatePaddingSelectCss() selected:',selectedDisplayOption)
+  console.log(`updatePaddingSelectCss(${selectId})`)
   //update css for each each option preview
   $(`#${selectId} > option`).each(function() {
-    console.log('updating css for: ', this.value);
     this.value=(this.value).trim().toLowerCase()
-
+    //console.log('   updating css for select option with value:  ', this.value);
     //if value does not need custom css (not 'none' or 'custom' or 'white'):
     if(this.value == 'none' || this.value == 'custom' || this.value == 'white'){
+      //console.log('   colorProfile1');
       //black text on white background
       this.style.color = "black";
       this.style.background = 'white';
     
     }else if(this.value == 'black'){ //else if color is black
+      //console.log('   colorProfile2');
       //white text black background
       this.style.color='white'
       this.style.background='black'
 
     }else{ 
+      console.log('   colorProfile3 setting custom colors and visible text for: ', this.value);
       //calcualte most visible text color
       let mostVisibleTextColor = getMostReadableTextColor(this.value)
-      //black text custom color
-      this.setAttribute('style',`
-        background:${this.value};
-        color:'${mostVisibleTextColor}';
-        textShadow:''
-      `)
+      //custom colors
+      this.setAttribute('style',`background:${this.value};color:'${mostVisibleTextColor}';`)
     }
+   
   });
 }
 
 async function getMostReadableTextColor(hex) {
   return new Promise(async function (resolve, reject) {
-    console.log('getMostReadableTextColor() hex = ', hex)
     let rgb = convertHexToRGB(hex)
-    console.log('getMostReadableTextColor() rgb = ', rgb)
     if (((rgb[0]) * 0.299 + (rgb[1]) * 0.587 + (rgb[2]) * 0.114) > 186) {
-      console.log('getMostReadableTextColor() returning black')
-      resolve("#000000")
+      console.log(`getMostReadableTextColor(${hex}) returning black`)
+      resolve("black")
     } else {
-      console.log('getMostReadableTextColor() returning white')
-      resolve("#ffffff")
+      console.log(`getMostReadableTextColor(${hex}) returning white`)
+      resolve("white")
     }
   })
 }
@@ -1204,33 +1188,14 @@ async function convertHexToRGB(hex) {
   ] : null;
 }
 
-async function paddingOptionChanged(uploadId){
-  //if padding option changes, set css if it is a custom color
-  console.log('paddingOptionChanged() ')
-  //get css
-  let cssValue = document.getElementById(`${uploadId}-paddingSelect`).value
-  console.log('cssValue=',cssValue)
-  if (['none', 'black', 'white'].indexOf(cssValue.toLowerCase()) < 0) {
-    //set css of main select element only for custom choices
-    //document.getElementById(`${uploadId}-paddingSelect`).style['text-shadow']='rgb(0, 0, 0) 1px 0px 0px, rgb(0, 0, 0) 0px -1px 0px, rgb(0, 0, 0) 0px 1px 0px, rgb(0, 0, 0) -1px 0px 0px;'
-    //document.getElementById(`${uploadId}-paddingSelect`).style['color']=' rgb(255, 255, 255)';
-    //document.getElementById(`${uploadId}-paddingSelect`).style['background']=`${cssValue}`;
-  }
-
-  
-  /*
-background: rgb(205, 201, 194); 
-color: rgb(255, 255, 255); 
-text-shadow: 
-  */
-}
 
 //add custom padding color option to full album render AND indvidual render padding options
 async function addCustomColorOption(uploadId){
   //get selected color
   let selectedColor = document.getElementById(`${uploadId}-hexColorBox`).value;
   console.log('addCustomColorOption() selectedColor=',selectedColor)
-  //create new padding color option
+
+  //create new padding color option html
   var newPaddingOption = `
   <option 
       style="
@@ -1243,37 +1208,23 @@ async function addCustomColorOption(uploadId){
       >${selectedColor}
   </option>`
 
-  var o = new Option(`${selectedColor}`, `${selectedColor}`);
-  $(o).html(`${selectedColor}`);
-  //set css of option 
-  $(o).css("outline", "#cc4242 11px -13px 10px");
-  $(o).css("background", `${selectedColor}`);
-  $(o).css("color", "#fff");
-  $(o).css("text-shadow", `1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000`);
-
-  //add new color option to full album padding select
+  //add new padding color option html to main padding select
   $(`#${uploadId}-paddingSelect`).append(newPaddingOption);
 
+  //select this newly added option
+  $(`#${uploadId}-paddingSelect option`).filter(function() {
+    return $(this).text().trim() == selectedColor;
+  }).prop('selected', true);
   
-  //add to individ renders padding col header
+  //add new padding color to individ renders table col header
   $(`#${uploadId}-individual-table-padding-col select`).append(newPaddingOption);
-  //add to each row in individ table 
+  //add new padding color to individ renders table rows
   var table = $(`#${uploadId}-individual-table`).DataTable()
   var rows = table.rows().data()
-  //set all values 
   for(var x = 0; x < rows.length; x++){
     $(`#${uploadId}-individual-table-padding-row-${x}`).append(newPaddingOption);
   }
- 
 
-  //save to uploadsList
-  //notify user that new color has been added
-
-  //select new option
-  $(`#${uploadId}-paddingSelect option`).filter(function() {
-    //may want to use $.trim in here
-    return $(this).text() == selectedColor;
-  }).prop('selected', true);
   //fire off change event
   $(`#${uploadId}-paddingSelect`).change();
 
@@ -1683,7 +1634,6 @@ async function updateRendersModal() {
       $('input[type="checkbox"]', rows).prop('checked', false);
       table.$("tr").removeClass('selected')
     }
-    //updateSelectedDisplays(`${uploadId}_table`, `${uploadId}`);
   });
 
   //if a row is clicked
@@ -1691,8 +1641,6 @@ async function updateRendersModal() {
     //determine whether or not to select/deselect & check/uncheck row
     var isSelected = $(this).hasClass('selected')
     $(this).toggleClass('selected').find(':checkbox').prop('checked', !isSelected);
-    //updateSelectedDisplays(`${uploadId}_table`, `${uploadId}`);
-
   });
 
   //if table order changes
@@ -1985,6 +1933,9 @@ async function createIndividualRendersTable(upload, uploadId) {
   //draw table
   table.draw();
 
+  //update css color
+  updatePaddingSelectCss(`${uploadId}-individual-table-padding-col`)
+
   //get img resolutions info
   let uploadImageResolutions = await getResolutionOptions(upload.files.images);
 
@@ -1994,7 +1945,7 @@ async function createIndividualRendersTable(upload, uploadId) {
     let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-col select`).value
     //get img name
     let newImgPath = upload.files.images[indexValueImgChoice].path
-
+    console.log(`update selected image for ${table.rows().eq(0).length} rows`)
     //set all rows in table to have new image value
     table.rows().eq(0).each(async function (index) {
       //get padding choice for this row
@@ -2016,31 +1967,31 @@ async function createIndividualRendersTable(upload, uploadId) {
   $(`#${uploadId}-individual-table-padding-col`).on('change', async function () {
     //get new padding choice
     let newPaddingChoice = document.querySelector(`#${uploadId}-individual-table-padding-col select`).value
-    console.log('newPaddingChoice: ',newPaddingChoice)
+    //update col header padding display css
+    updatePaddingSelectCss(`${uploadId}-individual-table-padding-col`)
     //set all rows in table to have new padding value
-
-
-      var table = $(`#${uploadId}-individual-table`).DataTable()
-      var rows = table.rows().data()
-      //set all values 
-      for(var x = 0; x < rows.length; x++){
-        let rowImgIndex = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
-        let rowImgPath = upload.files.images[rowImgIndex].path
-        //update that rows selected padding
-        document.getElementById(`${uploadId}-individual-table-padding-row-${x}`).value = `${newPaddingChoice}`
-        //if padding is not 'none', generate dropdown with static resolutions
-        if (!newPaddingChoice.toLowerCase().trim().includes('none')) {
-          createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${x}`);
-        } else {
-          createResolutionSelect(uploadImageResolutions, rowImgPath, `${uploadId}-individual-table-resolution-row-${x}`);
-        }
-        
-        //update css for each value
-        //updatePaddingSelectCss(`${uploadId}-individual-table-resolution-row-${x}`)
+    var table = $(`#${uploadId}-individual-table`).DataTable()
+    var rows = table.rows().data()
+    //set all values 
+    for(var x = 0; x < rows.length; x++){
+      //get selected image for this row
+      var  rowImgIndex = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
+      console.log('rowImgIndex=',rowImgIndex)
+      let rowImgPath = upload.files.images[rowImgIndex].path
+      //update that rows selected padding
+      document.getElementById(`${uploadId}-individual-table-padding-row-${x}`).value = `${newPaddingChoice}`
+      //if padding is not 'none', generate dropdown with static resolutions
+      if (!newPaddingChoice.toLowerCase().trim().includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${x}`);
+      } else {
+        createResolutionSelect(uploadImageResolutions, rowImgPath, `${uploadId}-individual-table-resolution-row-${x}`);
       }
-    
-      //update css for header color value
-      //updatePaddingSelectCss(`${uploadId}-individual-table-padding-col`)
+      
+      //update padding display css for row
+      updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${x}`)
+      //fire off change event for that row
+      $(`#${uploadId}-individual-table-padding-row-${x}`).change();
+    }
 
   });
 
@@ -2368,6 +2319,10 @@ function resetTableSelections(uploadTableId, uploadId) {
 
 //update displays of full album tracklist and selectedCount
 async function updateSelectedDisplays(uploadTableId, uploadId) {
+  console.log('updateSelectedDisplays() begin')
+  var fullAlbumLength = ''
+  var fullAlbumTracklist = ''
+  
   let uploads = await JSON.parse(localStorage.getItem('uploadList'))
   //get upload
   let upload = uploads[uploadId];
@@ -2387,22 +2342,15 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
   }
 
   let uploadImageResolutions = await getResolutionOptions(upload.files.images);
-  var fullAlbumLength = ''
-  var fullAlbumTracklist = ''
+  
   var startTime = 0
   var endTime = 0;
   //for each selected row
   for (var i = 0; i < selectedRowsCount; i++) {
     //get data for individualRenderTable
-    var row = selectedRows[i];
-    
+    var row = selectedRows[i];    
     //create imgSelect
-    //let rowImgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, false, 'max-width:150px', 'rowImg')
-  
-    let rowImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-row-${i}`)
-
-   
-    
+    let rowImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
@@ -2415,6 +2363,8 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
           </select> 
       </div>
     </form>`;
+    
+    
     //add row to individualRenders table
     individualRendersTable.row.add({
       "audio": row.audio,
@@ -2428,15 +2378,15 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //draw individual renders table
     individualRendersTable.draw();
 
+    
     //add jQuery setup to display images inside <select> <option> elements for main image selection
-    $(`#${uploadId}-individual-table-image-row-${i}`).ddslick({
-      width:'flex',
-      background: '#FFFFFF',
-      //onSelected: async function(selectedData){
-      //  console.log('row img option changed')
-      //  //handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
-      //}   
-    });
+    
+    //replace this with msdropdown?
+    //$(`#${uploadId}-individual-table-image-row-${i}`).ddslick({
+   //   width:'flex',
+    //  background: '#FFFFFF',
+    //});
+    
 
     //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
     createResolutionSelect(uploadImageResolutions, upload.files.images[0].path, `${uploadId}-individual-table-resolution-row-${i}`);
@@ -2454,8 +2404,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       startTime = endTime
       endTime = startTime + currTrackTimeSeconds
     }
-    console.log(startTime)
-    console.log(`selectedRows[${i}] startTime=${startTime}, endTime=${endTime}`)
+    //console.log(`selectedRows[${i}] startTime=${startTime}, endTime=${endTime}`)
     //convert times to hh:mm:ss
     var startTimeDisplay = new Date(startTime * 1000).toISOString().slice(11, 19);
     var endTimeDisplay = new Date(endTime * 1000).toISOString().slice(11, 19);
@@ -2463,14 +2412,24 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //update tracklist
     fullAlbumTracklist = `${fullAlbumTracklist}${selectedRows[i].audio} ${startTimeDisplay}-${endTimeDisplay}<br>`
     //console.log(`fullAlbumTracklist=${fullAlbumTracklist} \n`)
+    
+    
+    //update css padding color display
+    updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${i}`)
+    /*
+    */
+  
   }
 
+  
   //if selected padding option for row changes, update resolution for that row
   $(`.rowPadding`).on('change', async function () {
     console.log('rowPadding changed')
     //get row info
     let rowId = $(this)[0].id
     let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
+    //update row display color
+    updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${rowNum}`)
     //get image info
     let newImageNum = $(`#${uploadId}-individual-table-image-row-${rowNum}`).find('input[type=hidden]:first').val()
     let newImagePath = upload.files.images[newImageNum].path;
@@ -2506,12 +2465,14 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     }
 
+    console.log('updateSelectedDisplays() end')
   })
 
   //set duration
   document.getElementById(`${uploadId}-lengthText`).innerText = fullAlbumLength
   //set tracklist
   document.getElementById(`${uploadId}-tracklistText`).innerHTML = fullAlbumTracklist
+
 }
 
 //helper function to get sum of two timestamps
@@ -2573,7 +2534,7 @@ async function getResolutionOptions(images) {
 
 //generate resolution dropdown html
 function createResolutionSelect(uploadImageResolutions, imageName, selectId) {
-  console.log(`createResolutionSelect() uploadImageResolutions=`,uploadImageResolutions,`, imageName=${imageName}, selectId=${selectId}`)
+  console.log(`createResolutionSelect()`)
   //clear options 
   try{
     document.getElementById(`${selectId}`).textContent = ``;
@@ -2632,7 +2593,11 @@ async function createPaddingSelect(selectId, includeLabel, selectStyle = "", sel
                 <select id='${selectId}' 
                 class="form-control ${selectClass}" 
                 style="${selectStyle}"
-                onChange="this.style.backgroundColor=this.value;"
+                onChange="
+                  (this.value!='custom'&&this.value!='Custom'&&this.value!='white'&&this.value!='White'&&this.value!='none'&&this.value!='None')?(this.style.backgroundColor=this.value):(this.style.backgroundColor='white');
+              
+                  this.style.backgroundColor=this.value;
+                "
                 
                 > 
                   <option value="none">None</option>
@@ -2717,7 +2682,6 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
       let colorBoxesHTML = '';
     
       for(var x = 0; x < currentImageColors.length; x++){
-        console.log(currentImageColors[x])
         colorBoxesHTML=`${colorBoxesHTML} 
         <div 
           id="${uploadId}-color-${x}" 
@@ -2743,7 +2707,7 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
 }
 
 //create select html element for each image with img previews
-async function createImgSelectPreview(images, selectId) {
+async function createImgSelectPreview(images, selectId, extraClass='') {
   return new Promise(async function (resolve, reject) {
     
     //create each individual <option> element
@@ -2768,12 +2732,11 @@ async function createImgSelectPreview(images, selectId) {
     }
 
     //create the full <select> element
-    console.log('selectId=',selectId)
     var imgSelectElem = `
-    <select 
-      class='imgSelectBox'
-      id='${selectId}'
-    >
+      <select 
+        class='extraClass ${extraClass}'
+        id='${selectId}'
+      >
       ${imgSelectOptions}
     </select>
     `;
@@ -2818,39 +2781,19 @@ async function createImgSelect(images, selectId, includeLabel, selectStyle = "",
 //create dataset for the table in an upload
 async function createFilesTableDataset(uploadFiles, uploadId, upload) {
   return new Promise(async function (resolve, reject) {
-    //create img selection part of form
-    /*
-    var imageSelectionOptions = ``
-    try {
-      //for each image
-      for (var x = 0; x < uploadFiles.images.length; x++) {
-        var imagFilename = `${uploadFiles.images[x].name}`
-        imageSelectionOptions = imageSelectionOptions + `<option value="${x}">${imagFilename}</option>`
-      }
-    } catch (err) {
-
-    }
-    */
-
     //create dataset
     let dataSet = []
     let fileCount = 1;
     try {
+      //sort audio files by title
+      try{
+        uploadFiles['audio'].sort((a, b) => a.name.match(/\d+/)[0] - b.name.match(/\d+/)[0]);
+      }catch(err){
+
+      }
       //for each audio file
       for (var x = 0; x < uploadFiles['audio'].length; x++) {
         var audioObj = uploadFiles['audio'][x]
-
-        /*
-        //create img selection form
-        let imgSelectionSelect = await createImgSelect(upload, `${uploadId}_table-audio-${x}-img_choice`, false)
-        //create vid output selection
-        var videoOutputSelection = `
-              <select id='${uploadId}_table-vidFormat-row_${x}'>
-                  <option value="0">mp4</option>
-                  <option value="1">avi</option>
-              </select> 
-              `; 
-        */
 
         //create row obj
         let rowObj = {

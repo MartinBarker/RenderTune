@@ -53,6 +53,8 @@
 .dd-selected{
   max-height:100px;
   min-height:100px;
+  max-width:200px;
+  min-width:200px;
   height:100px;
   } 
   
@@ -68,7 +70,7 @@
   }
   
   .paddingOptionHover{
-    
+
   }
  
   table.display {
