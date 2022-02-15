@@ -2350,7 +2350,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //get data for individualRenderTable
     var row = selectedRows[i];    
     //create imgSelect
-    let rowImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
+    let dropdownMsrowImgSelect = await createImgSelectDropdownMs(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
@@ -2370,7 +2370,10 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       "audio": row.audio,
       "audioFilepath": row.audioFilepath,
       "length": row.length,
-      "imgSelection": rowImgSelect,
+      
+      
+      "imgSelection": dropdownMsrowImgSelect,
+     
       "padding": rowPaddingSelect,
       "resolution": `<select id='${uploadId}-individual-table-resolution-row-${i}' class="form-control rowRes"></select>`,
       "outputVid": rowOutputVidSelect
@@ -2703,6 +2706,41 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
     }catch(err){
       reject(err)
     }
+  })
+}
+
+async function createImgSelectDropdownMs(images, selectId, extraClass='') {
+  return new Promise(async function (resolve, reject) {
+    
+    //create each individual <option> element
+    var imgSelectOptions = ``;
+  
+    for(var x = 0; x < images.length; x++){
+      var imageFilename = `${images[x].name}`;
+      var imageFilepath = `${images[x].path}`
+      var imageSize = `${images[x].size}`
+      var imageResolution = `${images[x].resolution}`
+
+      imgSelectOptions = imgSelectOptions + 
+      `<option 
+        value="${x}"
+        data-image="${imageFilepath}" >
+          ${imageFilename}, ${imageSize}, ${imageResolution}
+        </option>
+      `;
+    }
+
+    //create the full <select> element
+    var imgSelectElem=`
+    <select 
+      id='${selectId}'
+      name="webmenu" 
+      is="ms-dropdown">
+      ${imgSelectOptions}
+    </select>
+    `
+
+    resolve(imgSelectElem)
   })
 }
 
