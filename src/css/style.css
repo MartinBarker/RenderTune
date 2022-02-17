@@ -27,6 +27,24 @@
     font-size: 16px;
 }
 
+.ms-dd{
+
+}
+
+.ms-dd-option-image{
+  /*
+  max-height:100px;
+  max-width:100px;
+  min-height:100px;
+  min-width:100px;
+  height:100px;
+  width:100px; 
+  */  
+  max-height:100px;
+  max-width:100px;
+  object-fit: contain;
+}
+
 .renders-modal-content{
   width:250%!important;
   max-width: none !important;

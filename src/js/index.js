@@ -957,7 +957,9 @@ async function createUploadPage(upload, uploadId) {
                   <!-- Image Selection -->
                   <th class='left-align-col' style="min-width:200px !important" >
                     <label>Img:</label><br>
-                    <div id='${uploadId}-individual-table-image-col'>
+                    <div 
+                      
+                      id='${uploadId}-individual-table-image-col-wrapper'>
                         
                     </div>
                   </th>
@@ -1896,12 +1898,22 @@ async function createIndividualRendersTable(upload, uploadId) {
 
   });
 
-  //create img selection col header and add it to table
-  //let imgSelect = await createImgSelect(upload.files.images, `${uploadId}-individual-table-image-col`, true, 'max-width: 150px;')
-  
-  let newImgSelect = await createImgSelectPreview(upload.files.images, `${uploadId}-individual-table-image-col`)
-  document.getElementById(`${uploadId}-individual-table-image-col`).innerHTML = newImgSelect;
+  //create img selection col header 
+  let newImgSelect = await createImgSelectDropdownMs(upload.files.images, `${uploadId}-individual-table-image-col`)
+  //add to table
+
+  document.getElementById(`${uploadId}-individual-table-image-col-wrapper`).insertAdjacentHTML('beforeend',newImgSelect);
+  console.log('added to table')
+  //style="display: none;"
+  //init jquery msDropdown
+  new MsDropdown(document.getElementById(`${uploadId}-individual-table-image-col`));
+  console.log('msdropdown created')
+  //make invisible (bug?)
+  //document.getElementById(`${uploadId}-individual-table-image-col`).setAttribute('style','display:none!important')
+
+
   //jQuery setup to display images inside <select> <option> elements for main image selection
+  /*
   $(`#${uploadId}-individual-table-image-col`).ddslick({
     width:'flex',
     background: '#FFFFFF',
@@ -1914,11 +1926,16 @@ async function createIndividualRendersTable(upload, uploadId) {
       var rows = table.rows().data()
       //set all values 
       for(var x = 0; x < rows.length; x++){
-        $(`#${uploadId}-individual-table-image-row-${x}`).ddslick('select', {index: selectedIndex });
+        //$(`#${uploadId}-individual-table-image-row-${x}`).ddslick('select', {index: selectedIndex });
+        console.log(`change row ${x} to ${selectedIndex}`)
+        //$(`${uploadId}-individual-table-image-row-${x}`).msDropDown().data("dd").set("selectedIndex", selectedIndex);
+        document.getElementById(`${uploadId}-individual-table-image-row-${x}`).msDropdown.selectedIndex = selectedIndex; 
+        //$(`#${uploadId}-individual-table-image-row-${x}`).msDropdown().data("dd").set("selectedIndex", 2);
       }
       //handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
     }   
   });
+  */
   
   //create padding selection col header and add it to table
   let paddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-col`, true, 'max-width: 100px;')
@@ -1940,18 +1957,20 @@ async function createIndividualRendersTable(upload, uploadId) {
   let uploadImageResolutions = await getResolutionOptions(upload.files.images);
 
   //if image selection col header changes, update each row
-  $(`#${uploadId}-individual-table-image-col`).on('change', async function () {
+  $(`#${uploadId}-individual-table-image-col`).on('change', async function (e) {
+    e.stopImmediatePropagation();
     //get new image choice
-    let indexValueImgChoice = document.querySelector(`#${uploadId}-individual-table-image-col select`).value
+    let indexValueImgChoice = document.getElementById(`${uploadId}-individual-table-image-col`).msDropdown.selectedIndex
     //get img name
     let newImgPath = upload.files.images[indexValueImgChoice].path
+    console.log('individ table img col changed to: ', indexValueImgChoice)
     console.log(`update selected image for ${table.rows().eq(0).length} rows`)
     //set all rows in table to have new image value
     table.rows().eq(0).each(async function (index) {
       //get padding choice for this row
       let rowPaddingChoice = $(`#${uploadId}-individual-table-padding-row-${index}`).val()
       //update selected img value for row
-      document.getElementById(`${uploadId}-individual-table-image-row-${index}`).selectedIndex = `${indexValueImgChoice}`;
+      document.getElementById(`${uploadId}-individual-table-image-row-${index}`).msDropdown.selectedIndex = indexValueImgChoice; 
 
       //if padding is not 'none', generate dropdown with static resolutions
       if (!rowPaddingChoice.includes('none')) {
@@ -2370,10 +2389,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       "audio": row.audio,
       "audioFilepath": row.audioFilepath,
       "length": row.length,
-      
-      
       "imgSelection": dropdownMsrowImgSelect,
-     
       "padding": rowPaddingSelect,
       "resolution": `<select id='${uploadId}-individual-table-resolution-row-${i}' class="form-control rowRes"></select>`,
       "outputVid": rowOutputVidSelect
@@ -2383,7 +2399,9 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
 
     
     //add jQuery setup to display images inside <select> <option> elements for main image selection
-    
+    //$(`#${uploadId}-individual-table-image-row-${i}`).msDropDown();
+    new MsDropdown(document.getElementById(`${uploadId}-individual-table-image-row-${i}`));
+
     //replace this with msdropdown?
     //$(`#${uploadId}-individual-table-image-row-${i}`).ddslick({
    //   width:'flex',
@@ -2407,23 +2425,14 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
       startTime = endTime
       endTime = startTime + currTrackTimeSeconds
     }
-    //console.log(`selectedRows[${i}] startTime=${startTime}, endTime=${endTime}`)
     //convert times to hh:mm:ss
     var startTimeDisplay = new Date(startTime * 1000).toISOString().slice(11, 19);
     var endTimeDisplay = new Date(endTime * 1000).toISOString().slice(11, 19);
-
     //update tracklist
     fullAlbumTracklist = `${fullAlbumTracklist}${selectedRows[i].audio} ${startTimeDisplay}-${endTimeDisplay}<br>`
-    //console.log(`fullAlbumTracklist=${fullAlbumTracklist} \n`)
-    
-    
     //update css padding color display
     updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${i}`)
-    /*
-    */
-  
   }
-
   
   //if selected padding option for row changes, update resolution for that row
   $(`.rowPadding`).on('change', async function () {
@@ -2711,7 +2720,8 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
 
 async function createImgSelectDropdownMs(images, selectId, extraClass='') {
   return new Promise(async function (resolve, reject) {
-    
+    console.log(`createImgSelectDropdownMs() images=`,images,`, selectId=`,selectId)
+      
     //create each individual <option> element
     var imgSelectOptions = ``;
   
@@ -2720,19 +2730,24 @@ async function createImgSelectDropdownMs(images, selectId, extraClass='') {
       var imageFilepath = `${images[x].path}`
       var imageSize = `${images[x].size}`
       var imageResolution = `${images[x].resolution}`
+      console.log(`createImgSelectDropdownMs() adding option with: ${imageFilepath}`)
 
       imgSelectOptions = imgSelectOptions + 
       `<option 
         value="${x}"
-        data-image="${imageFilepath}" >
-          ${imageFilename}, ${imageSize}, ${imageResolution}
+        data-image="${imageFilepath}" 
+        data-description="${imageSize}, ${imageResolution}"
+        >
+        ${imageFilename}
+         
         </option>
-      `;
+      `; 
     }
 
     //create the full <select> element
     var imgSelectElem=`
     <select 
+      
       id='${selectId}'
       name="webmenu" 
       is="ms-dropdown">
