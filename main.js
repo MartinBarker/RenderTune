@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const musicMetadata = require('music-metadata');
 var path = require('path');
@@ -271,6 +271,20 @@ ipcMain.handle('choose-dir', async (event) => {
         buttonLabel: 'Select this folder'
     });
     return dir.filePaths[0];
+});
+
+//open folder
+ipcMain.handle('open-dir', async (event, filepath) => {
+    shell.showItemInFolder(filepath) 
+    /*
+    dialog.showOpenDialog({
+        properties: ['openFile', 'multiSelections']
+    }, function (files) {
+        if (files !== undefined) {
+            // handle files
+        }
+    })
+    */
 });
 
 //convert rgb string to hex

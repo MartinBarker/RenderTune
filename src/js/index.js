@@ -1305,12 +1305,12 @@ async function individRenderPrep(uploadId, uploadNumber) {
       //console.log(` get row at index: ${x} imageSelection: `, document.querySelector(`#${uploadId}-individual-table-image-row-${x}`))
 
       //get image input filepath
-      //let indexValueImgChoice = document.querySelector(`#${imageLocationId}`).value;
       let indexValueImgChoice = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
 
-      //get img name
-      let imageFilepath = upload.files.images[indexValueImgChoice].path
-
+      //get individ render row image
+      //let imageFilepath = upload.files.images[indexValueImgChoice].path
+      let imageFilepath = document.getElementById(`${uploadId}-individual-table-image-row-${x}`).msDropdown.selectedOptions.dataset.image
+    
       //
       //get resolution choice for that row
       //
@@ -1618,6 +1618,7 @@ async function updateRendersModal() {
       "status": renderStatus,
       "length": (new Date(data.durationSeconds * 1000).toISOString().substr(11, 8)),
       "uploadName": data.uploadName,
+      //"location":'<button onClick="openDir(`open-dir`)">open location folder</button>'
     })
   }
 
@@ -1663,6 +1664,10 @@ async function updateRendersModal() {
   table.draw();
 }
 
+async function openDir(filepath){
+  await ipcRenderer.invoke('open-dir', filepath);
+}
+
 async function initRendersSetup() {
   //create renders table
   var table = $(`#renders-table`).DataTable({
@@ -1677,7 +1682,8 @@ async function initRendersSetup() {
       { "data": "filename" },
       { "data": "status" },
       { "data": "length" },
-      { "data": "uploadName" }
+      { "data": "uploadName" },
+      //{ "data": "location" },
     ],
     columnDefs: [
       {//select all checkbox
@@ -1899,7 +1905,7 @@ async function createIndividualRendersTable(upload, uploadId) {
   });
 
   //create img selection col header 
-  let newImgSelect = await createImgSelectDropdownMs(upload.files.images, `${uploadId}-individual-table-image-col`)
+  let newImgSelect = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-individual-table-image-col`)
   //add to table
 
   document.getElementById(`${uploadId}-individual-table-image-col-wrapper`).insertAdjacentHTML('beforeend',newImgSelect);
@@ -1982,28 +1988,36 @@ async function createIndividualRendersTable(upload, uploadId) {
     });
   });
 
-  //if padding selection col header changes, update each row
+  // if padding selection col header changes, update each row
+  // Individual Renders Table
+  // Padding Change All col header clicked
+  // Update option for every row in the table
   $(`#${uploadId}-individual-table-padding-col`).on('change', async function () {
+    
     //get new padding choice
     let newPaddingChoice = document.querySelector(`#${uploadId}-individual-table-padding-col select`).value
+    console.log('padding change all newPaddingChoice = ',newPaddingChoice)
+    
     //update col header padding display css
     updatePaddingSelectCss(`${uploadId}-individual-table-padding-col`)
+
     //set all rows in table to have new padding value
     var table = $(`#${uploadId}-individual-table`).DataTable()
     var rows = table.rows().data()
-    //set all values 
+
+    //for each individual row: 
     for(var x = 0; x < rows.length; x++){
-      //get selected image for this row
-      var  rowImgIndex = $(`#${uploadId}-individual-table-image-row-${x}`).find('input[type=hidden]:first').val()
-      console.log('rowImgIndex=',rowImgIndex)
-      let rowImgPath = upload.files.images[rowImgIndex].path
-      //update that rows selected padding
+      //get row's selected img filepath
+      let selectedImgFilepath = document.getElementById(`${uploadId}-individual-table-image-row-${x}`).msDropdown.selectedOptions.dataset.image
+
+
+      //change padding row value to new choice 
       document.getElementById(`${uploadId}-individual-table-padding-row-${x}`).value = `${newPaddingChoice}`
-      //if padding is not 'none', generate dropdown with static resolutions
+      //if new padding choice is not 'none', generate resolutions dropdown with static resolutions
       if (!newPaddingChoice.toLowerCase().trim().includes('none')) {
         createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${x}`);
       } else {
-        createResolutionSelect(uploadImageResolutions, rowImgPath, `${uploadId}-individual-table-resolution-row-${x}`);
+        createResolutionSelect(uploadImageResolutions, selectedImgFilepath, `${uploadId}-individual-table-resolution-row-${x}`);
       }
       
       //update padding display css for row
@@ -2369,7 +2383,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //get data for individualRenderTable
     var row = selectedRows[i];    
     //create imgSelect
-    let dropdownMsrowImgSelect = await createImgSelectDropdownMs(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
+    let dropdownMsrowImgSelect = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
@@ -2434,24 +2448,38 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${i}`)
   }
   
-  //if selected padding option for row changes, update resolution for that row
+  //individual table
+  //padding option changed: update resolution
   $(`.rowPadding`).on('change', async function () {
-    console.log('rowPadding changed')
     //get row info
     let rowId = $(this)[0].id
     let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
+
+    console.log(`rowPadding changed`)
     //update row display color
     updatePaddingSelectCss(`${uploadId}-individual-table-padding-row-${rowNum}`)
-    //get image info
-    let newImageNum = $(`#${uploadId}-individual-table-image-row-${rowNum}`).find('input[type=hidden]:first').val()
-    let newImagePath = upload.files.images[newImageNum].path;
-    //get padding info
+    console.log(`rowPadding changed, css updated`)
+    //get row's selected image choice display string
+    let indexValueImgChoice = document.getElementById(`${uploadId}-individual-table-image-row-${rowNum}`).msDropdown.selectedText
+    console.log('indexValueImgChoice=',indexValueImgChoice)
+    //get selected img filepath
+    let selectedImgFilepath = document.getElementById(`${uploadId}-individual-table-image-row-${rowNum}`).msDropdown.selectedOptions.dataset.image
+    console.log(`rowPadding changed, selectedImgFilepath = `, selectedImgFilepath)
+    //get row's padding choice
     let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${rowNum}`).val();
+    console.log(`rowPadding changed, paddingChoice = `, paddingChoice)
+
+
+    //generate new resolution options
+    let uploadImageResolutions = await getResolutionOptions(upload.files.images);
+
+
+
     //if padding is not 'none', generate dropdown with static resolutions
     if (!paddingChoice.includes('none')) {
       createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     } else {
-      createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-individual-table-resolution-row-${rowNum}`);
+      createResolutionSelect(uploadImageResolutions, selectedImgFilepath, `${uploadId}-individual-table-resolution-row-${rowNum}`);
     }
   })
 
@@ -2718,9 +2746,9 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
   })
 }
 
-async function createImgSelectDropdownMs(images, selectId, extraClass='') {
+async function createImgSelectMsDropdown(images, selectId, extraClass='') {
   return new Promise(async function (resolve, reject) {
-    console.log(`createImgSelectDropdownMs() images=`,images,`, selectId=`,selectId)
+    console.log(`createImgSelectMsDropdown() images=`,images,`, selectId=`,selectId)
       
     //create each individual <option> element
     var imgSelectOptions = ``;
@@ -2730,11 +2758,12 @@ async function createImgSelectDropdownMs(images, selectId, extraClass='') {
       var imageFilepath = `${images[x].path}`
       var imageSize = `${images[x].size}`
       var imageResolution = `${images[x].resolution}`
-      console.log(`createImgSelectDropdownMs() adding option with: ${imageFilepath}`)
+      console.log(`createImgSelectMsDropdown() adding option with: ${imageFilepath}`)
 
       imgSelectOptions = imgSelectOptions + 
       `<option 
         value="${x}"
+        filepathAttr="${imageFilepath}"
         data-image="${imageFilepath}" 
         data-description="${imageSize}, ${imageResolution}"
         >
