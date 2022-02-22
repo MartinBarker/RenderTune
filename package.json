@@ -65,8 +65,7 @@
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "target": [
-        "dmg",
-        "zip"
+        "mas"
       ],
       "asarUnpack": [
         "node_modules/trash/**"
@@ -221,7 +220,7 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron": "^11.3.0",
+    "electron": "11.3.0",
     "electron-builder": "^22.10.5",
     "electron-builder-notarize": "^1.1.2"
   },
