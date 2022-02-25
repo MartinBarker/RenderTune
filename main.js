@@ -273,18 +273,14 @@ ipcMain.handle('choose-dir', async (event) => {
     return dir.filePaths[0];
 });
 
-//open folder
+//open directory 
 ipcMain.handle('open-dir', async (event, filepath) => {
     shell.showItemInFolder(filepath) 
-    /*
-    dialog.showOpenDialog({
-        properties: ['openFile', 'multiSelections']
-    }, function (files) {
-        if (files !== undefined) {
-            // handle files
-        }
-    })
-    */
+});
+
+//open file with default application
+ipcMain.handle('open-file', async (event, filepath) => {
+    shell.openPath(filepath) 
 });
 
 //convert rgb string to hex

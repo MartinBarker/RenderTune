@@ -69,13 +69,6 @@ $("#homeButton").click(function (e) {
     if ($("#newUploadButton").hasClass('page-selected')) {
       $("#newUploadButton").toggleClass("page-selected");
     }
-    //untoggle UploadsList button if needed 
-    /*
-    if ($("#menu-toggle").hasClass('svg-selected')) {
-      $("#menu-toggle").toggleClass("svg-selected");
-      $("#wrapper").toggleClass("toggled");
-    }
-    */
   }
 });
 
@@ -626,7 +619,7 @@ async function createUploadPage(upload, uploadId) {
   console.log('defaultColorPickerValue=',defaultColorPickerValue)
 
   //create new image <select> with img previews
-  let imageSelectionHTML = await createImgSelectPreview(upload.files.images, `${uploadId}-imgSelect`)
+  let imageSelectionHTML = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-imgSelect`, `mainImgChoice`)
 
   //add html to page
   let audioFilesCount = upload.files.audio.length;
@@ -999,6 +992,8 @@ async function createUploadPage(upload, uploadId) {
     </div>
 
     </div>
+
+   
   `);
 
   //if output folder == null, set color of changeDir button to red
@@ -1062,7 +1057,41 @@ async function createUploadPage(upload, uploadId) {
     $(".colorBox").removeClass("selectedColorBox");
   });
 
+  //jquery initialize msDropdown
+  new MsDropdown(document.getElementById(`${uploadId}-imgSelect`));
+
+  //jquery listener for when main image choice changes
+  var selectedImgIndex = null;
+  $(`#${uploadId}-imgSelect`).off().on('change', async function (e) {
+    
+    //img being changed for first time, run code
+    if(!selectedImgIndex){
+      console.log('main image choice changed')
+      var indexValueImgChoice = document.getElementById(`${uploadId}-imgSelect`).msDropdown.selectedIndex
+      handleMainImageOptionChange(upload, uploadId, upload.files.images[indexValueImgChoice].path, indexValueImgChoice);
+      selectedImgIndex=indexValueImgChoice
+    }else{
+      //get current img index
+      var indexValueImgChoice = document.getElementById(`${uploadId}-imgSelect`).msDropdown.selectedIndex
+      //if it is different, run code
+      if(indexValueImgChoice != selectedImgIndex){
+        console.log('main image choice changed')
+        handleMainImageOptionChange(upload, uploadId, upload.files.images[indexValueImgChoice].path, indexValueImgChoice);
+        selectedImgIndex=indexValueImgChoice
+      }
+    }
+    /*
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    console.log('main image choice changed')
+    //get main image choice index:
+    let indexValueImgChoice = document.getElementById(`${uploadId}-imgSelect`).msDropdown.selectedIndex
+    //update resolution options
+    handleMainImageOptionChange(upload, uploadId, upload.files.images[indexValueImgChoice].path, indexValueImgChoice);
+    */
+  })
   //jQuery setup to display images inside <select> <option> elements for main image selection
+  /*
   $(`#${uploadId}-imgSelect`).ddslick({
     width:'flex',
     background: '#FFFFFF',
@@ -1070,6 +1099,7 @@ async function createUploadPage(upload, uploadId) {
       handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].path, selectedData.selectedIndex);
     }   
   });
+  */
 
   //if padding changes for main upload:
   //update resolution options, update css for padding options
@@ -1572,15 +1602,18 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
 }
 
 //add new render to renders list
-async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFile, renderStatusId) {
+async function addToRenderList(renderType, durationSeconds, uploadName, outputDir, outputFilepath, renderStatusId) {
+  let renderId = `render-${renderList.length}`
   renderList.push({
     status: 'in-progress',
     type: renderType,
     durationSeconds: durationSeconds,
     uploadName: uploadName,
     outputDir: outputDir,
-    outputFilename: (outputFile.substr(outputFile.lastIndexOf(`${path.sep}`) + 1)),
-    renderStatusId: `${renderStatusId}`
+    outputFilename: (outputFilepath.substr(outputFilepath.lastIndexOf(`${path.sep}`) + 1)),
+    outputFilepath: outputFilepath,
+    renderStatusId: `${renderStatusId}`,
+    renderId: renderId
   });
   updateRendersModal()
 }
@@ -1598,6 +1631,7 @@ function deleteFile(path) {
 
 //update renders modal that displays in progress/completed/failed renders
 async function updateRendersModal() {
+  console.log('updateRendersModal() renderList=',renderList)
   let rendersInProgress = 0;
   //get renders table
   var table = $(`#renders-table`).DataTable();
@@ -1607,19 +1641,36 @@ async function updateRendersModal() {
   for (var i = 0; i < renderList.length; i++) {
     let data = renderList[i];
     let renderStatus = `<a id="${data.renderStatusId}"></a>`;
-    if (data.status != 'done') {
-      rendersInProgress++
-    } else {
-      renderStatus = 'Done'
+    
+    //determine if data.status contains error
+    var doesStatusContainErr = false
+    if (data.status.toLowerCase().trim().includes('error')){
+      doesStatusContainErr=true;
     }
+
+    //if status is not done and does not contain error (still in progress)
+    if (data.status != 'done' && !doesStatusContainErr) {
+      rendersInProgress++
+    
+    //if status is error message:
+    } else if (doesStatusContainErr){
+      renderStatus = data.status;
+    
+    //else if status is done
+    } else {
+      renderStatus = `<i onClick='openFile("${data.renderId}")' class="fa fa-play clickable" aria-hidden="true"></i> Done`
+    
+    }
+
     table.row.add({
       "selectAll": '<input type="checkbox">',
-      "filename": data.outputFilename,
+      "filename": `<i onClick='openDir("${data.renderId}")' class="fa fa-folder-open clickable" aria-hidden="true"></i> ${data.outputFilename}`,
       "status": renderStatus,
       "length": (new Date(data.durationSeconds * 1000).toISOString().substr(11, 8)),
       "uploadName": data.uploadName,
       //"location":'<button onClick="openDir(`open-dir`)">open location folder</button>'
     })
+    table.draw()
   }
 
 
@@ -1664,8 +1715,29 @@ async function updateRendersModal() {
   table.draw();
 }
 
-async function openDir(filepath){
-  await ipcRenderer.invoke('open-dir', filepath);
+//call electron main.js to open directory
+async function openDir(renderId){
+  var render = getRender(renderId)
+  var outputFilepath = render.outputFilepath
+  await ipcRenderer.invoke('open-dir', outputFilepath);
+}
+
+//call electron main.js to open file with default application
+async function openFile(renderId){
+  var render = getRender(renderId)
+  var outputFilepath = render.outputFilepath
+  await ipcRenderer.invoke('open-file', outputFilepath);
+}
+
+function getRender(renderId){
+  console.log('getRender renderList = ', renderList)
+  for(var x = 0; x<renderList.length; x++){
+    if(renderList[x].renderId === renderId){
+      console.log('returning: ', renderList[x])
+      return renderList[x]
+    }
+
+  }
 }
 
 async function initRendersSetup() {
@@ -1703,18 +1775,44 @@ async function initRendersSetup() {
 }
 
 //run ffmpeg command 
-async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusId) {
+async function runFfmpegCommand(ffmpegArgs, cutDuration, renderStatusIdVar) {
   return new Promise(async function (resolve, reject) {
     const getFfmpegPath = () => getFfPath('ffmpeg');
     //const getFfprobePath = () => getFfPath('ffprobe');
     const ffmpegPath = getFfmpegPath();
-    console.log('runFfmpegCommand() ffmpegPath=',ffmpegPath, ', ffmpegArgs=',ffmpegArgs, ', cutDuration=',cutDuration)
+    console.log('runFfmpegCommand() ffmpegPath=',ffmpegPath, ', ffmpegArgs=',ffmpegArgs, ', cutDuration=',cutDuration,  ', renderStatusIdVar=',renderStatusIdVar)
     console.log(ffmpegArgs.join(" "))
     const process = execa(ffmpegPath, ffmpegArgs);
+    handleProgress(process, cutDuration, renderStatusIdVar);
+    var result;
+    try{
+      result = await process;
+    }catch(err){
+      //ffmpeg command error caught
+      
+      //document.getElementById(renderStatusId).innerText = `${displayProgress}%`;
 
+      //get errorReason
+      var errorReason = err.toString().split("Error ")[2]
+      console.log('ffmpeg err = ', err, ', renderStatusIdVar=',renderStatusIdVar)
+      console.log('runFfmpegCommand() err caught:',err, ', renderList=',renderList)
+      
+      //update renderList status as 'error: ${errReason}'
+      
+      for (var z = 0; z < renderList.length; z++) {
+        console.log(`check if: ${renderList[z].renderStatusId}==${renderStatusIdVar}`)
+        //update render status to be 'done'
+        if (renderList[z].renderStatusId == renderStatusIdVar) {
+          console.log('   set err: ',errorReason )
+          //  console.log(`renderList[z].renderStatusId (${renderList[z].renderStatusId}) == renderStatusId (${renderStatusId})`)
+        //  renderList[z].status = `Error: ${errorReason}`
+        }
+        //update render modal display
+        //updateRendersModal()
+      }
+      
 
-    handleProgress(process, cutDuration, renderStatusId);
-    const result = await process;
+    }
     resolve(result);
   })
 }
@@ -1728,10 +1826,12 @@ function handleProgress(process, cutDuration, renderStatusId) {
   const rl = readline.createInterface({ input: process.stderr });
   rl.on('line', (line) => {
     try {
-      console.log('line=',line)
+      //console.log('line=',line)
+      
       let match = line.match(/frame=\s*[^\s]+\s+fps=\s*[^\s]+\s+q=\s*[^\s]+\s+(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
       
-      console.log('match=',match)
+      //console.log('match=',match)
+      
       // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
       if (!match){
         console.log('no match 1')
@@ -1739,15 +1839,12 @@ function handleProgress(process, cutDuration, renderStatusId) {
       }
       
       let startOfLine = line.substring(0,6)
-      console.log(`startOfLine=${startOfLine}`)
-
+      //console.log(`startOfLine=${startOfLine}`)
 
       var displayProgress=0
-
-
       //if line begins with 'video:' then video has finished
       if(startOfLine.includes('video:')){
-        console.log('line starts with video: so it is finished')
+        //console.log('line starts with video: so it is finished')
         displayProgress=100
         for (var z = 0; z < renderList.length; z++) {
           //update render status to be 'done'
@@ -1760,20 +1857,17 @@ function handleProgress(process, cutDuration, renderStatusId) {
 
       }else{
         if (!match){
-          console.log('no match 2, return')
+          //console.log('no match 2, return')
           return
         }
         const str = match[1];
-        console.log('str=',str)
+        //console.log('str=',str)
         const progressTime = Math.max(0, moment.duration(str).asSeconds());
         const progress = cutDuration ? progressTime / cutDuration : 0;
         displayProgress = parseInt(progress * 100)
       }
 
-
-      
-
-      console.log('displayProgress=',displayProgress)
+      //console.log('displayProgress=',displayProgress)
       //update table display
       document.getElementById(renderStatusId).innerText = `${displayProgress}%`;
       //if render has completed
@@ -1891,7 +1985,7 @@ async function createIndividualRendersTable(upload, uploadId) {
         sortable: false,
       },
       { targets: 2, sortable: false },
-      { targets: 3, sortable: false },
+      { targets: 3, sortable: false, width: 200 },
       { targets: 4, sortable: false },
       { targets: 5, sortable: false },
       { targets: 6, sortable: false },
@@ -1914,34 +2008,7 @@ async function createIndividualRendersTable(upload, uploadId) {
   //init jquery msDropdown
   new MsDropdown(document.getElementById(`${uploadId}-individual-table-image-col`));
   console.log('msdropdown created')
-  //make invisible (bug?)
-  //document.getElementById(`${uploadId}-individual-table-image-col`).setAttribute('style','display:none!important')
 
-
-  //jQuery setup to display images inside <select> <option> elements for main image selection
-  /*
-  $(`#${uploadId}-individual-table-image-col`).ddslick({
-    width:'flex',
-    background: '#FFFFFF',
-    onSelected: async function(selectedData){
-      //get current value
-      let selectedIndex = selectedData.selectedIndex
-      console.log('individ table image col changed: ', selectedIndex)
-      //get the number of selected rows
-      var table = $(`#${uploadId}-individual-table`).DataTable()
-      var rows = table.rows().data()
-      //set all values 
-      for(var x = 0; x < rows.length; x++){
-        //$(`#${uploadId}-individual-table-image-row-${x}`).ddslick('select', {index: selectedIndex });
-        console.log(`change row ${x} to ${selectedIndex}`)
-        //$(`${uploadId}-individual-table-image-row-${x}`).msDropDown().data("dd").set("selectedIndex", selectedIndex);
-        document.getElementById(`${uploadId}-individual-table-image-row-${x}`).msDropdown.selectedIndex = selectedIndex; 
-        //$(`#${uploadId}-individual-table-image-row-${x}`).msDropdown().data("dd").set("selectedIndex", 2);
-      }
-      //handleMainImageOptionChange(upload, uploadId, upload.files.images[selectedData.selectedIndex].name, selectedData.selectedIndex);
-    }   
-  });
-  */
   
   //create padding selection col header and add it to table
   let paddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-col`, true, 'max-width: 100px;')
@@ -2383,7 +2450,7 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //get data for individualRenderTable
     var row = selectedRows[i];    
     //create imgSelect
-    let dropdownMsrowImgSelect = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, 'individRowImg')
+    let dropdownMsrowImgSelect = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-individual-table-image-row-${i}`, null, 'rowImgDropdown')
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
@@ -2410,18 +2477,13 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     })
     //draw individual renders table
     individualRendersTable.draw();
-
     
     //add jQuery setup to display images inside <select> <option> elements for main image selection
-    //$(`#${uploadId}-individual-table-image-row-${i}`).msDropDown();
     new MsDropdown(document.getElementById(`${uploadId}-individual-table-image-row-${i}`));
 
-    //replace this with msdropdown?
-    //$(`#${uploadId}-individual-table-image-row-${i}`).ddslick({
-   //   width:'flex',
-    //  background: '#FFFFFF',
-    //});
-    
+    //add jquery listener for if image changes
+    //console.log('adding jquery listener for: ', `${uploadId}-individual-table-image-row-${i}`)
+
 
     //create html options of resolutions based off the default selected image name, and add to ${uploadId}-resolutionSelect
     createResolutionSelect(uploadImageResolutions, upload.files.images[0].path, `${uploadId}-individual-table-resolution-row-${i}`);
@@ -2484,7 +2546,8 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
   })
 
   //if selected image option for row changes, update resolution for that row
-  $(`.rowImg`).on('change', async function () {
+  $(`.rowImgDropdown`).on('change', async function () {
+    console.log('rowImgDropdown ROW IMG CHANGED')
     let rowId = $(this)[0].id
     //console.log('rowImg changed for id: ', rowId)
     let rowNum = (rowId).substr((rowId).lastIndexOf('-') + 1)
@@ -2514,6 +2577,33 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
   document.getElementById(`${uploadId}-tracklistText`).innerHTML = fullAlbumTracklist
 
 }
+
+$(".rowImgDropdown").each(function () {
+  var drag = this;
+ 
+  drag.addEventListener("change", function() {
+      event.preventDefault();
+      console.log('.rowImgDropdown changed method2')
+  })
+})
+
+
+/*
+    $(`#${uploadId}-individual-table-image-row-${i}`).on('click', async function (e) {
+      console.log(`img row choice changed for id: `, `${uploadId}-individual-table-image-row-${i}`)
+      //get new image choice path
+      let indexValueImgChoice = document.getElementById(`${uploadId}-individual-table-image-row-${i}`).msDropdown.selectedIndex
+      let newImagePath = upload.files.images[indexValueImgChoice].path  
+      //get padding info
+      let paddingChoice = $(`#${uploadId}-individual-table-padding-row-${i}`).val()    
+      //if padding is not 'none', generate dropdown with static resolutions
+      if (!paddingChoice.includes('none')) {
+        createResolutionSelect(null, null, `${uploadId}-individual-table-resolution-row-${i}`);
+      } else {
+        createResolutionSelect(uploadImageResolutions, newImagePath, `${uploadId}-individual-table-resolution-row-${i}`);
+      }
+    })
+*/
 
 //helper function to get sum of two timestamps
 function sum(date1, date2) {
@@ -2746,7 +2836,7 @@ async function createPaddingImgColors(images, uploadId, paddingImgColorsId){
   })
 }
 
-async function createImgSelectMsDropdown(images, selectId, extraClass='') {
+async function createImgSelectMsDropdown(images, selectId, extraClass='', extraSelectClass='') {
   return new Promise(async function (resolve, reject) {
     console.log(`createImgSelectMsDropdown() images=`,images,`, selectId=`,selectId)
       
@@ -2766,6 +2856,7 @@ async function createImgSelectMsDropdown(images, selectId, extraClass='') {
         filepathAttr="${imageFilepath}"
         data-image="${imageFilepath}" 
         data-description="${imageSize}, ${imageResolution}"
+        class="${extraClass}"
         >
         ${imageFilename}
          
@@ -2779,6 +2870,7 @@ async function createImgSelectMsDropdown(images, selectId, extraClass='') {
       
       id='${selectId}'
       name="webmenu" 
+      class='${extraSelectClass}'
       is="ms-dropdown">
       ${imgSelectOptions}
     </select>
