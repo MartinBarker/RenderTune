@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "1.0.3",
+  "version": "1.1.1",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -65,8 +65,7 @@
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "target": [
-        "dmg",
-        "zip"
+        "dmg","zip"
       ],
       "asarUnpack": [
         "node_modules/trash/**"
@@ -221,12 +220,14 @@
   },
   "homepage": "https://github.com/MartinBarker/digify#readme",
   "devDependencies": {
-    "electron": "^11.3.0",
+    "electron": "11.3.0",
     "electron-builder": "^22.10.5",
     "electron-builder-notarize": "^1.1.2"
   },
   "dependencies": {
     "bootstrap": "^4.6.0",
+    "browser-window": "^0.4.0",
+    "crypto": "^1.0.1",
     "datatables.net-dt": "^1.10.21",
     "datatables.net-rowreorder-dt": "^1.2.7",
     "dotenv": "^8.2.0",
@@ -234,8 +235,10 @@
     "electron-is-dev": "^1.2.0",
     "electron-notarize": "^1.0.0",
     "electron-osx-sign": "^0.5.0",
+    "electron-routes": "^1.3.0",
     "electron-updater": "^4.3.5",
     "execa": "^5.0.0",
+    "express": "^4.17.2",
     "ffmpeg-ffprobe-static": "^4.3.1-rc.2",
     "ffmpeg-static": "^4.2.7",
     "ffmpeg-static-electron": "^2.0.1",
@@ -243,6 +246,8 @@
     "ffprobe-static-electron": "^2.0.0",
     "find-config": "^1.0.0",
     "fluent-ffmpeg": "^2.1.2",
+    "get-image-colors": "^4.0.1",
+    "http": "^0.0.1-security",
     "image-size": "^0.9.3",
     "jquery": "^3.5.1",
     "moment": "^2.29.1",

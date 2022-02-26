@@ -1,0 +1,64 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mixed audio files + RGB COLOR resolution padding working
+change: input files and n=# in filter_complex 
+output .mkv file 
+
+ffmpeg \
+-loop 1 \
+-framerate 2 \
+-i front.png \
+-i song1.wav \
+-i song2.mp3 \
+-i song3.flac \
+-i song4.wma \
+-i song5.aiff \
+-i song6.m4a \
+-i song7.aac \
+-c:a pcm_s32le \
+-filter_complex 'concat=n=7:v=0:a=1' \
+-vcodec libx264 \
+-bufsize 3M \
+-filter:v "format=rgb24,scale=w='if(gt(a,1.7777777777777777),1280,trunc(720*a/2)*2)':h='if(lt(a,1.7777777777777777),720,trunc(1280/a/2)*2)',pad=w=1280:h=720:x='if(gt(a,1.7777777777777777),0,(1280-iw)/2)':y='if(lt(a,1.7777777777777777),0,(720-ih)/2)':color=#966e6e " \
+-crf 18 \
+-pix_fmt yuv420p \
+-shortest \
+-tune stillimage \
+-t 1730 \
+out_white.mkv
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mixed audio files mp4 output
+	• 7 audio files
+	• total length in seconds video should be 
+	• vid resolution and/or padding with rgb color
+	• video output audio codec:
+		○ .mkv output
+			§ -c:a pcm_s32le \  
+		○ .mp4 output:
+			§ -c:a libmp3lame \
+			-b:a 320k \
+		○ 
+ffmpeg \
+-loop 1 \
+-framerate 2 \
+-i front.png \
+-i song1.wav \
+-i song2.mp3 \
+-i song3.flac \
+-i song4.wma \
+-i song5.aiff \
+-i song6.m4a \
+-i song7.aac \
+-c:a libmp3lame \
+-b:a 320k \
+-filter_complex 'concat=n=7:v=0:a=1' \
+-vcodec libx264 \
+-bufsize 3M \
+-filter:v "format=rgb24,scale=w='if(gt(a,1.7777777777777777),1280,trunc(720*a/2)*2)':h='if(lt(a,1.7777777777777777),720,trunc(1280/a/2)*2)',pad=w=1280:h=720:x='if(gt(a,1.7777777777777777),0,(1280-iw)/2)':y='if(lt(a,1.7777777777777777),0,(720-ih)/2)':color=#966e6e " \
+-crf 18 \
+-pix_fmt yuv420p \
+-shortest \
+-tune stillimage \
+-t 1730 \
+out_color_mp4.mp4
