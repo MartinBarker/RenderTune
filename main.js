@@ -207,7 +207,7 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false,
             //debug tools
-            showDevTools: true
+            //showDevTools: false
         },
         //framless
         frame: false,
@@ -217,7 +217,7 @@ function createWindow() {
     //load html
     mainWindow.loadFile('./src/index.html');
     //open devtools
-    mainWindow.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
     //setup server
 
     mainWindow.on('closed', function () {

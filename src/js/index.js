@@ -1834,7 +1834,6 @@ function handleProgress(process, cutDuration, renderStatusId) {
       
       // Audio only looks like this: "line size=  233422kB time=01:45:50.68 bitrate= 301.1kbits/s speed= 353x    "
       if (!match){
-        console.log('no match 1')
         match = line.match(/(?:size|Lsize)=\s*[^\s]+\s+time=\s*([^\s]+)\s+/);
       }
       
