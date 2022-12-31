@@ -1,8 +1,6 @@
 <p align="center"><img src="./build/header.png" title="Auto-Editor" width="700"></p> 
 
-### RenderTune <a href="url"><img src="./build/icon.png" align="left" height="48" width="48" ></a>
-<br>
-RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.
+<h1>RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.</h1>
 <img src="./build/RenderTune-screenshot-small.png" style="float:left" alt="screenshot">
 
 ## Tutorial Video (Click To Watch):
