@@ -1,3 +1,11 @@
+DEV: npm run electron-dev
+
+BUILD REACT: npm run build-react
+
+BUILD WIN: npm run build-win
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 <p align="center"><img src="./build/header.png" title="Auto-Editor" width="700"></p> 
 
 <h1>RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.</h1>

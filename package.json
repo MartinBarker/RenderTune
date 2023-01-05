@@ -1,26 +1,29 @@
 {
-  "name": "rendertune",
-  "productName": "RenderTune",
-  "version": "1.1.1",
-  "description": "combine audio and image files to create video files",
+  "name": "create-react-electron-app",
+  "version": "0.1.0",
+  "description": "A simple starter project to get up and developing quickly with the blend of React and Electron JS for building a Native Desktop App on various OS Platforms like Windows, Linux and macOS using Electron Builder.",
   "main": "main.js",
+  "author": "Souleh Shaikh <author.souleh@thegeekytutor.com>",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soulehshaikh99/create-react-electron-app"
+  },
+  "bugs": {
+    "url": "https://github.com/soulehshaikh99/create-react-electron-app/issues"
+  },
   "scripts": {
-    "start": "electron .",
+    "build-react": "react-scripts build",
+    "electron-dev": "concurrently \"npm run start\" \"npm run electron\"",
+    "start": "npx cross-env BROWSER=none react-scripts start",
+    "electron": "wait-on http://localhost:3000 && electron .",
+    "preelectron-pack": "npm run build",
+    "electron-pack": "electron-builder",
     "build-win": "electron-builder build --win --publish never",
-    "build-win-publish": "electron-builder build --win --publish always",
     "build-mac": "electron-builder build --mac --publish never",
     "build-mac-publish": "electron-builder build --mac --publish always",
-    "build-mas": "electron-builder build --mac && sh signmasscript.sh",
-    "build-linux-publish": "electron-builder build --linux --publish always",
-    "download-ffmpeg": "sh buildffmpeg.sh"
-  },
-  "browserslist": {
-    "production": [
-      "electron 8.0"
-    ],
-    "development": [
-      "electron 8.0"
-    ]
+    "build-mas": "electron-builder build --mac && sh signmasscript.sh"
   },
   "build": {
     "extraMetadata": {
@@ -58,14 +61,15 @@
     "mac": {
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "entitlements": "dist/entitlements.mac.plist",
+      "entitlementsInherit": "dist/entitlements.mac.plist",
       "appId": "com.martinbarker.digifyunique",
       "artifactName": "${productName}-${os}.${ext}",
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "target": [
-        "dmg","zip"
+        "dmg",
+        "zip"
       ],
       "asarUnpack": [
         "node_modules/trash/**"
@@ -182,9 +186,9 @@
     },
     "mas": {
       "hardenedRuntime": false,
-      "entitlements": "entitlements.mas.plist",
-      "entitlementsInherit": "entitlements.mas.inherit.plist",
-      "provisioningProfile": "embedded.provisionprofile",
+      "entitlements": "dist/entitlements.mas.plist",
+      "entitlementsInherit": "dist/entitlements.mas.inherit.plist",
+      "provisioningProfile": "dist/embedded.provisionprofile",
       "binaries": [
         "dist/mas/RenderTune.app/Contents/Resources/ffmpeg",
         "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
@@ -202,64 +206,60 @@
       ]
     }
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MartinBarker/rendertune.git"
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "electron-notarize": "^1.2.2",
+    "electron-scripts": "^1.1.0",
+    "electron-serve": "^1.0.0",
+    "music-metadata-browser": "^2.5.9"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "concurrently": "^5.3.0",
+    "electron": "^22.0.0",
+    "electron-builder": "^23.6.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "^5.0.1",
+    "wait-on": "^5.2.0"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "keywords": [
-    "ffmpeg"
-  ],
-  "author": {
-    "name": "Martin Barker",
-    "email": "martinbarker99@gmail.com",
-    "url": "https://martinbarker.me/digify"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/MartinBarker/digify/issues"
-  },
-  "homepage": "https://github.com/MartinBarker/digify#readme",
-  "devDependencies": {
-    "electron": "11.3.0",
-    "electron-builder": "^22.10.5",
-    "electron-builder-notarize": "^1.1.2"
-  },
-  "dependencies": {
-    "bootstrap": "^4.6.0",
-    "browser-window": "^0.4.0",
-    "crypto": "^1.0.1",
-    "datatables.net-dt": "^1.10.21",
-    "datatables.net-rowreorder-dt": "^1.2.7",
-    "dotenv": "^8.2.0",
-    "electron-builder-notarize": "^1.1.2",
-    "electron-is-dev": "^1.2.0",
-    "electron-notarize": "^1.0.0",
-    "electron-osx-sign": "^0.5.0",
-    "electron-routes": "^1.3.0",
-    "electron-updater": "^4.3.5",
-    "execa": "^5.0.0",
-    "express": "^4.17.2",
-    "ffmpeg-ffprobe-static": "^4.3.1-rc.2",
-    "ffmpeg-static": "^4.2.7",
-    "ffmpeg-static-electron": "^2.0.1",
-    "ffprobe-static": "^3.0.0",
-    "ffprobe-static-electron": "^2.0.0",
-    "find-config": "^1.0.0",
-    "fluent-ffmpeg": "^2.1.2",
-    "get-image-colors": "^4.0.1",
-    "http": "^0.0.1-security",
-    "image-size": "^0.9.3",
-    "jquery": "^3.5.1",
-    "moment": "^2.29.1",
-    "music-metadata": "^7.5.2",
-    "open": "^7.2.1",
-    "os": "^0.1.1",
-    "path": "^0.12.7",
-    "popper.js": "^1.16.1",
-    "readline": "^1.3.0",
-    "trash": "^6.1.1"
-  },
-  "resolutions": {
-    "electron-builder": "22.2.0"
-  }
+    "cross-platform",
+    "native-app",
+    "installed-app",
+    "desktop-applications",
+    "windows",
+    "linux",
+    "macos",
+    "html",
+    "css",
+    "javascript",
+    "front-end",
+    "declarative",
+    "react",
+    "react-dom",
+    "react-scripts",
+    "electron",
+    "electron-builder",
+    "electron-serve",
+    "concurrently",
+    "wait-on"
+  ]
 }
