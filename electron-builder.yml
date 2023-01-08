@@ -1,4 +1,0 @@
-appId: com.martinbarker.digifyunique
-publish:
-  provider: github
-  token: process.env.GH_TOKEN

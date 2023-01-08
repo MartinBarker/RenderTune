@@ -11,9 +11,9 @@ RESULT_PATH="${CWD}/$APP.pkg"
 APP_KEY="3rd Party Mac Developer Application: Martin Barker (LV6WXG529F)"
 INSTALLER_KEY="3rd Party Mac Developer Installer: Martin Barker (LV6WXG529F)"
 # The path of your plist files.
-CHILD_PLIST="${CWD}/child.plist"
-PARENT_PLIST="${CWD}/parent.plist"
-LOGINHELPER_PLIST="${CWD}/loginhelper.plist"
+CHILD_PLIST="${CWD}/build-assets/child.plist"
+PARENT_PLIST="${CWD}/build-assets/parent.plist"
+LOGINHELPER_PLIST="${CWD}/build-assets/loginhelper.plist"
 
 FRAMEWORKS_PATH="$APP_PATH/Contents/Frameworks"
 

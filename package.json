@@ -1,5 +1,7 @@
 {
-  "name": "create-react-electron-app",
+  "name": "rendertune",
+  "productName": "RenderTune",
+
   "version": "0.1.0",
   "description": "A simple starter project to get up and developing quickly with the blend of React and Electron JS for building a Native Desktop App on various OS Platforms like Windows, Linux and macOS using Electron Builder.",
   "main": "main.js",
@@ -61,15 +63,14 @@
     "mac": {
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "entitlements": "dist/entitlements.mac.plist",
-      "entitlementsInherit": "dist/entitlements.mac.plist",
+      "entitlements": "build-assets/entitlements.mac.plist",
+      "entitlementsInherit": "build-assets/entitlements.mac.plist",
       "appId": "com.martinbarker.digifyunique",
       "artifactName": "${productName}-${os}.${ext}",
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
+      "icon": "build-assets/icon.icns",
       "target": [
-        "dmg",
-        "zip"
+        "mas"
       ],
       "asarUnpack": [
         "node_modules/trash/**"
@@ -186,9 +187,9 @@
     },
     "mas": {
       "hardenedRuntime": false,
-      "entitlements": "dist/entitlements.mas.plist",
-      "entitlementsInherit": "dist/entitlements.mas.inherit.plist",
-      "provisioningProfile": "dist/embedded.provisionprofile",
+      "entitlements": "build-assets/entitlements.mas.plist",
+      "entitlementsInherit": "build-assets/entitlements.mas.inherit.plist",
+      "provisioningProfile": "build-assets/embedded.provisionprofile",
       "binaries": [
         "dist/mas/RenderTune.app/Contents/Resources/ffmpeg",
         "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
@@ -196,7 +197,7 @@
     },
     "linux": {
       "category": "public.app-category.productivity",
-      "icon": "build/icon.png",
+      "icon": "build-assets/icon.png",
       "target": [
         "AppImage",
         "snap"
