@@ -25,7 +25,8 @@
     "build-win": "electron-builder build --win --publish never",
     "build-mac": "electron-builder build --mac --publish never",
     "build-mac-publish": "electron-builder build --mac --publish always",
-    "build-mas": "electron-builder build --mac && sh signmasscript.sh"
+    "build-mas": "electron-builder build --mac && sh scripts/signmasscript.sh",
+    "download-ffmpeg": "sh scripts/buildffmpeg.sh"
   },
   "build": {
     "extraMetadata": {
