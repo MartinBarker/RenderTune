@@ -1,8 +1,16 @@
-DEV: npm run electron-dev
-
-BUILD REACT: npm run build-react
-
-BUILD WIN: npm run build-win
+SETUP:
+- create .env file to look like this:
+```
+BROWSER=none
+APPLEID=
+APPLEIDPASS=
+GH_TOKEN=
+```
+- run `npm i`
+- run `npm run download-ffmpeg` on mac
+- run `npm run electron-dev` to run locally
+- run `npm run build-react` to build react stuff
+- run `npm run build-mac` to build mac and mas (mac apple store)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
