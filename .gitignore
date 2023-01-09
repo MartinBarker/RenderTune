@@ -3,6 +3,5 @@ node_modules/
 dist/
 RenderTune.pkg
 Digify-mac.pkg
-ffmpeg-mac/
 package-lock.json
 build/
