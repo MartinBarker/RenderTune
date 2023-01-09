@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# If you get error `c compiler failed` run `sudo apt install libglfw3-dev libglew-dev`
+# apt-get install build-essential
+# apt-get build-dep ffmpeg
+
 set -e
 
 CWD=$(pwd)

@@ -8,7 +8,7 @@ GH_TOKEN=
 ```
 - run `npm i`
 - run `npm run download-ffmpeg` on mac
-- run `npm run electron-dev` to run locally
+- run `npm run dev` to run locally
 - run `npm run build-react` to build react stuff
 - run `npm run build-mac` to build mac and mas (mac apple store)
 

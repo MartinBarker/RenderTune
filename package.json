@@ -9,14 +9,19 @@
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/soulehshaikh99/create-react-electron-app"
+    "url": "https://github.com/MartinBarker/rendertune.git"
   },
   "bugs": {
     "url": "https://github.com/soulehshaikh99/create-react-electron-app/issues"
   },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
+  },
   "scripts": {
     "build-react": "react-scripts build",
-    "electron-dev": "concurrently \"npm run start\" \"npm run electron\"",
+    "dev": "concurrently \"npm run start\" \"npm run electron\"",
     "start": "npx cross-env BROWSER=none react-scripts start",
     "electron": "wait-on http://localhost:3000 && electron .",
     "preelectron-pack": "npm run build",
@@ -212,7 +217,10 @@
     "electron-notarize": "^1.2.2",
     "electron-scripts": "^1.1.0",
     "electron-serve": "^1.0.0",
-    "music-metadata-browser": "^2.5.9"
+    "electron-updater": "^5.3.0",
+    "fs": "0.0.1-security",
+    "music-metadata-browser": "^2.5.9",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
