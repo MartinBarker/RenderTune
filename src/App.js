@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Border from './Border/Border'
-import FfmpegTest from './ffmpegTest'
+import FfmpegTest from './FfmpegTest'
 
 
 function App() {

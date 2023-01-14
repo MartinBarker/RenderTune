@@ -52,7 +52,7 @@ function Border() {
         <button id="close-button" onClick={closeNotification}>
           Close
         </button>
-        <button id="restart-button" onClick={restartApp} class={ restartApp='restart' ? "" : "hidden"}>
+        <button id="restart-button" onClick={restartApp} className={ restartApp='restart' ? "" : "hidden"}>
           Restart
         </button>
       </div>
