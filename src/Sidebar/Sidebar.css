@@ -1,0 +1,187 @@
+#sidebarIcons{
+    height: 100%;
+    width: 50px;
+    position: fixed;
+    top: 40px;
+    left: 0;
+    overflow-x: hidden;
+
+    background: #254053; 
+    height:100%; 
+    width:50px; 
+    position:absolute; 
+}
+
+#sidebar {
+    height: 100%;
+}
+
+.custom-svg{
+    height: 30px;
+    padding: 0px !important;
+    left: 0px !important;
+    width: 30px; 
+}
+
+.renderJobsIconCircle{
+    display: none !important;  
+}
+
+.renderJobsButton{
+    padding-top: 7px;
+}
+
+html,
+body {
+    font-family: "Lato", sans-serif;
+    height: 100%;
+    margin: 0;
+}
+
+.super-animation {
+    -webkit-transition: -webkit-transform 300ms ease;
+    -webkit-transition-duration: 300ms;
+    -moz-transition: -moz-transform 300ms ease;
+    transition: transform 300ms ease;
+}
+
+.main-content {
+    margin: 0;
+    display: flex;
+    position: fixed;
+    height: 100%;
+}
+
+.sidebar {
+    width: 250px;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+
+    right: 0;
+    -webkit-transform: translate3d(calc(-100%), 0, 0);
+    -moz-transform: translate3d(calc(-100%), 0, 0);
+    transform: translate3d(calc(-100%), 0, 0);
+
+    background-color: #7762ca;
+    
+}
+
+.sidebar.sidebar-show {
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+}
+
+.sidebar a {
+    padding: 9px 15px 8px 12px;
+    text-decoration: none;
+    font-size: 19px;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    color: #f1f1f1;
+}
+
+.chevron-char {
+    height: 22px;
+    color: white;
+}
+
+
+.sidebar-collapsed {
+    transform: rotate(180deg);
+    transition: all 0.25s ease-in-out;
+    display: inline-block;
+}
+
+.sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+.sidebarBtn {
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+
+    -webkit-transition: -webkit-transform 300ms ease;
+    -webkit-transition-duration: 300ms;
+    -moz-transition: -moz-transform 300ms ease;
+    transition: transform 300ms ease;
+
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+
+    padding: 10px 15px;
+    border: none;
+
+    background-color: purple;
+    color: brown;
+
+    z-index: 100 !important;
+
+    box-shadow: 0px 1px 4px 1px rgb(0 0 0 / 30%);
+    cursor: pointer;
+}
+
+#color1 {
+    background: #564a34
+}
+
+
+.sidebarBtn:hover {
+    background-color: #444;
+}
+
+#main {
+    padding-left: 16px;
+    z-index: 9999 !important;
+    display: table;
+}
+
+#main.show-sidebar {
+    -webkit-transform: translate3d(250px, 0, 0);
+    -moz-transform: translate3d(250px, 0, 0);
+    transform: translate3d(250px, 0, 0);
+    margin-right: 190px;
+    min-width: 15px;
+    overflow: overlay;
+}
+
+.main-content .sidebar ul {
+    margin: 0;
+    max-height: 0px;
+    overflow: hidden;
+    transition: max-height 200ms;
+}
+
+.main-content .sidebar ul.ul-show {
+    transition: max-height 200ms ease-in;
+    max-height: 400px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidebar {
+        padding-top: 15px;
+    }
+
+    .sidebar a {
+        font-size: 18px;
+    }
+}
+
+
+/* sidebar arrow */
+#projects-arrow {
+    display: contents !important
+}
