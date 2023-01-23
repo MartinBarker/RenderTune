@@ -82,21 +82,69 @@ app.on('activate', function () {
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) createWindow()
 });
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
 
-//if request for app_version is received, return app version
+//
+// App verison update functions
+//
 ipcMain.on('app_version', (event) => {
     event.sender.send('app_version', { version: app.getVersion() });
 })
-
 ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
 });
-
 autoUpdater.on('update-available', () => {
     mainWindow.webContents.send('update_available');
 });
 autoUpdater.on('update-downloaded', () => {
     mainWindow.webContents.send('update_downloaded');
 });
+
+//
+// App window controls functions
+//
+
+// Register an event listener. When ipcRenderer sends a request to minimize the window; minimize the window if possible.
+ipcMain.on(`minimize-window`, function (e, args) {
+    if (mainWindow) {
+      if (mainWindow.minimizable) {
+        // browserWindow.isMinimizable() for old electron versions
+        mainWindow.minimize();
+      }
+    }
+  });
+  
+  // Register an event listener. When ipcRenderer sends a request to maximize he window; maximize the window if possible.
+  ipcMain.on(`maximize-window`, function (e, args) {
+    if (mainWindow) {
+      if (mainWindow.maximizable) {
+        // browserWindow.isMinimizable() for old electron versions
+        mainWindow.maximize();
+      }
+    }
+  });
+  
+  // Register an event listener. When ipcRenderer sends a request to unmaximize the window, unmaximize the window.
+  ipcMain.on(`unmaximize-window`, function (e, args) {
+    if (mainWindow) {
+      mainWindow.unmaximize()
+    }
+  });
+  
+  // Register an event listener. When ipcRenderer sends a request to max-unmax the window; check if it is maximized and unmaximize it. Otherwise maximize it
+  ipcMain.on(`max-unmax-window`, function (e, args) {
+    if (mainWindow) {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
+    }
+  });
+  
+  // Register an event listener. When ipcRenderer sends a request to close the window; close it
+  ipcMain.on(`close-window`, function (e, args) {
+    if (mainWindow) {
+      mainWindow.close();
+      app.quit();
+    }
+  });

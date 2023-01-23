@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import "./Border.css"
+
 const { ipcRenderer } = window.require("electron");
+
+//const { remote } = window.require("electron").remote;
+
 
 function Border() {
 
   const [appVersion, setAppVersion] = useState();
   const [appUpdateStatus, setAppUpdateStatus] = useState(null);
+  const [windowStatus, setwindowStatus] = useState('init')
 
   useEffect(() => {
     getAppVersion()
@@ -20,13 +25,44 @@ function Border() {
     });
   }
 
+  //
+  // Electron App frameless window controls (min/max/close)
+  //
+  function minimizeWindow() {
+    ipcRenderer.send(`minimize-window`);
+  }
+
+  function maximizeWindow() {
+    ipcRenderer.send(`maximize-window`);
+    setwindowStatus('maximized')
+    console.log('maximizeWindow() windowStatus=', windowStatus)
+  }
+  function unmaximizeWindow() {
+    ipcRenderer.send(`unmaximize-window`);
+    setwindowStatus('init')
+    console.log('unmaximizeWindow() windowStatus=', windowStatus)
+  }
+
+  function maxUnmaxWindow() {
+    ipcRenderer.send(`max-unmax-window`);
+    setwindowStatus('maximized')
+  }
+  function closeWindow() {
+    ipcRenderer.send(`close-window`)
+  }
+  function dragEventHandler(){
+    console.log('dragEventHandler()')
+  }
+
+  //
+  //  Electron App Auto-Update logic 
+  //
   ipcRenderer.on('update_available', () => {
     ipcRenderer.removeAllListeners('update_available');
     setAppUpdateStatus('downloading')
     //message.innerText = 'A new update is available. Downloading now...';
     //notification.classList.remove('hidden');
   });
-
   ipcRenderer.on('update_downloaded', () => {
     ipcRenderer.removeAllListeners('update_downloaded');
     setAppUpdateStatus('downloaded')
@@ -34,7 +70,6 @@ function Border() {
     //restartButton.classList.remove('hidden');
     //notification.classList.remove('hidden');
   });
-
   function closeNotification() {
     //notification.classList.add('hidden');
   }
@@ -42,34 +77,37 @@ function Border() {
     ipcRenderer.send('restart_app');
   }
 
+
+
+  //
+  // Render component UI DOM content
+  //
   return (
     <div>
 
 
-      <div id='frameWrapper'>
-        <header id="titlebar">
+      <div draggable="true" onDragStart={dragEventHandler} id='frameWrapper'>
+        <header  id="titlebar" >
           <div id="drag-region">
-            <span>RenderTune v{appVersion}</span>
+            <span><a>windowStatus={windowStatus} unmax={}</a></span>
             <div id="window-controls">
 
-              <div className="button" id="min-button">
-              
-                <svg draggable="false" className="" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1472 992v480q0 26-19 45t-45 19h-384v-384h-256v384h-384q-26 0-45-19t-19-45v-480q0-1 .5-3t.5-3l575-474 575 474q1 2 1 6zm223-69l-62 74q-8 9-21 11h-3q-13 0-21-7l-692-577-692 577q-12 8-24 7-13-2-21-11l-62-74q-8-10-7-23.5t11-21.5l719-599q32-26 76-26t76 26l244 204v-195q0-14 9-23t23-9h192q14 0 23 9t9 23v408l219 182q10 8 11 21.5t-7 23.5z" />
-                </svg>
-
+              <div className="button" onClick={minimizeWindow}>
+                MIN
               </div>
 
-              <div className="button" id="max-button">
-                <img className="icon" srcSet="./icons/max-w-10.png 1x, ./icons/max-w-12.png 1.25x, ./icons/max-w-15.png 1.5x, ./icons/max-w-15.png 1.75x, ./icons/max-w-20.png 2x, ./icons/max-w-20.png 2.25x, ./icons/max-w-24.png 2.5x, ./icons/max-w-30.png 3x, ./icons/max-w-30.png 3.5x" draggable="false" />
+              {windowStatus==='init' &&
+                <div className="button" onClick={maximizeWindow}>
+                MAX
               </div>
+              }
 
-              <div className="button" id="restore-button">
-                <img className="icon" srcSet="./icons/restore-w-10.png 1x, ./icons/restore-w-12.png 1.25x, ./icons/restore-w-15.png 1.5x, ./icons/restore-w-15.png 1.75x, ./icons/restore-w-20.png 2x, ./icons/restore-w-20.png 2.25x, ./icons/restore-w-24.png 2.5x, ./icons/restore-w-30.png 3x, ./icons/restore-w-30.png 3.5x" draggable="false" />
-              </div>
+              {windowStatus==='maximized' &&
+                <div className="button" onClick={unmaximizeWindow}>RST</div>
+              }
 
-              <div className="button" id="close-button">
-                <img className="icon" srcSet="./icons/close-w-10.png 1x, ./icons/close-w-12.png 1.25x, ./icons/close-w-15.png 1.5x, ./icons/close-w-15.png 1.75x, ./icons/close-w-20.png 2x, ./icons/close-w-20.png 2.25x, ./icons/close-w-24.png 2.5x, ./icons/close-w-30.png 3x, ./icons/close-w-30.png 3.5x" draggable="false" />
+              <div className="button" onClick={closeWindow}>
+                CLOSE
               </div>
 
             </div>
@@ -77,6 +115,8 @@ function Border() {
         </header>
         <div id="main">
           <h1>Hello World!</h1>
+          <p>Lorem ipsum dolor sit amet...</p>
+          <p>Lorem ipsum dolor sit amet...</p>
           <p>Lorem ipsum dolor sit amet...</p>
           <p>Lorem ipsum dolor sit amet...</p>
           <p>Lorem ipsum dolor sit amet...</p>
@@ -99,6 +139,21 @@ function Border() {
 }
 
 export default Border;
+
+/*
+
+module.exports = {
+ getCurrentWindow,
+  openMenu,
+  minimizeWindow,
+  maximizeWindow,
+  unmaximizeWindow,
+  maxUnmaxWindow,
+  isWindowMaximized,
+  closeWindow
+  closeWindow,
+}
+*/
 
 
 
