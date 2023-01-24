@@ -5,3 +5,4 @@ RenderTune.pkg
 Digify-mac.pkg
 package-lock.json
 build/
+ffmpeg-mac/
