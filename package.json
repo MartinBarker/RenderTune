@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "A simple starter project to get up and developing quickly with the blend of React and Electron JS for building a Native Desktop App on various OS Platforms like Windows, Linux and macOS using Electron Builder.",
   "main": "main.js",
   "author": "Souleh Shaikh <author.souleh@thegeekytutor.com>",
@@ -30,7 +30,8 @@
     "build-mac": "electron-builder build --mac --publish never",
     "build-mac-publish": "electron-builder build --mac --publish always",
     "build-mas": "electron-builder build --mac && sh scripts/signmasscript.sh",
-    "download-ffmpeg": "sh scripts/buildffmpeg.sh"
+    "download-ffmpeg": "sh scripts/buildffmpeg.sh",
+    "newmas": "electron-builder build --mac --publish always && sh scripts/signmasscript.sh"
   },
   "build": {
     "extraMetadata": {
@@ -45,6 +46,9 @@
       "src/",
       "src/**/*",
       "build/**/*",
+      "build-assets",
+      "build-assets/",
+      "build-assets/**/*",
       "node_modules/ffmpeg-ffprobe-static/ffmpeg",
       "node_modules/ffmpeg-ffprobe-static/ffprobe"
     ],
@@ -65,7 +69,14 @@
       "publisherDisplayName": "martinbarker",
       "backgroundColor": "#a0beeb"
     },
+    "extraFiles":[ {
+      "from":"build-assets/",
+      "to":"build-assets/",
+      "filter": ["**/*"]
+    }],
     "mac": {
+      
+
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build-assets/entitlements.mac.plist",
@@ -83,7 +94,18 @@
       "electronLanguages": [
         "en"
       ],
+      "extraFiles":[ {
+        "from":"build-assets",
+        "to":"build-assets",
+        "filter": ["**/*"]
+      }],
       "extraResources": [
+        {
+          "from":"build-assets",
+          "to":"build-assets",
+          "filter": ["**/*"]
+        },
+        
         {
           "from": "ffmpeg-mac/ffmpeg",
           "to": "ffmpeg"
