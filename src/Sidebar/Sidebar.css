@@ -10,9 +10,30 @@
     width:50px;
     position:absolute;
 }
+.sidebarIcon :hover {
+    fill: #f1f1f1;
+}
+
 #sidebar {
     height: 100%;
 }
+
+.sidebarIcon{
+    height: 43px;
+    padding: 9px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+}
+
+.sidebarSvg{
+    height: 50px;
+    width: 35px;
+    fill: grey;
+    margin-left: 5px;
+}
+
 .custom-svg{
     height: 30px;
     padding: 0px;

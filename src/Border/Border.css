@@ -34,12 +34,20 @@ html,
 body {
   height: 100%;
   margin: 0;
+  border:0px;
 }
+
+/* Framless CSS: */
+* {margin: 0; padding: 0!important; border: 0; vertical-align: baseline;}
+html {box-sizing: border-box;}
+*, *:before, *:after {box-sizing: inherit;}
+html, body {height: 100%; margin: 0; border:0px;}
 
 body {
   font-family: "Segoe UI", sans-serif;
   background: #1A2933;
   color: #FFF;
+  border:0px;
 }
 
 h1 {
@@ -59,18 +67,16 @@ p {
   overflow-y: hidden;
 }
 
+
 #titlebar {
-  display: block;
-  position: fixed;
-  height: 32px;
-  width: calc(100% - 2px);
-  /*Compensate for body 1px border*/
-  background: #254053;
-  padding: 4px;
-  color: #FFF;
+  top:0px;
+position: fixed;
+height: 40px;
+width: calc(100%); /*Compensate for body 1px border*/
+background: #254053;
 }
 
-#titlebar #drag-region {
+#titlebar #dragRegion {
   width: 100%;
   height: 100%;
   -webkit-app-region: drag;
@@ -83,6 +89,7 @@ p {
   margin-top: 32px;
   padding: 20px;
   overflow-y: auto;
+  border:0px;
 }
 
 #window-controls {
@@ -112,7 +119,7 @@ p {
   grid-column: 2;
 }
 
-#close-button {
+#closeButton {
   grid-column: 3;
 }
 
@@ -132,10 +139,12 @@ p {
 .titlebarLogo {
   z-index: 3;
   height: 30px;
+  margin-left: 5px;
 }
 
 .titlebarText {
   margin-left: 30px;
+  font-size: 15px;
 }
 
 .titlebarLogoSquare {
@@ -147,12 +156,21 @@ p {
   background: #7762ca;
   width: 50px;
 }
+#windowTitle{
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 11px;
+  overflow: hidden;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+}
 
 #window-controls {
   -webkit-app-region: no-drag;
 }
 
-#titlebar #drag-region {
+#titlebar #dragRegion {
   display: grid;
   grid-template-columns: auto 138px;
 }
@@ -164,8 +182,6 @@ p {
 
 #window-controls .button {
   fill: white;
-  height: 31px;
-  width: 31px;
 }
 
 #window-controls .button:hover {
@@ -176,15 +192,15 @@ p {
   background: rgba(255, 255, 255, 0.2);
 }
 
-#close-button:hover {
+#closeButton:hover {
   background: #E81123 !important;
 }
 
-#close-button:active {
+#closeButton:active {
   background: #F1707A !important;
 }
 
-#close-button:active .icon {
+#closeButton:active .icon {
   filter: invert(1);
 }
 

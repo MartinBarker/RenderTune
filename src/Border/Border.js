@@ -6,7 +6,7 @@ const { ipcRenderer } = window.require("electron");
 //const { remote } = window.require("electron").remote;
 
 
-function Border() {
+function Border({children}) {
 
   const [appVersion, setAppVersion] = useState();
   const [appUpdateStatus, setAppUpdateStatus] = useState(null);
@@ -88,24 +88,15 @@ function Border() {
 
       <div draggable="true" onDragStart={dragEventHandler} id='frameWrapper'>
         <header id="titlebar" >
-          <div id="drag-region">
+          <div id="dragRegion">
 
 
             <div className="titlebarLogoSquare"></div>
 
-            <div id="window-title">
+            <div id="windowTitle">
               <img className='titlebarLogo' src={require('./icon.png')}></img>
-              <span className='titlebarText' >RenderTune </span>
-
+              <span className='titlebarText' >RenderTune v{appVersion}</span>
             </div>
-
-
-            {/* 
-            <div id="window-title">
-                <img style="z-index: 3; height:30px; " src="../build/new-icon-white.png"></img>
-                <span style="margin-left:30px;">RenderTune <span id="version"></span></span> <br>
-            </div>
-            */}
 
             <div id="window-controls">
 
@@ -131,13 +122,7 @@ function Border() {
                 </div>
               }
 
-              <div className="button" onClick={closeWindow}>
-                {/*
-                <svg className="windowButtonIcon" viewBox="0 0 320 512">
-                  <path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z" />
-                </svg>
-                */}
-
+              <div id="closeButton" className="button" onClick={closeWindow}>
                 <svg className="windowButtonIcon" viewBox="0 0 50 50" width="50px" height="50px">
                   <path d="M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z" />
                 </svg>
@@ -145,20 +130,11 @@ function Border() {
               </div>
 
             </div>
+            
           </div>
         </header>
-        <div id="main">
-          <h1>Hello World!</h1>
-
-          windowStatus={windowStatus}
-
-
-          <p>Lorem ipsum dolor sit amet...</p>
-          <p>Lorem ipsum dolor sit amet...</p>
-          <p>Lorem ipsum dolor sit amet...</p>
-          <p>Lorem ipsum dolor sit amet...</p>
-          <p>Lorem ipsum dolor sit amet...</p>
-          <p>Lorem ipsum dolor sit amet...</p>
+        <div >
+          { children }
         </div>
       </div >
 
