@@ -148,10 +148,10 @@ background: #254053;
 }
 
 .titlebarLogoSquare {
+  left: -1px;
   z-index: 2;
   position: absolute;
   top: 0px;
-  left: 0px;
   height: 40px;
   background: #7762ca;
   width: 50px;
