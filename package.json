@@ -69,14 +69,16 @@
       "publisherDisplayName": "martinbarker",
       "backgroundColor": "#a0beeb"
     },
-    "extraFiles":[ {
-      "from":"build-assets/",
-      "to":"build-assets/",
-      "filter": ["**/*"]
-    }],
+    "extraFiles": [
+      {
+        "from": "build-assets/",
+        "to": "build-assets/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "mac": {
-      
-
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build-assets/entitlements.mac.plist",
@@ -94,18 +96,23 @@
       "electronLanguages": [
         "en"
       ],
-      "extraFiles":[ {
-        "from":"build-assets",
-        "to":"build-assets",
-        "filter": ["**/*"]
-      }],
+      "extraFiles": [
+        {
+          "from": "build-assets",
+          "to": "build-assets",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ],
       "extraResources": [
         {
-          "from":"build-assets",
-          "to":"build-assets",
-          "filter": ["**/*"]
+          "from": "build-assets",
+          "to": "build-assets",
+          "filter": [
+            "**/*"
+          ]
         },
-        
         {
           "from": "ffmpeg-mac/ffmpeg",
           "to": "ffmpeg"

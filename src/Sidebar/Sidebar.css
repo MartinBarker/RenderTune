@@ -1,4 +1,8 @@
+
 #sidebar{
+   
+    -webkit-app-region: drag;
+
     height: 100%;
     width: 50px;
     position: fixed;
@@ -11,10 +15,13 @@
     position:absolute;
     overflow: hidden;
 }
-.sidebarIcon:hover .sidebarSvg {
-    fill: #f1f1f1;
+ svg:hover{
+  fill: #f1f1f1;
  }
 
+.noDrag{
+  -webkit-app-region: no-drag !important;
+}
 
 .sidebarIcon{
     height: 43px;
