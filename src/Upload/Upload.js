@@ -28,27 +28,22 @@ function Upload() {
       } else {
         exeName = cmd;
       }
-
       if (isDev) {
         exeName = `node_modules/ffmpeg-ffprobe-static/${exeName}`;
       } else {
         exeName = join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
       }
-
       //if snap build downloaded from store has wrong ffmpeg filepath:
       if (!isDev && platform === "linux" && exeName.match(/snap\/rendertune\/\d+(?=\/)\/resources/)) {
         console.log("getFfPath() snap linux path before: ", exeName)
         exeName = exeName.replace(/snap\/rendertune\/\d+(?=\/)\/resources/, "/snap/rendertune/current/resources/app.asar.unpacked/")
       }
-
       console.log("getFfPath() returning exeName=", exeName);
       return (exeName);
-
     } catch (err) {
       console.log('getFfPath cmd=', cmd, '. err = ', err)
       return ("")
     }
-
   }
 
   function handleProgress(process, cutDuration) {
@@ -83,9 +78,6 @@ function Upload() {
               lastTime = percent;
             }
           }
-
-
-
         } catch (err) {
           console.log('Failed to parse ffmpeg progress line', err);
         }
@@ -101,28 +93,46 @@ function Upload() {
   //render video
   function renderVideo() {
     console.log('renderVideo()')
+    
     //create command
     let cmdArgs = []
+    //create output filepath / filename
+    let outputFilepath = 'C:\\Users\\martin\\Desktop\\12.11\\outputvideo.mkv';
     //for each input file
-    for (var x = 0; x <= [...audioFiles, ...imageFiles].length; x++) {
-      console.log('x = ', x)
-
+    let outputDuration = 0;
+    for (var x = 0; x < [...audioFiles, ...imageFiles].length; x++) {
+      console.log('x=',x)
+      cmdArgs.push('-r','2','-i',[...audioFiles, ...imageFiles][x].path)
+      console.log('here')
+      //calculate duration
+      if([...audioFiles, ...imageFiles][x].duration){
+        console.log('duration found')
+        outputDuration += [...audioFiles, ...imageFiles][x].duration;
+      }
+      console.log('outputDuration=',outputDuration)
     }
-    let ffmpegCmdArgs = ['-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\untitled.flac', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sidea.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sideb.png', '-filter_complex',
+    let filterComplex = '';
+    //concat audio
+    for(var x = 0; x < audioFiles.length; x++){
+      console.log(audioFiles[x])
+      filterComplex=`${filterComplex}[${x}:a]`
+    }
+    filterComplex=`${filterComplex}concat=n=${audioFiles.length+1}:v=0:a=1[a];`
 
-      '[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]',
+    
+    //cmdArgs.push('[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]')
+    cmdArgs.push('-map','[v]','-map','[a]')
+    cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+    
+    console.log(cmdArgs)
 
-      '-map', '[v]', '-map', '[a]',
+    //let ffmpegCmdArgs = ['-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\untitled.flac', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sidea.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sideb.png', '-filter_complex','[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]','-map', '[v]', '-map', '[a]', '-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', '2102', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\SLIDESHOW.mkv']
 
-      '-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', '2102', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\SLIDESHOW.mkv']
-
-    let outputDuration = 2102
-
-    //const ffmpegPath = getFfmpegPath('ffmpeg');
+    const ffmpegPath = getFfmpegPath('ffmpeg');
     //console.log('ffmpegPath=', ffmpegPath)
-    //const process = execa(ffmpegPath, ffmpegCmdArgs);
+    const process = execa(ffmpegPath, cmdArgs);
     //console.log('process=', process)
-    //handleProgress(process, outputDuration);
+    handleProgress(process, outputDuration);
 
   }
 
@@ -155,8 +165,8 @@ function Upload() {
       if (fileType == 'audio') {
         fileData.type = 'audio'
         const metadata = await parseFile(file);
-        var durationSeconds = metadata.format.duration;
-        file.duration = durationSeconds;
+        var durationSeconds = Math.round(metadata.format.duration * 100) / 100;
+        fileData.duration = durationSeconds;
         audioFiles.push(fileData);
         setAudioFiles(audioFiles)
       } else if (fileType == 'image') {
@@ -165,17 +175,10 @@ function Upload() {
         setImageFiles(imageFiles)
       }
     }
-    //update state vars
   }
 
   return (
     <>
-
-    <a id='txt'>
-
-
-    </a>
-    
       <div id='upload'>
         <h2>Choose Files</h2>
         <input
@@ -183,7 +186,6 @@ function Upload() {
           multiple="multiple"
           onChange={onChangeFilesSelected}
         />
-        <button onClick={renderVideo}>Render Video</button>
         <br></br>
         <div id='filesDisplay'>
           <h3>{[...audioFiles, ...imageFiles].length} Files: </h3>
@@ -196,7 +198,10 @@ function Upload() {
           })}
           <br></br>
         </div>
+        <button onClick={renderVideo}>Render Video</button>
       </div>
+
+
     </>
   );
 }

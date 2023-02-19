@@ -1,8 +1,5 @@
-
 #sidebar{
-   
     -webkit-app-region: drag;
-
     height: 100%;
     width: 50px;
     position: fixed;
@@ -14,6 +11,9 @@
     width:50px;
     position:absolute;
     overflow: hidden;
+}
+svg{
+    outline: none;
 }
  svg:hover{
   fill: #f1f1f1;

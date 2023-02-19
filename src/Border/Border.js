@@ -90,8 +90,7 @@ function Border() {
                 {/* 
                 <img className='titlebarLogo' src={require('./icon.svg')}></img>
                 */}
-                <img img className='titlebarLogo' src={RenderTuneLogo}  />
-
+                <img className='titlebarLogo' src={RenderTuneLogo}  />
 
               </div>
 

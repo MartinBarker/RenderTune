@@ -242,6 +242,8 @@
     }
   },
   "dependencies": {
+    "babel-loader": "8.0.4",
+    "buffer": "^6.0.3",
     "cross-env": "^7.0.3",
     "electron-is-dev": "^2.0.0",
     "electron-is-packaged": "^1.0.2",
