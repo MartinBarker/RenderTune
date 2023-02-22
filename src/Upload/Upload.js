@@ -46,38 +46,32 @@ function Upload() {
     }
   }
 
-  function handleProgress(process, cutDuration) {
+  function handleProgress(process) {
     try {
-      //set to zero % compelted as initial default
-      let renderStatus = '0%';
+
+      let progress = {
+        percentage: 0,
+        eta: 0
+      };
+
       //read progress from process
       const rl = readline.createInterface({ input: process.stderr });
       rl.on('line', (data) => {
         try {
-          console.log('data=', data)
+          ///////////////////////////////////////////////////////////////
+          // Parse the stderr data to extract the progress information
           const str = data.toString();
-          const timeMatch = str.match(/Duration: (\d{2}):(\d{2}):(\d{2})/);
-          if (timeMatch) {
-            const hours = parseInt(timeMatch[1], 10);
-            const minutes = parseInt(timeMatch[2], 10);
-            const seconds = parseInt(timeMatch[3], 10);
-            duration = hours * 3600 + minutes * 60 + seconds;
-            start = Date.now();
+          const matches = str.match(/time=(\d\d:\d\d:\d\d\.\d\d)/);
+          if (matches) {
+            const timeStr = matches[1];
+            const timeArr = timeStr.split(':').map(parseFloat);
+            const timeSec = timeArr[0] * 3600 + timeArr[1] * 60 + timeArr[2];
+            const duration = 146.49;
+            progress.percentage = (timeSec / duration) * 100;
+            progress.eta = (duration - timeSec).toFixed(2);
+            console.log(`Progress: ${progress.percentage.toFixed(2)}% (ETA: ${progress.eta} seconds)`);
           }
-          const timeMatch2 = str.match(/time=(\d{2}):(\d{2}):(\d{2})/);
-          if (timeMatch2) {
-            const hours = parseInt(timeMatch2[1], 10);
-            const minutes = parseInt(timeMatch2[2], 10);
-            const seconds = parseInt(timeMatch2[3], 10);
-            const currentTime = hours * 3600 + minutes * 60 + seconds;
-            const percent = Math.floor((currentTime / duration) * 100);
-            const elapsedTime = Date.now() - start;
-            const remainingTime = Math.floor((elapsedTime / (percent / 100)) / 60000);
-            if (percent && percent !== lastTime) {
-              console.log(`Progress: ${percent}% (${remainingTime} minutes remaining)`);
-              lastTime = percent;
-            }
-          }
+          /////////////////////////////////////////////////////////////
         } catch (err) {
           console.log('Failed to parse ffmpeg progress line', err);
         }
@@ -90,49 +84,92 @@ function Upload() {
     }
   }
 
-  //render video
-  function renderVideo() {
-    console.log('renderVideo()')
-    
+  //function to create ffmpeg command for slideshow video
+  function createFfmpegCommand(audioInputs, imageInputs, outputFilepath) {
     //create command
     let cmdArgs = []
-    //create output filepath / filename
-    let outputFilepath = 'C:\\Users\\martin\\Desktop\\12.11\\outputvideo.mkv';
-    //for each input file
+
+    //get total duration
     let outputDuration = 0;
-    for (var x = 0; x < [...audioFiles, ...imageFiles].length; x++) {
-      console.log('x=',x)
-      cmdArgs.push('-r','2','-i',[...audioFiles, ...imageFiles][x].path)
-      console.log('here')
-      //calculate duration
-      if([...audioFiles, ...imageFiles][x].duration){
-        console.log('duration found')
-        outputDuration += [...audioFiles, ...imageFiles][x].duration;
+    for (var x = 0; x < audioInputs.length; x++) {
+      outputDuration += audioInputs[x].duration;
+    }
+
+    //determine how long to show each image (for slideshow)
+    let imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
+
+    //filter_complex (fc) consturction vars
+    let fc_audioFiles = '';
+    let fc_imgOrder = '';
+    let fc_finalPart = '';
+    //for each input file
+    for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
+      console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}: `, [...audioInputs, ...imageInputs][x])
+
+      //add input to ffmpeg cmd args
+      cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].path)
+
+      //if file is audio
+      if ([...audioInputs, ...imageInputs][x].type == 'audio') {
+        //add to filter_complex
+        fc_audioFiles = `${fc_audioFiles}[${x}:a]`
+
+      } else if ([...audioInputs, ...imageInputs][x].type == 'image') {
+        //if file is image
+        fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=1920:h=1937,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+        fc_finalPart = `${fc_finalPart}[v${x}]`
       }
-      console.log('outputDuration=',outputDuration)
     }
-    let filterComplex = '';
-    //concat audio
-    for(var x = 0; x < audioFiles.length; x++){
-      console.log(audioFiles[x])
-      filterComplex=`${filterComplex}[${x}:a]`
-    }
-    filterComplex=`${filterComplex}concat=n=${audioFiles.length+1}:v=0:a=1[a];`
 
-    
+    //construct filter_complex audio files concat text
+    fc_audioFiles = `${fc_audioFiles}concat=n=${audioFiles.length}:v=0:a=1[a];`
+    //constuct final part
+    fc_finalPart = `${fc_finalPart}concat=n=${imageInputs.length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
+    //consturct final combined everything filter_complex value
+    let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
+
+    console.log('construct fitler complex: ')
+    console.log('fc_audioFiles: ', fc_audioFiles)
+    console.log('fc_imgOrder: ', fc_imgOrder)
+    console.log('fc_finalPart: ', fc_finalPart)
+    console.log('______')
+    console.log('filter_complex = ', filter_complex)
+
+
     //cmdArgs.push('[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]')
-    cmdArgs.push('-map','[v]','-map','[a]')
-    cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
-    
-    console.log(cmdArgs)
 
+    cmdArgs.push('-filter_complex', filter_complex)
+
+    cmdArgs.push('-map', '[v]', '-map', '[a]')
+    cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+    return cmdArgs
+  }
+  //render video
+  function renderVideo() {
+    //get output video folder/filepath
+    let firstAudioFilepath = audioFiles[0]['path'];
+    let splitChar = ''
+    if (window.require('os').platform() === 'darwin') {
+      splitChar = '/'
+    } else if (window.require('os').platform() === 'win32') {
+      splitChar = '\\'
+    }
+    let firstAudioFolderpath = firstAudioFilepath.substring(0, firstAudioFilepath.lastIndexOf(splitChar) + 1);
+    let outputFilename = `MyOutputVideo${new Date().getUTCMilliseconds()}`
+    let outputVideoFiletype = 'mkv'
+    let outputFilepath = `${firstAudioFolderpath}${outputFilename}.${outputVideoFiletype}`
+    console.log('outputFilepath=', outputFilepath)
+
+    let cmdArgs = createFfmpegCommand(audioFiles, imageFiles, outputFilepath)
+    console.log('cmdArgs = ', cmdArgs)
+    console.log('~~~~~~~~~~~~~ \n', cmdArgs.join(' '), `\n~~~~~~~~~~~~~~~\n`)
     //let ffmpegCmdArgs = ['-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\untitled.flac', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\front2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\back2.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sidea.png', '-r', '2', '-i', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\sideb.png', '-filter_complex','[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]','-map', '[v]', '-map', '[a]', '-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', '2102', 'E:\\martinradio\\rips\\vinyl\\unknownrecord1\\SLIDESHOW.mkv']
 
     const ffmpegPath = getFfmpegPath('ffmpeg');
     //console.log('ffmpegPath=', ffmpegPath)
     const process = execa(ffmpegPath, cmdArgs);
     //console.log('process=', process)
-    handleProgress(process, outputDuration);
+    handleProgress(process);
 
   }
 
@@ -152,27 +189,38 @@ function Upload() {
 
   //when multiple files are selected
   async function onChangeFilesSelected() {
-    console.log('onChangeFilesSelected()')
-    let audioFiles = []
-    let imageFiles = []
+    
+    let imageFiles = [];
+    var fileCount = 0;
     for (const file of event.target.files) {
+      console.log(`looking at file ${fileCount}: `, file);
+      fileCount++;
       let fileData = {}
-      console.log('examining file = ', file)
-      let fileType = file.type.split('/')[0];
-      console.log('fileType = ', fileType)
       fileData.name = file.name;
       fileData.path = file.path;
+      let fileType = file.type.split('/')[0];
       if (fileType == 'audio') {
+        //get file data
         fileData.type = 'audio'
         const metadata = await parseFile(file);
         var durationSeconds = Math.round(metadata.format.duration * 100) / 100;
         fileData.duration = durationSeconds;
-        audioFiles.push(fileData);
-        setAudioFiles(audioFiles)
+        //add filedata to state
+        var oldAudioFiles = [...audioFiles];
+        setImageFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
+        
+        //var tmpArr = [...audioFiles];
+        //tmpArr.push(fileData);
+        //setAudioFiles(tmpArr)
+
       } else if (fileType == 'image') {
+        //get filedata
         fileData.type = 'image';
-        imageFiles.push(fileData);
-        setImageFiles(imageFiles)
+
+        var oldImageFiles = [...imageFiles];
+        setImageFiles(oldImageFiles => ([ ...oldImageFiles, fileData]));
+
+
       }
     }
   }
@@ -188,15 +236,29 @@ function Upload() {
         />
         <br></br>
         <div id='filesDisplay'>
-          <h3>{[...audioFiles, ...imageFiles].length} Files: </h3>
-          {[...audioFiles, ...imageFiles].map(function (d, idx) {
-            return (
-              <li key={idx}>
-                {d.name}
-              </li>
-            )
-          })}
-          <br></br>
+          <div>
+            <h3>{imageFiles.length} Image Files: </h3>
+            {imageFiles.map(function (d, idx) {
+              console.log('display img file')
+              return (
+                <li key={idx}>
+                  {d.name}
+                </li>
+              )
+            })}
+            <br></br>
+          </div>
+          <div>
+            <h3>{audioFiles.length} Audio Files: </h3>
+            {audioFiles.map(function (d, idx) {
+              return (
+                <li key={idx}>
+                  {d.name}
+                </li>
+              )
+            })}
+            <br></br>
+          </div>
         </div>
         <button onClick={renderVideo}>Render Video</button>
       </div>
