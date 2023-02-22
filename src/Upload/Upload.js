@@ -207,7 +207,7 @@ function Upload() {
         fileData.duration = durationSeconds;
         //add filedata to state
         var oldAudioFiles = [...audioFiles];
-        setImageFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
+        setAudioFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
         
         //var tmpArr = [...audioFiles];
         //tmpArr.push(fileData);
