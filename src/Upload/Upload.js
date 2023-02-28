@@ -8,12 +8,43 @@ const moment = window.require("moment");
 const readline = window.require('readline');
 
 function Upload() {
+  
+  useEffect(() => {
+    checkLocalStorage()
+  }, []);
+
   const [audioFiles, setAudioFiles] = React.useState([]);
   const [imageFiles, setImageFiles] = React.useState([]);
   const [imageAudioSync, setImageAudioSync] = React.useState(false);
 
   function handleImageAudioSyncChange(){
     setImageAudioSync(!imageAudioSync)
+  }
+
+  function checkLocalStorage(){
+    let localStorageAudioFiles = getLocalStorage('audioFiles')
+    let localStorageImageFiles = getLocalStorage('imageFiles')
+    console.log('checkLocalStorage() img=', localStorageImageFiles, '\n audio=',localStorageAudioFiles)
+    
+  }
+
+  function setLocalStorage(varName, varData){
+    console.log(`setLocalStorage() setting ${varName} as `, varData)
+    localStorage.setItem(varName, JSON.stringify(varData))
+    console.log(`setLocalStorage() set! localstorage ${varName} = `, JSON.parse(localStorage.getItem(varName)))
+  }
+
+  function getLocalStorage(varName){
+    try{
+    if(localStorage.getItem(varName)){
+      return JSON.parse(localStorage.getItem(varName));
+    }else{
+      return null
+    }
+  }catch(err){
+    console.log(`getLocalStorage err=${err}, setting ${varName} localStorage to null`)
+    localStorage.setItem(varName, null)
+  }
   }
 
   function getFfmpegPath(cmd) {
@@ -116,7 +147,7 @@ function Upload() {
     let imgAudioSyncCount = 0;
     //for each input file
     for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
-      console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}: `, [...audioInputs, ...imageInputs][x])
+      console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
 
       //add input to ffmpeg cmd args
       cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].path)
@@ -216,7 +247,6 @@ function Upload() {
     let imageFiles = [];
     var fileCount = 0;
     for (const file of event.target.files) {
-      console.log(`looking at file ${fileCount}: `, file);
       fileCount++;
       let fileData = {}
       fileData.name = file.name;
@@ -228,22 +258,17 @@ function Upload() {
         const metadata = await parseFile(file);
         var durationSeconds = Math.round(metadata.format.duration * 100) / 100;
         fileData.duration = durationSeconds;
-        //add filedata to state
+        //save filedata to state
         var oldAudioFiles = [...audioFiles];
-        setAudioFiles(oldAudioFiles => ([...oldAudioFiles, fileData]));
-
-        //var tmpArr = [...audioFiles];
-        //tmpArr.push(fileData);
-        //setAudioFiles(tmpArr)
-
+        setAudioFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
+        setLocalStorage('audioFiles', [ ...oldAudioFiles, fileData])
       } else if (fileType == 'image') {
         //get filedata
         fileData.type = 'image';
-
+        //save filedata to state
         var oldImageFiles = [...imageFiles];
-        setImageFiles(oldImageFiles => ([...oldImageFiles, fileData]));
-
-
+        setImageFiles(oldImageFiles => ([ ...oldImageFiles, fileData]));
+        setLocalStorage('imageFiles', [ ...oldImageFiles, fileData])
       }
     }
   }
