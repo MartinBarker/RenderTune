@@ -10,6 +10,11 @@ const readline = window.require('readline');
 function Upload() {
   const [audioFiles, setAudioFiles] = React.useState([]);
   const [imageFiles, setImageFiles] = React.useState([]);
+  const [imageAudioSync, setImageAudioSync] = React.useState(false);
+
+  function handleImageAudioSyncChange(){
+    setImageAudioSync(!imageAudioSync)
+  }
 
   function getFfmpegPath(cmd) {
     try {
@@ -96,12 +101,19 @@ function Upload() {
     }
 
     //determine how long to show each image (for slideshow)
-    let imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
+    let imgDuration = 0;
+    if(imageAudioSync){
+      //sync audio / image transition(s)
+    }else{
+      //dont sync audio/image transitions, just split compeltely evenly accross video's entire duration
+      imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
+    }
 
     //filter_complex (fc) consturction vars
     let fc_audioFiles = '';
     let fc_imgOrder = '';
     let fc_finalPart = '';
+    let imgAudioSyncCount = 0;
     //for each input file
     for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
       console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}: `, [...audioInputs, ...imageInputs][x])
@@ -115,8 +127,18 @@ function Upload() {
         fc_audioFiles = `${fc_audioFiles}[${x}:a]`
 
       } else if ([...audioInputs, ...imageInputs][x].type == 'image') {
+        //if we need to sync image and audio file transitions (expects number of audio files and image files to be the same)
+        if(imageAudioSync){
+          imgDuration = (audioInputs[imgAudioSyncCount].duration)*2
+          imgAudioSyncCount++;
+        }
         //if file is image
         fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=1920:h=1937,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+
+        //fc_imgOrder = `${fc_imgOrder}[${x}:v]format=rgb24,scale=w='if(gt(a,1.7777777777777777),1920,trunc(1937*a/2)*2)':h='if(lt(a,1.7777777777777777),1937,trunc(1920/a/2)*2)',pad=w=1920:h=1937:x='if(gt(a,1.7777777777777777),0,(1920-iw)/2)':y='if(lt(a,1.7777777777777777),0,(1937-ih)/2)':color=#FFC0CB,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+
+        //format=rgb24,scale=w='if(gt(a,1.7777777777777777),1920,trunc(1937*a/2)*2)':h='if(lt(a,1.7777777777777777),1937,trunc(1920/a/2)*2)',pad=w=1920:h=1937:x='if(gt(a,1.7777777777777777),0,(1920-iw)/2)':y='if(lt(a,1.7777777777777777),0,(1937-ih)/2)':color=#FFC0CB[v2];
+
         fc_finalPart = `${fc_finalPart}[v${x}]`
       }
     }
@@ -144,6 +166,7 @@ function Upload() {
     cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
     return cmdArgs
   }
+
   //render video
   function renderVideo() {
     //get output video folder/filepath
@@ -189,7 +212,7 @@ function Upload() {
 
   //when multiple files are selected
   async function onChangeFilesSelected() {
-    
+
     let imageFiles = [];
     var fileCount = 0;
     for (const file of event.target.files) {
@@ -207,8 +230,8 @@ function Upload() {
         fileData.duration = durationSeconds;
         //add filedata to state
         var oldAudioFiles = [...audioFiles];
-        setImageFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
-        
+        setAudioFiles(oldAudioFiles => ([...oldAudioFiles, fileData]));
+
         //var tmpArr = [...audioFiles];
         //tmpArr.push(fileData);
         //setAudioFiles(tmpArr)
@@ -218,13 +241,22 @@ function Upload() {
         fileData.type = 'image';
 
         var oldImageFiles = [...imageFiles];
-        setImageFiles(oldImageFiles => ([ ...oldImageFiles, fileData]));
+        setImageFiles(oldImageFiles => ([...oldImageFiles, fileData]));
 
 
       }
     }
   }
 
+  //return 'count' number of <option> items
+  function NumberedOptions({ count }) {
+    const divs = Array.from({ length: count }, (_, index) => (
+      <option value={index} key={index} >{index + 1}</option>
+    ));
+    return <>{divs}</>;
+  }
+
+  //render dom
   return (
     <>
       <div id='upload'>
@@ -236,19 +268,20 @@ function Upload() {
         />
         <br></br>
         <div id='filesDisplay'>
-          <div>
             <h3>{imageFiles.length} Image Files: </h3>
+            {/* For each image file */}
             {imageFiles.map(function (d, idx) {
-              console.log('display img file')
               return (
-                <li key={idx}>
+                <div key={idx}>
+                  <select>
+                    <NumberedOptions count={imageFiles.length}/>
+                  </select>
                   {d.name}
-                </li>
+                </div>
               )
             })}
             <br></br>
-          </div>
-          <div>
+         
             <h3>{audioFiles.length} Audio Files: </h3>
             {audioFiles.map(function (d, idx) {
               return (
@@ -258,12 +291,13 @@ function Upload() {
               )
             })}
             <br></br>
-          </div>
         </div>
         <button onClick={renderVideo}>Render Video</button>
+        <div>
+          <h4>Video Image Audio Sync</h4>
+          <input onChange={handleImageAudioSyncChange} type="checkbox" id="videoImageAudioSync" name="videoImageAudioSync"></input>
+        </div>
       </div>
-
-
     </>
   );
 }
