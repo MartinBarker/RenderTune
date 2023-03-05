@@ -143,15 +143,14 @@ background: #254053;
 
 .titlebarLogo {
   height: 40px;
-  margin-left: 5px;
-
   left: -1px;
   z-index: 2;
   position: absolute;
   top: 0px;
   height: 40px;
   background: #7762ca;
-  width: 50px;
+  width: 49px;
+  padding: 2px!important;
 }
 
 .titlebarText {

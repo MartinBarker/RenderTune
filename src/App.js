@@ -5,6 +5,8 @@ import Sidebar from './Sidebar/Sidebar'
 import Upload from './Upload/Upload'
 import BlankTxtElem from './BlankTxtElem'
 import NewBorder from './NewBorder'
+import YouTubeUpload from './YouTubeUpload/YouTubeUpload'
+import "./App.css"
 
 /*
 import FfmpegTest from './FfmpegTest'
@@ -17,8 +19,13 @@ function App() {
     <>
       <Sidebar/>
       <Border/>
+
+      <YouTubeUpload/>
+      
+      
       <Upload/>
-    </>
+      {/**/}
+      </>
   );
 }
 

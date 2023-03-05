@@ -13,6 +13,16 @@ function isDev() {
     return !app.isPackaged;
 }
 
+//start express app
+const express = require('express');
+let expressApp = express();
+let server = expressApp.listen(3001);
+
+expressApp.get('/code', function(req, res){
+  console.log('/code url detected ')
+  res.send('CODE GET');    
+});
+
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
