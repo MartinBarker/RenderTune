@@ -18,9 +18,9 @@ const express = require('express');
 let expressApp = express();
 let server = expressApp.listen(3001);
 
-expressApp.get('/code', function(req, res){
-  console.log('/code url detected ')
-  res.send('CODE GET');    
+expressApp.get('/ytCode', function(req, res){
+  console.log('/code url detected: ', req.url.toString().replace('/ytCode?code=', ''))
+  res.send();    
 });
 
 function createWindow() {

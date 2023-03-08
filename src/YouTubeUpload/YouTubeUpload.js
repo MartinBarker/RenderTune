@@ -5,11 +5,12 @@ function YouTubeUpload() {
 
     //run each function once at start
     useEffect(() => {
-        createOauth2Client()
+        getYtUrl()
     }, [])
 
-    function createOauth2Client(){
-        console.log('create oauth2 client')
+    function getYtUrl(){
+        console.log('get youtube url')
+        //make request to https://martinbarker.me/getYtUrl?port=8000
         
     }
 

@@ -139,7 +139,9 @@ function Upload() {
       //dont sync audio/image transitions, just split compeltely evenly accross video's entire duration
       imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
     }
-
+    //video resolution (width, height)
+    var width = 5672;
+    var height = 2814;
     //filter_complex (fc) consturction vars
     let fc_audioFiles = '';
     let fc_imgOrder = '';
@@ -164,11 +166,10 @@ function Upload() {
           imgAudioSyncCount++;
         }
         //if file is image
-        fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=1920:h=1937,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+        //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+        fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:-1:-1:color=white,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
 
-        //fc_imgOrder = `${fc_imgOrder}[${x}:v]format=rgb24,scale=w='if(gt(a,1.7777777777777777),1920,trunc(1937*a/2)*2)':h='if(lt(a,1.7777777777777777),1937,trunc(1920/a/2)*2)',pad=w=1920:h=1937:x='if(gt(a,1.7777777777777777),0,(1920-iw)/2)':y='if(lt(a,1.7777777777777777),0,(1937-ih)/2)':color=#FFC0CB,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
-
-        //format=rgb24,scale=w='if(gt(a,1.7777777777777777),1920,trunc(1937*a/2)*2)':h='if(lt(a,1.7777777777777777),1937,trunc(1920/a/2)*2)',pad=w=1920:h=1937:x='if(gt(a,1.7777777777777777),0,(1920-iw)/2)':y='if(lt(a,1.7777777777777777),0,(1937-ih)/2)':color=#FFC0CB[v2];
+        //[4:v]scale=1920:1898:force_original_aspect_ratio=decrease,pad=1920:1898:-1:-1,setsar=1,loop=580.03:580.03[v4];
 
         fc_finalPart = `${fc_finalPart}[v${x}]`
       }
@@ -187,9 +188,6 @@ function Upload() {
     console.log('fc_finalPart: ', fc_finalPart)
     console.log('______')
     console.log('filter_complex = ', filter_complex)
-
-
-    //cmdArgs.push('[0:a]concat=n=1:v=0:a=1[a];[1:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v0];[2:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v1];[3:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v2];[4:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v3];[5:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v4];[6:v]scale=w=1920:h=1937,setsar=1,loop=700.6:700.6[v5];[v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]')
 
     cmdArgs.push('-filter_complex', filter_complex)
 
