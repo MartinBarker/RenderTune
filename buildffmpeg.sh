@@ -18,7 +18,7 @@ FFMPEG_ARCHIVE="$PACKAGES/ffmpeg.tar.gz"
 
 if [ ! -f "$FFMPEG_ARCHIVE" ]; then
 	echo "Downloading tag ${FFMPEG_TAG}..."
-	curl -L --silent -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
+	curl -L -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
 fi
 
 EXTRACTED_DIR="$PACKAGES/extracted"
@@ -39,26 +39,26 @@ MACOS_MIN="10.10"
     --pkgconfigdir="$WORKSPACE/lib/pkgconfig" \
     --prefix=${WORKSPACE} \
     --pkg-config-flags="--static" \
-    --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN}" \
-    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN}" \
-    --extra-libs="-lpthread -lm" \
-		--enable-static \
-		--disable-securetransport \
-		--disable-debug \
-		--disable-shared \
-		--disable-ffplay \
-		--disable-lzma \
-		--disable-doc \
-		--enable-version3 \
-		--enable-pthreads \
-		--enable-runtime-cpudetect \
-		--enable-avfilter \
-		--enable-filters \
-		--disable-libxcb \
-		--enable-gpl \
-		--disable-libass \
-		--enable-libmp3lame \
-		--enable-libx264 
+    --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN} -I/usr/local/Cellar/lame/3.100/include" \
+    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/local/Cellar/lame/3.100/lib" \
+    --extra-libs="-lpthread -lm -lmp3lame" \
+    --enable-static \
+    --disable-securetransport \
+    --disable-debug \
+    --disable-shared \
+    --disable-ffplay \
+    --disable-lzma \
+    --disable-doc \
+    --enable-version3 \
+    --enable-pthreads \
+    --enable-runtime-cpudetect \
+    --enable-avfilter \
+    --enable-filters \
+    --disable-libxcb \
+    --enable-gpl \
+    --disable-libass \
+    --enable-libmp3lame \
+    --enable-libx264
 
 make -j 4
 make install
