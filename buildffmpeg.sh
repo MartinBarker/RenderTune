@@ -22,8 +22,8 @@ FFMPEG_URL="http://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/74c4c539538e36d8df0
 FFMPEG_ARCHIVE="$PACKAGES/ffmpeg.tar.gz"
 
 if [ ! -f "$FFMPEG_ARCHIVE" ]; then
-	echo "Downloading tag ${FFMPEG_TAG}..."
-	curl -L -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
+    echo "Downloading tag ${FFMPEG_TAG}..."
+    curl -L -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
 fi
 
 EXTRACTED_DIR="$PACKAGES/extracted"
@@ -64,7 +64,7 @@ MACOS_MIN="10.10"
     --disable-libass \
     --enable-libmp3lame \
     --enable-libx264 \
-	--enable-libopus
+    --enable-libopus
 
 make -j 4
 make install
@@ -74,10 +74,10 @@ otool -L "$WORKSPACE/bin/ffprobe"
 
 echo "Building done. The binaries can be found here: $WORKSPACE/bin/ffmpeg $WORKSPACE/bin/ffprobe"
 
-mkdir ffmpeg-mac/ 
+mkdir ffmpeg-mac/
 cp -r "$WORKSPACE/bin/" "$CWD/ffmpeg-mac/"
 
-rm -rf "$PACKAGES"
-rm -rf "$WORKSPACE"
+# Copy the libmp3lame library to the same directory as the ffmpeg executable
+cp "$WORKSPACE/lib/libmp3lame.0.dylib" "$CWD/ffmpeg-mac/"
 
-exit 0
+# Update the dynamic library path of the ffmpeg executable to include the lib
