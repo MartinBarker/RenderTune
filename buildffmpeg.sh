@@ -40,8 +40,8 @@ MACOS_MIN="10.10"
     --prefix=${WORKSPACE} \
     --pkg-config-flags="--static" \
     --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN} -I/usr/local/Cellar/lame/3.100/include" \
-    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/local/Cellar/lame/3.100/lib -L/usr/lib" \
-    --extra-libs="-lpthread -lm -lmp3lame" \
+    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/lib" \
+    --extra-libs="-lpthread -lm" \
     --enable-static \
     --disable-securetransport \
     --disable-debug \
@@ -57,7 +57,7 @@ MACOS_MIN="10.10"
     --disable-libxcb \
     --enable-gpl \
     --disable-libass \
-    --enable-libmp3lame \
+    --enable-libmp3lame=static \
     --enable-libx264
 
 make -j 4
