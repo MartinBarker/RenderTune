@@ -44,6 +44,9 @@ MACOS_MIN="10.10"
     --pkgconfigdir="$WORKSPACE/lib/pkgconfig" \
     --prefix=${WORKSPACE} \
     --pkg-config-flags="--static" \
+	--extra-libs=-static \
+	--extra-cflags=--static \
+	--enable-cross-compile \
     --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN}" \
     --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/local/opt/lame/lib -Wl,-rpath,/usr/local/opt/lame/lib" \
     --extra-libs="-lpthread -lm" \
