@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# If you get error `c compiler failed` run `sudo apt install libglfw3-dev libglew-dev`
-# apt-get install build-essential
-# apt-get build-dep ffmpeg
-# when running this on mac, you need to install some libraries such as 'brew install opus'
-
 set -e
 
 CWD=$(pwd)
@@ -17,13 +12,13 @@ mkdir -p "$PACKAGES"
 mkdir -p "$WORKSPACE"
 
 FFMPEG_TAG="$1"
-FFMPEG_URL="http://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/74c4c539538e36d8df02de2484b045010d292f2c.tar.gz"
+FFMPEG_URL="https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/74c4c539538e36d8df02de2484b045010d292f2c.tar.gz"
 
 FFMPEG_ARCHIVE="$PACKAGES/ffmpeg.tar.gz"
 
 if [ ! -f "$FFMPEG_ARCHIVE" ]; then
 	echo "Downloading tag ${FFMPEG_TAG}..."
-	curl -L -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
+	curl -L -k -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
 fi
 
 EXTRACTED_DIR="$PACKAGES/extracted"
@@ -44,12 +39,9 @@ MACOS_MIN="10.10"
     --pkgconfigdir="$WORKSPACE/lib/pkgconfig" \
     --prefix=${WORKSPACE} \
     --pkg-config-flags="--static" \
-	--extra-libs=-static \
-	--extra-cflags=--static \
-	--enable-cross-compile \
-    --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN}" \
-    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/local/opt/lame/lib -Wl,-rpath,/usr/local/opt/lame/lib" \
-    --extra-libs="-lpthread -lm" \
+    --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN} -I/usr/local/Cellar/lame/3.100/include" \
+    --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN} -L/usr/local/Cellar/lame/3.100/lib -L/usr/lib" \
+    --extra-libs="-lpthread -lm -lmp3lame" \
     --enable-static \
     --disable-securetransport \
     --disable-debug \
@@ -66,8 +58,7 @@ MACOS_MIN="10.10"
     --enable-gpl \
     --disable-libass \
     --enable-libmp3lame \
-    --enable-libx264 \
-	--enable-libopus
+    --enable-libx264
 
 make -j 4
 make install
