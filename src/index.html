@@ -18,18 +18,18 @@
     <link rel="stylesheet" href="./static/font-awesome/css/font-awesome.min.css">
 
     <!-- datatables css/js -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.23/datatables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.23/datatables.min.css" />
     <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.23/datatables.min.js"></script>
 
     <!-- datatable row reorder css -->
     <link rel="stylesheet" href="./static/datatables/rowReorder.dataTables.min.css">
-    <link rel="stylesheet" href="./static/datatables/jquery.dataTables.min.css"> 
-    
+    <link rel="stylesheet" href="./static/datatables/jquery.dataTables.min.css">
+
     <!-- msdropdown -->
     <link rel="stylesheet" type="text/css" href="./static/msdropdown/css/dd.min.css" />
-    <script src="./static/msdropdown/js/dd.min.js"></script> 
+    <script src="./static/msdropdown/js/dd.min.js"></script>
     <!--  <script src="./static/msdropdown/js/jquery.dd.js"></script>   -->
-    
+
 </head>
 
 
@@ -143,25 +143,25 @@
                                                 multiple="multiple"></h5>
 
                                         <br>
-                                        
+
                                         <!-- new files display 2 -->
                                         <hr>
                                         <div class="container">
                                             <div class="row">
-                                              <div class="col-sm">
-                                                <strong>Audio Files:</strong>
-                                                <div id='newUploadAudioFilesDisplay2'>
+                                                <div class="col-sm">
+                                                    <strong>Audio Files:</strong>
+                                                    <div id='newUploadAudioFilesDisplay2'>
 
+                                                    </div>
                                                 </div>
-                                              </div>
-                                              <div class="col-sm">
-                                                <strong>Image Files:</strong>
-                                                <div id='newUploadImageFilesDisplay2'>
+                                                <div class="col-sm">
+                                                    <strong>Image Files:</strong>
+                                                    <div id='newUploadImageFilesDisplay2'>
 
+                                                    </div>
                                                 </div>
-                                              </div>
                                             </div>
-                                          </div>
+                                        </div>
 
                                     </div>
                                 </div>
@@ -210,26 +210,28 @@
                                 <!-- Modal body -->
                                 <div class="modal-body">
                                     <!-- renders table -->
-                                    <table id="renders-table" class="table table-sm table-bordered scroll display filesTable" cellspacing="2" width="100%">
-                                        <thead> 
+                                    <table id="renders-table"
+                                        class="table table-sm table-bordered scroll display filesTable" cellspacing="2"
+                                        width="100%">
+                                        <thead>
                                             <tr>
-                                              <!-- select box -->
-                                              <th style="min-width: 20px;">
-                                                <input id='renders-tableSelectAll' type="checkbox">
-                                              </th>
-                            
-                                              <!-- Render Type -->
-                                              <th class='left-align-col' >Filename</th>
-                                              
-                                              <!-- Render Status -->
-                                              <th class='left-align-col' >Status</th>
-                                              
-                                              <!-- Render Length -->
-                                              <th class='left-align-col' >Length</th>
-                                              
-                                              <!-- Render UploadName -->
-                                              <th class='left-align-col' style='max-width:100px;'>UploadName</th>
-                                              
+                                                <!-- select box -->
+                                                <th style="min-width: 20px;">
+                                                    <input id='renders-tableSelectAll' type="checkbox">
+                                                </th>
+
+                                                <!-- Render Type -->
+                                                <th class='left-align-col'>Filename</th>
+
+                                                <!-- Render Status -->
+                                                <th class='left-align-col'>Status</th>
+
+                                                <!-- Render Length -->
+                                                <th class='left-align-col'>Length</th>
+
+                                                <!-- Render UploadName -->
+                                                <th class='left-align-col' style='max-width:100px;'>UploadName</th>
+
 
                                             </tr>
                                         </thead>
@@ -289,91 +291,110 @@
                     <div id='default-home-html' style="display:visible;" class="row">
                         <div class="col-lg-12">
                             <h1>Home</h1>
-                            <p>Hello, this is the home page for RenderTune, an open-source, cross-platform, free electron program that uses ffmpeg to render videos by combining an image file + audio file(s).</p>
+                            <p>Hello, this is the home page for RenderTune, an open-source, cross-platform, free
+                                electron program that uses ffmpeg to render videos by combining an image file + audio
+                                file(s).</p>
                             <p>RenderTune Website:<a style='color: blue; cursor: pointer;'
-                                onclick="openUrl('web')">https://martinbarker.me/rendertune</a></p>
+                                    onclick="openUrl('web')">https://martinbarker.me/rendertune</a></p>
                             <p>View code here:<a style='color: blue; cursor: pointer;'
-                                onclick="openUrl('github')">https://github.com/MartinBarker/rendertune</a></p>
+                                    onclick="openUrl('github')">https://github.com/MartinBarker/rendertune</a></p>
                             <p>Or email me directly at martinbarker99@gmail.com</p>
-                            
+
                             <h1>Tutorial:</h1>
-                            <p>Click the <svg 
-                                style="height: 30px;padding: 0px !important;left: 0px !important;width: 30px;"
-                                xmlns="http://www.w3.org/2000/svg" version="1.0" width="168.000000pt" height="149.000000pt"
-                                viewBox="0 0 168.000000 149.000000" preserveAspectRatio="xMidYMid meet">
-        
-                                <g class="custom-svg" transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)"
-                                    fill="#818181" stroke="none">
-                                    <path
-                                        d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z" />
-                                    <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z" />
-                                </g>
-                            </svg> icon to view your uploads. If you have 0 uploads, click the <a>
-                                <i class="fa fa-plus-circle fa-2x" style="color:#818181" aria-hidden="true"></i>
-                            </a> icon to create a new upload. <br> When you create a new upload, choose or drag files into the window, add an optional title, and click 'create'. You will be directed to the upload page, where you can change settings and render videos.<br>Once a video starts rendering, you can view its progress in the <i class="fa fa-tasks fa-2x" style="color:#818181" aria-hidden="true"></i> renders popup.</p>
+                            <p>Click the <svg
+                                    style="height: 30px;padding: 0px !important;left: 0px !important;width: 30px;"
+                                    xmlns="http://www.w3.org/2000/svg" version="1.0" width="168.000000pt"
+                                    height="149.000000pt" viewBox="0 0 168.000000 149.000000"
+                                    preserveAspectRatio="xMidYMid meet">
 
+                                    <g class="custom-svg"
+                                        transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)"
+                                        fill="#818181" stroke="none">
+                                        <path
+                                            d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z" />
+                                        <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z" />
+                                    </g>
+                                </svg> icon to view your uploads. If you have 0 uploads, click the <a>
+                                    <i class="fa fa-plus-circle fa-2x" style="color:#818181" aria-hidden="true"></i>
+                                </a> icon to create a new upload. <br> When you create a new upload, choose or drag
+                                files into the window, add an optional title, and click 'create'. You will be directed
+                                to the upload page, where you can change settings and render videos.<br>Once a video
+                                starts rendering, you can view its progress in the <i class="fa fa-tasks fa-2x"
+                                    style="color:#818181" aria-hidden="true"></i> renders popup.</p>
+                            <br>
                         </div>
-                    </div>
+                        <br></br>
+                        <h3>Default output video format:</h3>
+                        <br></br>
+                        <form>
+                            <input id='defaultVideoOutputFormat-mp4' type="radio" id="mp4" name="video-format" value="mp4">
+                            <label for="mp4">MP4</label><br>
+                            <input id='defaultVideoOutputFormat-mkv' type="radio" id="mkv" name="video-format" value="mkv">
+                            <label for="mkv">MKV</label><br>
+                        </form>
 
-                    <!-- html pages for uploads -->
-                    <div id='upload-pages-container' style='display:none' class='row'>
                     </div>
-
                 </div>
+
+                <!-- html pages for uploads -->
+                <div id='upload-pages-container' style='display:none' class='row'>
+                </div>
+
             </div>
-            <!-- /#page-content-wrapper -->
-
         </div>
+        <!-- /#page-content-wrapper -->
 
-        <!-- small icon sidebar -->
-        <div class="sidenav">
-            <!-- left-side icons -->
-            <div style="background: #254053; height:100%; width:50px; position: absolute; ">
+    </div>
 
-                <!-- home button -->
-                <a id='homeButton' class="page-selected" href="#">
-                    <i class="fa fa-home" aria-hidden="true" class="page-selected"></i>
-                </a>
-               
+    <!-- small icon sidebar -->
+    <div class="sidenav">
+        <!-- left-side icons -->
+        <div style="background: #254053; height:100%; width:50px; position: absolute; ">
 
-                <!-- new upload button -->
-                <a data-toggle="modal" data-target="#new-upload-modal" id='newUploadButton' href="#">
-                    <i href="#" class="fa fa-plus-circle" aria-hidden="true"></i>
-                </a>
+            <!-- home button -->
+            <a id='homeButton' class="page-selected" href="#">
+                <i class="fa fa-home" aria-hidden="true" class="page-selected"></i>
+            </a>
 
-                <!-- view uploads button -->
-                <a href="#menu-toggle" id="menu-toggle">
-                    <!-- 
+
+            <!-- new upload button -->
+            <a data-toggle="modal" data-target="#new-upload-modal" id='newUploadButton' href="#">
+                <i href="#" class="fa fa-plus-circle" aria-hidden="true"></i>
+            </a>
+
+            <!-- view uploads button -->
+            <a href="#menu-toggle" id="menu-toggle">
+                <!-- 
                     <div class="selected-div" style="left:0px !important; width:11px; height:11px; position:absolute; background:red;"></div>
                 -->
 
-                    <svg class="custom-svg"
-                        style="height: 30px;padding: 0px !important;left: 0px !important;width: 30px;"
-                        xmlns="http://www.w3.org/2000/svg" version="1.0" width="168.000000pt" height="149.000000pt"
-                        viewBox="0 0 168.000000 149.000000" preserveAspectRatio="xMidYMid meet">
+                <svg class="custom-svg" style="height: 30px;padding: 0px !important;left: 0px !important;width: 30px;"
+                    xmlns="http://www.w3.org/2000/svg" version="1.0" width="168.000000pt" height="149.000000pt"
+                    viewBox="0 0 168.000000 149.000000" preserveAspectRatio="xMidYMid meet">
 
-                        <g class="custom-svg" transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)"
-                            fill="#818181" stroke="none">
-                            <path
-                                d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z" />
-                            <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z" />
-                        </g>
-                    </svg>
-                </a>
+                    <g class="custom-svg" transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)"
+                        fill="#818181" stroke="none">
+                        <path
+                            d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z" />
+                        <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z" />
+                    </g>
+                </svg>
+            </a>
 
-                <!-- render jobs button -->
-                <a style='padding-top: 7px;' data-toggle="modal" data-target="#render-jobs-modal" id='renderJobsButton' href="#">
-                    <i class="fa fa-tasks" aria-hidden="true"></i>
-                    <!--<span class="renderJobsIconCircle"></span>-->
-                    <div class=" spinner-border renderJobsIconCircle" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                </a>
+            <!-- render jobs button -->
+            <a style='padding-top: 7px;' data-toggle="modal" data-target="#render-jobs-modal" id='renderJobsButton'
+                href="#">
+                <i class="fa fa-tasks" aria-hidden="true"></i>
+                <!--<span class="renderJobsIconCircle"></span>-->
+                <div class=" spinner-border renderJobsIconCircle" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </a>
 
-            </div>
         </div>
+    </div>
 
-        <!-- Page content 
+    <!-- Page content 
         <div class="main">
         </div> -->
     </div>
@@ -382,12 +403,12 @@
     <div id="notification" class="hidden">
         <p id="message"></p>
         <button id="close-button" onClick="closeNotification()">
-          Close
+            Close
         </button>
         <button id="restart-button" onClick="restartApp()" class="hidden">
-          Restart
+            Restart
         </button>
-      </div>
+    </div>
 
     <!-- scripts -->
     <script src="./js/renderer.js"></script>
