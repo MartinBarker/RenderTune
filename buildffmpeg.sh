@@ -18,7 +18,7 @@ FFMPEG_ARCHIVE="$PACKAGES/ffmpeg.tar.gz"
 
 if [ ! -f "$FFMPEG_ARCHIVE" ]; then
 	echo "Downloading tag ${FFMPEG_TAG}..."
-	curl -L --silent -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
+	curl -L -k -o "$FFMPEG_ARCHIVE" "$FFMPEG_URL"
 fi
 
 EXTRACTED_DIR="$PACKAGES/extracted"
@@ -57,7 +57,6 @@ MACOS_MIN="10.10"
 		--disable-libxcb \
 		--enable-gpl \
 		--disable-libass \
-		--enable-libmp3lame \
 		--enable-libx264 
 
 make -j 4
