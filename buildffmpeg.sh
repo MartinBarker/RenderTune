@@ -42,22 +42,24 @@ MACOS_MIN="10.10"
     --extra-cflags="-I$WORKSPACE/include -mmacosx-version-min=${MACOS_MIN}" \
     --extra-ldflags="-L$WORKSPACE/lib -mmacosx-version-min=${MACOS_MIN}" \
     --extra-libs="-lpthread -lm" \
-		--enable-static \
-		--disable-securetransport \
-		--disable-debug \
-		--disable-shared \
-		--disable-ffplay \
-		--disable-lzma \
-		--disable-doc \
-		--enable-version3 \
-		--enable-pthreads \
-		--enable-runtime-cpudetect \
-		--enable-avfilter \
-		--enable-filters \
-		--disable-libxcb \
-		--enable-gpl \
-		--disable-libass \
-		--enable-libx264 
+    --enable-static \
+    --disable-securetransport \
+    --disable-debug \
+    --disable-shared \
+    --disable-ffplay \
+    --disable-lzma \
+    --disable-doc \
+    --enable-version3 \
+    --enable-pthreads \
+    --enable-runtime-cpudetect \
+    --enable-avfilter \
+    --enable-filters \
+    --disable-libxcb \
+    --enable-gpl \
+    --disable-libass \
+    --enable-libx264 \
+    --extra-ldflags="-L/usr/local/opt/x264/lib" \
+    --extra-cflags="-I/usr/local/opt/x264/include"
 
 make -j 4
 make install
