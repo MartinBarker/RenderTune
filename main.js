@@ -192,10 +192,12 @@ async function finishRequest(res, status){
     res.end('');
 }
 
+/*
 const server = http.createServer(requestListener);
 server.listen(port, host, () => {
     console.log(`Server is running on http://${host}:${port}`);
 });
+*/
 
 let mainWindow;
 function createWindow() {
