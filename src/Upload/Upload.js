@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import "./Upload.css"
 import * as mmb from 'music-metadata-browser';
 import { isPackaged } from 'electron-is-packaged';
+import Table from '../Table/Table'
+import FileUploader from '../FileUploader/FileUploader'
+
 const { join } = window.require('path');
 const execa = window.require('execa');
 const moment = window.require("moment");
 const readline = window.require('readline');
 
 function Upload() {
-  
+
   useEffect(() => {
     checkLocalStorage()
   }, []);
@@ -17,34 +20,34 @@ function Upload() {
   const [imageFiles, setImageFiles] = React.useState([]);
   const [imageAudioSync, setImageAudioSync] = React.useState(false);
 
-  function handleImageAudioSyncChange(){
+  function handleImageAudioSyncChange() {
     setImageAudioSync(!imageAudioSync)
   }
 
-  function checkLocalStorage(){
+  function checkLocalStorage() {
     let localStorageAudioFiles = getLocalStorage('audioFiles')
     let localStorageImageFiles = getLocalStorage('imageFiles')
-    console.log('checkLocalStorage() img=', localStorageImageFiles, '\n audio=',localStorageAudioFiles)
-    
+    console.log('checkLocalStorage() img=', localStorageImageFiles, '\n audio=', localStorageAudioFiles)
+
   }
 
-  function setLocalStorage(varName, varData){
+  function setLocalStorage(varName, varData) {
     console.log(`setLocalStorage() setting ${varName} as `, varData)
     localStorage.setItem(varName, JSON.stringify(varData))
     console.log(`setLocalStorage() set! localstorage ${varName} = `, JSON.parse(localStorage.getItem(varName)))
   }
 
-  function getLocalStorage(varName){
-    try{
-    if(localStorage.getItem(varName)){
-      return JSON.parse(localStorage.getItem(varName));
-    }else{
-      return null
+  function getLocalStorage(varName) {
+    try {
+      if (localStorage.getItem(varName)) {
+        return JSON.parse(localStorage.getItem(varName));
+      } else {
+        return null
+      }
+    } catch (err) {
+      console.log(`getLocalStorage err=${err}, setting ${varName} localStorage to null`)
+      localStorage.setItem(varName, null)
     }
-  }catch(err){
-    console.log(`getLocalStorage err=${err}, setting ${varName} localStorage to null`)
-    localStorage.setItem(varName, null)
-  }
   }
 
   function getFfmpegPath(cmd) {
@@ -133,15 +136,15 @@ function Upload() {
 
     //determine how long to show each image (for slideshow)
     let imgDuration = 0;
-    if(imageAudioSync){
+    if (imageAudioSync) {
       //sync audio / image transition(s)
-    }else{
+    } else {
       //dont sync audio/image transitions, just split compeltely evenly accross video's entire duration
       imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
     }
     //video resolution (width, height)
-    var width = 5672;
-    var height = 2814;
+    var width = 600;//5672;
+    var height = 600;// 2814;
     //filter_complex (fc) consturction vars
     let fc_audioFiles = '';
     let fc_imgOrder = '';
@@ -161,8 +164,8 @@ function Upload() {
 
       } else if ([...audioInputs, ...imageInputs][x].type == 'image') {
         //if we need to sync image and audio file transitions (expects number of audio files and image files to be the same)
-        if(imageAudioSync){
-          imgDuration = (audioInputs[imgAudioSyncCount].duration)*2
+        if (imageAudioSync) {
+          imgDuration = (audioInputs[imgAudioSyncCount].duration) * 2
           imgAudioSyncCount++;
         }
         //if file is image
@@ -258,15 +261,15 @@ function Upload() {
         fileData.duration = durationSeconds;
         //save filedata to state
         var oldAudioFiles = [...audioFiles];
-        setAudioFiles(oldAudioFiles => ([ ...oldAudioFiles, fileData]));
-        setLocalStorage('audioFiles', [ ...oldAudioFiles, fileData])
+        setAudioFiles(oldAudioFiles => ([...oldAudioFiles, fileData]));
+        setLocalStorage('audioFiles', [...oldAudioFiles, fileData])
       } else if (fileType == 'image') {
         //get filedata
         fileData.type = 'image';
         //save filedata to state
         var oldImageFiles = [...imageFiles];
-        setImageFiles(oldImageFiles => ([ ...oldImageFiles, fileData]));
-        setLocalStorage('imageFiles', [ ...oldImageFiles, fileData])
+        setImageFiles(oldImageFiles => ([...oldImageFiles, fileData]));
+        setLocalStorage('imageFiles', [...oldImageFiles, fileData])
       }
     }
   }
@@ -283,6 +286,9 @@ function Upload() {
   return (
     <>
       <div id='upload'>
+        <FileUploader />
+        {/* 
+        <h1>~~~~~~~~old~~~~~~~~</h1>
         <h2>Choose Files</h2>
         <input
           type="file"
@@ -291,35 +297,46 @@ function Upload() {
         />
         <br></br>
         <div id='filesDisplay'>
-            <h3>{imageFiles.length} Image Files: </h3>
-            {/* For each image file */}
-            {imageFiles.map(function (d, idx) {
-              return (
-                <div key={idx}>
-                  <select>
-                    <NumberedOptions count={imageFiles.length}/>
-                  </select>
-                  {d.name}
-                </div>
-              )
-            })}
-            <br></br>
-         
-            <h3>{audioFiles.length} Audio Files: </h3>
-            {audioFiles.map(function (d, idx) {
-              return (
-                <li key={idx}>
-                  {d.name}
-                </li>
-              )
-            })}
-            <br></br>
+          <h3>{imageFiles.length} Image Files: </h3>
+          {imageFiles.map(function (d, idx) {
+            return (
+              <div key={idx}>
+                <select>
+                  <NumberedOptions count={imageFiles.length} />
+                </select>
+                {d.name}
+              </div>
+            )
+          })}
+          <br></br>
+
+          <h3>{audioFiles.length} Audio Files: </h3>
+          {audioFiles.map(function (d, idx) {
+            return (
+              <li key={idx}>
+                {d.name}
+              </li>
+            )
+          })}
+          <br></br>
         </div>
         <button onClick={renderVideo}>Render Video</button>
         <div>
           <h4>Video Image Audio Sync</h4>
           <input onChange={handleImageAudioSyncChange} type="checkbox" id="videoImageAudioSync" name="videoImageAudioSync"></input>
         </div>
+     
+        <hr></hr>
+        Table Example <br></br>
+        <Table props={
+          {
+            id: 1,
+            name: 'string',
+            age: 'number'
+          }
+        } />
+         */}
+
       </div>
     </>
   );

@@ -16,9 +16,7 @@ function YouTubeUpload() {
 
     return (
         <>
-            <div className='windowContentPadding'>
-                <h1>YouTube API</h1>
-            </div>
+          
 
         </>
     );

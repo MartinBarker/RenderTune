@@ -1,0 +1,86 @@
+/* FileUploader.css */
+.file-uploader__list-item-details {
+    display: flex;
+    align-items: center;
+  }
+
+.file-uploader {
+    margin-right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    padding: 24px;
+    border: 2px dashed gray;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .file-uploader.highlight {
+    border-color: blue;
+  }
+  
+  .drag-icon {
+    width: 48px;
+    height: 48px;
+    fill: gray;
+    margin-bottom: 16px;
+  }
+  
+  .choose-btn {
+    display: block;
+    width: 80px;
+    height: 36px;
+    margin-top: 16px;
+    padding: 8px;
+    background-color: blue;
+    color: white;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .choose-btn:hover {
+    background-color: darkblue;
+  }
+  
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    margin-top: 16px;
+  }
+  
+  li {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  li button {
+    margin-left: 8px;
+    padding: 4px 8px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  li button:hover {
+    background-color: darkred;
+  }
+  
+  .file-uploader__box {
+    border: 2px dotted #ccc;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
