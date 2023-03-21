@@ -311,9 +311,21 @@
                             </svg> icon to view your uploads. If you have 0 uploads, click the <a>
                                 <i class="fa fa-plus-circle fa-2x" style="color:#818181" aria-hidden="true"></i>
                             </a> icon to create a new upload. <br> When you create a new upload, choose or drag files into the window, add an optional title, and click 'create'. You will be directed to the upload page, where you can change settings and render videos.<br>Once a video starts rendering, you can view its progress in the <i class="fa fa-tasks fa-2x" style="color:#818181" aria-hidden="true"></i> renders popup.</p>
-
                         </div>
+
+                        <br></br>
+                        <h3>Default output video format:</h3>
+                        <br></br>
+                        <form>
+                            <input id='defaultVideoOutputFormat-mp4' type="radio" id="mp4" name="video-format" value="mp4">
+                            <label for="mp4">MP4</label><br>
+                            <input id='defaultVideoOutputFormat-mkv' type="radio" id="mkv" name="video-format" value="mkv">
+                            <label for="mkv">MKV</label><br>
+                        </form>
+                        
                     </div>
+
+                    
 
                     <!-- html pages for uploads -->
                     <div id='upload-pages-container' style='display:none' class='row'>

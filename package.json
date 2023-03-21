@@ -1,7 +1,7 @@
 {
   "name": "rendertune",
   "productName": "RenderTune",
-  "version": "1.1.1",
+  "version": "1.1.4",
   "description": "combine audio and image files to create video files",
   "main": "main.js",
   "scripts": {
@@ -65,7 +65,7 @@
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "target": [
-        "dmg","zip"
+        "mas"
       ],
       "asarUnpack": [
         "node_modules/trash/**"

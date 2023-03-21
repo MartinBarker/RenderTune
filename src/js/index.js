@@ -128,7 +128,8 @@ $(document).ready(async function () {
   if (platform === 'darwin') {
     await setLocalStorage('uploadList', {})
   }
-
+  //default value selections update display
+  initDefaultVideoOutputFormatSetup()
   //inital uploads sidebar display setup
   initUploadsSetup();
   //initial renders table setup
@@ -139,6 +140,17 @@ $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
 
+//update default video format output selection
+async function initDefaultVideoOutputFormatSetup(){
+  let defaultVideoOutputFormatLocalStorage = localStorage.getItem('defaultVideoOutputFormat')
+  console.log('defaultVideoOutputFormatLocalStorage=', defaultVideoOutputFormatLocalStorage)
+  if(!defaultVideoOutputFormatLocalStorage || defaultVideoOutputFormatLocalStorage=='mkv'){
+    $('#defaultVideoOutputFormat-mkv').prop('checked', true);
+    localStorage.setItem('defaultVideoOutputFormat', 'mkv')
+  }else if(defaultVideoOutputFormatLocalStorage=='mp4'){
+    $('#defaultVideoOutputFormat-mp4').prop('checked', true);
+  }
+}
 //ensure uploadList exists
 async function initUploadsSetup() {
   //ensure uploadList exists
@@ -621,6 +633,15 @@ async function createUploadPage(upload, uploadId) {
   //create new image <select> with img previews
   let imageSelectionHTML = await createImgSelectMsDropdown(upload.files.images, `${uploadId}-imgSelect`, `mainImgChoice`)
 
+  //default video render format
+  let defaultVideoFormatMkvSelected = ''
+  let defaultVideoFormatMp4Selected = ''
+  if(localStorage.getItem('defaultVideoOutputFormat')=='mkv'){
+    defaultVideoFormatMkvSelected='selected'
+  }else if(localStorage.getItem('defaultVideoOutputFormat')=='mp4'){
+    defaultVideoFormatMp4Selected='selected'
+  }
+
   //add html to page
   let audioFilesCount = upload.files.audio.length;
   let imageFilesCount = upload.files.images.length;
@@ -772,8 +793,8 @@ async function createUploadPage(upload, uploadId) {
                 <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Choose what file type you want the outputted video(s) to be. Mkv will have higher quality audio."></i>
               </label>
               <select id='${uploadId}-vidFormatSelect' class="form-control">
-                <option value="mkv">mkv</option>
-                <option value="mp4">mp4</option>
+              <option value="mkv" ${defaultVideoFormatMkvSelected}>mkv</option>
+              <option value="mp4" ${defaultVideoFormatMp4Selected}>mp4</option>
               </select>
             </span>
           </div>
@@ -1534,9 +1555,22 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
       cmdArr.push('pcm_s32le')
     }else if(renderOptions.outputFormat == 'mp4'){
       cmdArr.push('-c:a')
-      cmdArr.push('libmp3lame')
+      cmdArr.push('aac')
+
       cmdArr.push('-b:a')
       cmdArr.push('320k')
+
+      cmdArr.push('-c:v')
+      cmdArr.push('h264')
+
+      cmdArr.push('-movflags')
+      cmdArr.push('+faststart')
+
+      cmdArr.push('-profile:v')
+      cmdArr.push('high')
+
+      cmdArr.push('-level:v')
+      cmdArr.push('4.2')
     }else{
       throw 'invalid output video format selected'
     }
@@ -1546,9 +1580,7 @@ async function render(renderOptions, debugConcatAudioCmd=null) {
     //video codec
     cmdArr.push('-vcodec')
     cmdArr.push('libx264')
-    //buffer size
-    cmdArr.push('-bufsize')
-    cmdArr.push('3M')
+
     //filter to set resolution/padding
     cmdArr.push('-filter:v')
     //if user has no padding option selected, render vid to exact width/height resolution 
@@ -2453,12 +2485,20 @@ async function updateSelectedDisplays(uploadTableId, uploadId) {
     //create paddingSelect
     let rowPaddingSelect = await createPaddingSelect(`${uploadId}-individual-table-padding-row-${i}`, false, 'max-width:100px', 'rowPadding')
     //create output vid select
+    let defaultVideoFormatMkvSelected='';
+    let defaultVideoFormatMp4Selected='';
+    if(localStorage.getItem('defaultVideoOutputFormat')=='mkv'){
+      defaultVideoFormatMkvSelected='selected'
+    }else if(localStorage.getItem('defaultVideoOutputFormat')=='mp4'){
+      defaultVideoFormatMp4Selected='selected'
+    }
+
     let rowOutputVidSelect = `
     <form class="form-inline">
       <div class="form-group">
           <select id='${uploadId}-individual-table-output-vid-row-${i}' class="form-control rowOutputVid" style="max-width:100px"> 
-            <option value="mkv">mkv</option>
-            <option value="mp4">mp4</option>
+            <option value="mkv" ${defaultVideoFormatMkvSelected}>mkv</option>
+            <option value="mp4" ${defaultVideoFormatMp4Selected}>mp4</option>
           </select> 
       </div>
     </form>`;
@@ -2779,14 +2819,21 @@ async function createOutputVidSelectIndividualCol(selectId, includeLabel, select
       label = "<label>Output Vid:⠀</label>"
     }
 
+    let defaultVideoOutputFormatMkv='';
+    let defaultVideoOutputFormatMp4 = '';
+    if(localStorage.getItem('defaultVideoOutputFormat')){
+      defaultVideoOutputFormatMkv='selected'
+      defaultVideoOutputFormatMp4='selected'
+    }
+
     //create selection form
     var selectForm = `
           <form class="form-inline">
             <div class="form-group">
                 ${label}
                 <select id='${selectId}' class="form-control" style="${selectStyle}"> 
-                  <option value="mkv">mkv</option>
-                  <option value="mp4">mp4</option>
+                  <option value="mkv" ${defaultVideoOutputFormatMkv}>mkv</option>
+                  <option value="mp4" ${defaultVideoOutputFormatMp4}>mp4</option>
                 </select> 
             </div>
           </form>`;
@@ -3099,6 +3146,11 @@ async function openUrl(type) {
       open('https://martinbarker.me/rendertune')
   }
 
-  
-  
-}
+  }
+
+  //default video option selection handler
+$('input[name="video-format"]').change(function() {
+  const selectedOption = $('input[name="video-format"]:checked').val();
+  console.log(`Default video format changed: ${selectedOption}`);
+  localStorage.setItem('defaultVideoOutputFormat', selectedOption)
+});
