@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import './FileUploader.css';
 
-function FileUploader() {
+function FileUploader(props) {
     const [highlight, setHighlight] = useState(false);
     const [files, setFiles] = useState([]);
 
@@ -27,7 +27,7 @@ function FileUploader() {
                 newFiles.push(file);
             }
         }
-        setFiles(newFiles);
+        setFiles(newFiles)
     }
 
     function handleFileInputChange(event) {
@@ -38,62 +38,65 @@ function FileUploader() {
                 newFiles.push(file);
             }
         }
-        setFiles(newFiles);
+        setFiles(newFiles)
     }
 
     function handleRemoveFile(index) {
         const newFiles = [...files];
         newFiles.splice(index, 1);
-        setFiles(newFiles);
+        setFiles(newFiles)
     }
 
     function handleRemoveAllFiles() {
-        setFiles([]);
+        setFiles([])
     }
 
     return (
-        <div
-            className={`file-uploader ${highlight ? 'highlight' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-        >
+        <>
 
-            <svg className="drag-icon" viewBox="0 0 24 24">
-                <path d="M20,9H4v2h16V9z M20,13H4v2h16V13z M20,17H4v2h16V17z" />
-            </svg>
-            <div>Drag and drop files or choose</div>
-            <input
-                type="file"
-                id="file-input"
-                multiple
-                style={{ display: 'none' }}
-                onChange={handleFileInputChange}
-            />
-            <label htmlFor="file-input" className="choose-btn">
-                Choose
-            </label>
-            {files.length > 0 && (
-                <button className="remove-all-btn" onClick={handleRemoveAllFiles}>
-                    Remove All
-                </button>
-            )}
-            <ul>
-                {files.map((file, index) => (
-                    <li key={index}>
-                        <div className="file-uploader__list-item-details">
-                            <button
-                                className="file-uploader__list-item-remove"
-                                onClick={() => handleRemoveFile(file.name)}
-                            >
-                                x
-                            </button>
-                            <p>{file.name}</p>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        </div>
+            <div
+                className={`file-uploader ${highlight ? 'highlight' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+
+                <svg className="drag-icon" viewBox="0 0 24 24">
+                    <path d="M20,9H4v2h16V9z M20,13H4v2h16V13z M20,17H4v2h16V17z" />
+                </svg>
+                <div>Drag and drop files or choose</div>
+                <input
+                    type="file"
+                    id="file-input"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleFileInputChange}
+                />
+                <label htmlFor="file-input" className="choose-btn">
+                    Choose
+                </label>
+                {files.length > 0 && (
+                    <button className="remove-all-btn" onClick={handleRemoveAllFiles}>
+                        Remove All
+                    </button>
+                )}
+                <ul>
+                    {files.map((file, index) => (
+                        <li key={index}>
+                            <div className="file-uploader__list-item-details">
+                                <button
+                                    className="file-uploader__list-item-remove"
+                                    onClick={() => handleRemoveFile(file.name)}
+                                >
+                                    x
+                                </button>
+                                <p>{file.name}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </>
     );
 }
 

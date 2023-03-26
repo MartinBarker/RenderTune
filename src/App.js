@@ -20,11 +20,12 @@ function App() {
       <Sidebar/>
       <Border/>
 
+{/*
       <YouTubeUpload/>
-      
+*/}
       
       <Upload/>
-      {/**/}
+      
       </>
   );
 }

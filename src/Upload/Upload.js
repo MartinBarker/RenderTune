@@ -19,6 +19,8 @@ function Upload() {
   const [audioFiles, setAudioFiles] = React.useState([]);
   const [imageFiles, setImageFiles] = React.useState([]);
   const [imageAudioSync, setImageAudioSync] = React.useState(false);
+  const [videoWidth, setVideoWidth] = React.useState(600)
+  const [videoHeight, setVideoHeight] = React.useState(600)
 
   function handleImageAudioSyncChange() {
     setImageAudioSync(!imageAudioSync)
@@ -143,8 +145,8 @@ function Upload() {
       imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
     }
     //video resolution (width, height)
-    var width = 600;//5672;
-    var height = 600;// 2814;
+    var width = videoWidth;//5672;
+    var height = videoHeight;// 2814;
     //filter_complex (fc) consturction vars
     let fc_audioFiles = '';
     let fc_imgOrder = '';
@@ -242,9 +244,40 @@ function Upload() {
       })
   }
 
+  async function handleFilesChange(files){
+    let imageFiles = [];
+    var fileCount = 0;
+    for (const file of files) {
+      fileCount++;
+      let fileData = {}
+      fileData.name = file.name;
+      fileData.path = file.path;
+      let fileType = file.type.split('/')[0];
+      if (fileType == 'audio') {
+        //get file data
+        fileData.type = 'audio'
+        const metadata = await parseFile(file);
+        var durationSeconds = Math.round(metadata.format.duration * 100) / 100;
+        fileData.duration = durationSeconds;
+        //save filedata to state
+        var oldAudioFiles = [...audioFiles];
+        setAudioFiles(oldAudioFiles => ([...oldAudioFiles, fileData]));
+        setLocalStorage('audioFiles', [...oldAudioFiles, fileData])
+      } else if (fileType == 'image') {
+        //get filedata
+        fileData.type = 'image';
+        //save filedata to state
+        var oldImageFiles = [...imageFiles];
+        setImageFiles(oldImageFiles => ([...oldImageFiles, fileData]));
+        setLocalStorage('imageFiles', [...oldImageFiles, fileData])
+      }
+    }
+  }
+
   //when multiple files are selected
   async function onChangeFilesSelected() {
-
+    handleFilesChange(event.target.files)
+/*
     let imageFiles = [];
     var fileCount = 0;
     for (const file of event.target.files) {
@@ -272,6 +305,7 @@ function Upload() {
         setLocalStorage('imageFiles', [...oldImageFiles, fileData])
       }
     }
+    */
   }
 
   //return 'count' number of <option> items
@@ -282,13 +316,53 @@ function Upload() {
     return <>{divs}</>;
   }
 
+  const handleVideoWidthChange = event => {
+    const result = event.target.value.replace(/\D/g, '');
+    setVideoWidth(result);
+  };
+
+  const handleVideoHeightChange = event => {
+    const result = event.target.value.replace(/\D/g, '');
+    setVideoHeight(result);
+  };
+
+  const handleFilesChangeTest = (newFiles) => {
+    console.log(`handleFilesChangeTest newFiles=`,newFiles)
+    handleFilesChange(newFiles)
+  }
+
   //render dom
   return (
     <>
       <div id='upload'>
+
+        {/* Drag & Drop or Choose Files */}
         <FileUploader />
-        {/* 
-        <h1>~~~~~~~~old~~~~~~~~</h1>
+
+        <h2>Video Options:</h2>
+        <div id='videoOptions'>
+          <label>
+            Video Width:
+            <input
+              type="text"
+              value={videoWidth}
+              onChange={handleVideoWidthChange}
+            />
+          </label>
+          <br></br>
+          <label>
+            Video Height:
+            <input
+              type="text"
+              value={videoHeight}
+              onChange={handleVideoHeightChange}
+            />
+          </label>
+        </div>
+        <br></br><br></br>
+
+
+        {/* Choose Files */}
         <h2>Choose Files</h2>
         <input
           type="file"
@@ -296,6 +370,8 @@ function Upload() {
           onChange={onChangeFilesSelected}
         />
         <br></br>
+
+        {/* Files Display */}
         <div id='filesDisplay'>
           <h3>{imageFiles.length} Image Files: </h3>
           {imageFiles.map(function (d, idx) {
@@ -320,12 +396,15 @@ function Upload() {
           })}
           <br></br>
         </div>
+
+        {/* Trigger Render Video  */}
         <button onClick={renderVideo}>Render Video</button>
         <div>
           <h4>Video Image Audio Sync</h4>
           <input onChange={handleImageAudioSyncChange} type="checkbox" id="videoImageAudioSync" name="videoImageAudioSync"></input>
         </div>
-     
+
+        {/*
         <hr></hr>
         Table Example <br></br>
         <Table props={
@@ -335,7 +414,7 @@ function Upload() {
             age: 'number'
           }
         } />
-         */}
+      */}
 
       </div>
     </>
