@@ -1,22 +1,31 @@
 
 import React from 'react';
-import Border from './Border/Border'
-import Sidebar from './Sidebar/Sidebar'
-import Upload from './Upload/Upload'
-import BlankTxtElem from './BlankTxtElem'
-import NewBorder from './NewBorder'
-import YouTubeUpload from './YouTubeUpload/YouTubeUpload'
-import "./App.css"
+
+import Frame from './Frame'
 
 /*
 import FfmpegTest from './FfmpegTest'
 import Projects from './Projects/ProjectsFunctional'
 import Projects from './Projects/ProjectsClass'
 import Sidebar from './Sidebar/Sidebar'
+
+.windowContentPadding{
+    padding-left: 55px!important;
+    padding-top: 40px!important;
+}
+
+
 */
 function App() {
   return (
     <>
+    <Frame/>
+    AAAAAAAAAAAAAAAAAAAAAAAAAA<br></br>
+    bbbbbbbbbbbbbbbbbbbbbb<br></br>
+    cccccccccccccccccccccccccccccccc <br></br>
+    ddddddddddddddddddddddddddddddddddd <br></br>
+    eeeeeeeeeeeeeeeeeeeeeeeeee <br></br>
+    {/*
       <Sidebar/>
       <Border/>
 
@@ -24,7 +33,7 @@ function App() {
       
       
       <Upload/>
-      {/**/}
+      */}
       </>
   );
 }

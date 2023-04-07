@@ -1,0 +1,179 @@
+/* General styles */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  border: 0px;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #1A2933;
+  color: #FFF;
+}
+
+.hidden {
+  display: none;
+}
+
+
+/* Update notification popup */
+
+#updateNotificationPopup {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 200px;
+  padding: 20px;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+
+/* Title bar */
+
+#titlebar {
+  top: 0px;
+  position: fixed;
+  height: 40px;
+  width: calc(100%);
+  background: #254053;
+}
+
+#titlebar .dragRegion {
+  display: grid;
+  grid-template-columns: auto 138px;
+}
+
+.dragRegion {
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: drag;
+}
+
+.titlebarLogo {
+  height: 35px;
+  left: -1px;
+  z-index: 2;
+  position: absolute;
+  top: 0px;
+  background: #7762ca;
+  width: 49px;
+  padding: 2px !important;
+}
+
+.titlebarText {
+  margin-left: 50px;
+  font-size: 15px;
+}
+
+#windowTitle {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 11px;
+  overflow: hidden;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+}
+
+#window-title {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  overflow: hidden;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+}
+
+#window-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+
+/* Window controls */
+
+#window-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 46px);
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+#window-controls .button {
+  fill: white;
+  grid-row: 1 / span 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#min-button {
+  grid-column: 1;
+}
+
+#max-button, #restore-button {
+  grid-column: 2;
+}
+
+#closeButton {
+  grid-column: 3;
+}
+
+.windowButtonIcon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: #f1f1f1;
+}
+
+#window-controls .button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#window-controls .button:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#closeButton:hover {
+  background: #E81123 !important;
+}
+
+#closeButton:active {
+  background: #F1707A !important;
+}
+
+#closeButton:active .icon {
+  filter: invert(1);
+}
+
+#restore-button {
+  display: none !important;
+}
+
+#window-title {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  overflow: hidden;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+}
+
+#window-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5;
+}
