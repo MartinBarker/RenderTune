@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FileUploader from './FileUploader'
+import Table from './Table'
 
 function Upload() {
 
@@ -11,6 +12,7 @@ function Upload() {
 
   return (<>
     UPLOAD!
+    <Table/>
     <FileUploader onFilesSelect={handleFilesSelect} />
       <ul>
         {selectedFiles.map((file) => (
