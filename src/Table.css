@@ -1,0 +1,13 @@
+th{
+    color: black;
+    background: white;
+    cursor: pointer;
+}
+
+th:hover{
+    background:grey;
+}
+
+td{
+    border:2px solid white;
+}
