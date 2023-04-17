@@ -1,13 +1,39 @@
-th{
+th {
     color: black;
     background: white;
     cursor: pointer;
-}
-
-th:hover{
-    background:grey;
-}
-
-td{
-    border:2px solid white;
-}
+  }
+  
+  th:hover {
+    background: grey;
+  }
+  
+  td {
+    border: 2px solid white;
+  }
+  
+  .table {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  table {
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  
+  td,
+  th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 10px;
+    border: 1px solid black;
+  }
+  

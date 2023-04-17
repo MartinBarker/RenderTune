@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import './FileUploader.css'
 
 const FileUploader = ({ onFilesSelect }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -35,14 +36,14 @@ const FileUploader = ({ onFilesSelect }) => {
   return (
     <div
       className="file-uploader"
-      style={{ border: `2px dashed ${borderColor}` }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleChooseFiles}
     >
       <div className="file-uploader-box">
-        <p>Drag or choose files</p>
-        <button onClick={handleChooseFiles}>Choose</button>
+        <p>Drag or <button style={{'cursor':'pointer'}}>choose</button> files</p>
+        
       </div>
       <input
         type="file"

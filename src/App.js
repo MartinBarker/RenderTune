@@ -1,13 +1,13 @@
 import React from 'react';
 import Frame from './Frame'
-import Upload from './Upload'
+import Project from './Project'
 
 function App() {
   return (
     <>
       <Frame/>
       <div style={{"marginTop":"40px"}}>
-        <Upload/>
+        <Project/>
       </div>
     </>
   );

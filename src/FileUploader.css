@@ -1,0 +1,8 @@
+.file-uploader:hover{
+    cursor:pointer;
+    border:2px dashed white;
+}
+
+.file-uploader{
+    border:2px dashed grey;
+}

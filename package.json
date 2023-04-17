@@ -244,6 +244,7 @@
   "dependencies": {
     "babel-loader": "8.0.4",
     "buffer": "^6.0.3",
+    "child_process": "^1.0.2",
     "cross-env": "^7.0.3",
     "datatables.net": "^1.13.4",
     "datatables.net-dt": "^1.13.4",
@@ -259,7 +260,8 @@
     "jquery": "^3.6.4",
     "moment": "^2.29.4",
     "music-metadata-browser": "^2.5.9",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "react-resizable": "^3.0.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",

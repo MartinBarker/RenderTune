@@ -1,147 +1,76 @@
 import React, { useState, useEffect, useRef } from "react";
 import $ from "jquery";
 import DataTable from "datatables.net-dt";
-import './Table.css';
+import "./Table.css";
 
-
-const Table = () => {
-
-    // Set default table data 
-    const [dataSet, setDataSet] = useState([
-        [
-            'aaaa 1',
-            'aaaa 2',
-            'aaaa 3',
-            'aaaa 4',
-            'aaaa 5',
-            'aaaa 6',
-        ],
-        [
-            'bbbb 1',
-            'bbbb 2',
-            'bbbb 3',
-            'bbbb 4',
-            'bbbb 5',
-            'bbbb 6',
-        ]
-    ]);
+const Table = ({ tableData }) => {
     
-    const [dataSetObj, setDataSetObj] = useState([
-        {
-            "sequence":'aaaa 1',
-            "#":'aaaa 2',
-            "selectAll":'aaaa 3',
-            "audio":'aaaa 4',
-            "length":'aaaa 5',
-            "audioFilepath":'aaaa 6',
-        },
-        {
-            "sequence":'bbbbb 1',
-            "#":'bbbbb 2',
-            "selectAll":'bbbbb 3',
-            "audio":'bbbbb 4',
-            "length":'bbbbb 5',
-            "audioFilepath":'bbbbb 6',
+    //call tableSetup function once on startup
+    useEffect(() => {
+        tableSetup();
+    }, []);
+
+    //call function to update table data 
+    useEffect(() => {
+        updateTableRows(tableData)
+    }, [tableData]);
+
+    const updateTableRows = (newData) => {
+        console.log('adding data to table: ', newData)
+        var $el = $(tableRef.current);
+        var dataTable = $el.DataTable();
+        dataTable.clear()
+        for(var x=0; x<newData.length; x++){
+            console.log(`add row ${x}: `, newData[x])
+            dataTable.row.add(newData[x]);
         }
-    ]);
-    
+        dataTable.draw();
+      };
 
     const tableRef = useRef();
-
-    // Run this at start of component dom render
-    useEffect(() => {
+    const tableSetup = () => {
         const $el = $(tableRef.current);
         const dataTable = $el.DataTable({
-            data: dataSet,
-            "autoWidth": true,
-            "pageLength": 5000,
-
-
             columns: [
                 { title: "sequence" },
                 { title: "#" },
-                { title: "selectAll" },
-                { title: "audio" },
-                { title: "length" },
-                { title: "audioFilepath" },
+                { title: "<input type='checkbox'>", orderable: false },
+                { title: "audio", className: "track-name", type: "natural" },
             ],
             columnDefs: [
-                { //invisible sequence num
-                  searchable: false,
-                  orderable: false,
-                  visible: false,
-                  targets: 0,
-                },
-                { //visible sequence num
-                  searchable: false,
-                  orderable: false,
-                  targets: 1,
-          
-                },
-                {//select all checkbox
-                  "className": 'selectall-checkbox',
-                  "className": "text-center",
-                  searchable: false,
-                  orderable: false,
-                  targets: 2,
-                },
-                {//audio filename 
-                  targets: 3,
-                  type: "natural",
-                  className: 'track-name'
-                },
-                /*
-                {//audio format
-                    targets: 4,
-                    type: "string"
-                },
-                */
-                { //audio file length
-                  targets: 4,
-                  type: "string"
-                },
-                /*
-                
-                { //video output format
-                    targets: 6,
-                    type: "string",
-                    orderable: false
-                },
-                */
-                {//audioFilepath
-                  targets: 5,
-                  visible: false,
-                }
-              ],
-            
+                { targets: [0], searchable: false, orderable: false, visible: false },
+                { targets: [1], searchable: false, orderable: false, width: "40px" },
+                { targets: [2], className: "selectall-checkbox text-center", searchable: false, orderable: false, width: "40px" },
+            ],
+            autoWidth: true,
+            language: {
+                emptyTable: "No files in this upload",
+            },
+            rowReorder: {
+                dataSrc: "sequence",
+            },
         });
-
-        // Add a new row
-        dataTable.row.add([
-            'bzzzzbbb 1',
-            'bzzzzbbb 2',
-            'bzzzzbbb 3',
-            'bzzzzbbb 4',
-            'bzzzzbbb 5',
-            'bzzzzbbb 6',
-        ]).draw();
-
-        // Destroy the DataTable instance when the component unmounts
         return () => {
             dataTable.destroy(true);
         };
-    }, []);
+    }
 
     return (
-        <table ref={tableRef}>
+        <table ref={tableRef} style={{ width: "100%" }}>
             <thead>
                 <tr>
                     <th>sequence</th>
                     <th>#</th>
                     <th>selectAll</th>
                     <th>audio</th>
+                    {/*
                     <th>length</th>
                     <th>audioFilepath</th>
+                    <th>trackNum</th>
+                    <th>album</th>
+                    <th>year</th>
+                    <th>artist</th>
+                    */}
                 </tr>
             </thead>
         </table>
@@ -149,4 +78,3 @@ const Table = () => {
 };
 
 export default Table;
-
