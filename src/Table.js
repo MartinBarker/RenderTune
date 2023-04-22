@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import $ from "jquery";
 import DataTable from "datatables.net-dt";
+import "datatables.net-rowreorder-dt"; // import the rowreorder extension
+
 import "./Table.css";
 
 const Table = ({ tableData }) => {
@@ -63,14 +65,6 @@ const Table = ({ tableData }) => {
                     <th>#</th>
                     <th>selectAll</th>
                     <th>audio</th>
-                    {/*
-                    <th>length</th>
-                    <th>audioFilepath</th>
-                    <th>trackNum</th>
-                    <th>album</th>
-                    <th>year</th>
-                    <th>artist</th>
-                    */}
                 </tr>
             </thead>
         </table>
