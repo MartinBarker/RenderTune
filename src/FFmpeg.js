@@ -1,15 +1,31 @@
 import React from 'react';
 import { isPackaged } from 'electron-is-packaged';
-const execa = window.require('execa');
+//import {taskkill} from 'taskkill';
+//import fkill from 'fkill';
+
+//const execa = window.require('execa');
 const readline = window.require('readline');
 const moment = window.require("moment");
+const { ipcRenderer } = window.require('electron');
 
 function startRender(settings = {}) {
     console.log('startRender() settings:', settings);
-    let cmdArgs = ["-loop", "1", "-y", "-framerate", "2", "-i", "E:\\martinradio\\rips\\vinyl\\More Bob Allen At The Christopher Inn\\1_front.png", "-i", "E:\\martinradio\\rips\\vinyl\\More Bob Allen At The Christopher Inn\\A1 Medley From Jesus Christ Super Star.flac", "-c:a", "pcm_s32le", "-filter_complex", "concat=n=1:v=0:a=1", "-vcodec", "libx264", "-filter:v", "scale=w=780:h=783,pad=ceil(iw/2)*2:ceil(ih/2)*2", "-crf", "18", "-pix_fmt", "yuv420p", "-shortest", "-tune", "stillimage", "-t", "1162", `E:\\martinradio\\rips\\vinyl\\More Bob Allen At The Christopher Inn\\${settings.outputFilename}.${settings.outputFormat}`];
+    let cmdArgs = [
+        "-f",
+        "lavfi",
+        "-i",
+        "color=white:s=1920x1920:d=1800",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "0",
+        "-preset",
+        "ultrafast",
+        `C:\\Users\\marti\\Documents\\projects\\rendertune-react-dev\\${settings.outputFilename}.mkv`
+    ];
     const ffmpegPath = getFfmpegPath('ffmpeg');
     console.log('startRender() ffmpegPath=', ffmpegPath)
-    const process = execa(ffmpegPath, cmdArgs);
+    const process = 222; //execa(ffmpegPath, cmdArgs);
     console.log('startRender() process=', process)
     handleProgress(process, 1162);
     return {
@@ -84,7 +100,7 @@ function handleProgress(process, outputDuration) {
                     const progress = outputDuration ? progressTime / outputDuration : 0;
                     displayProgress = parseInt(progress * 100)
                 }
-                console.log(`${process.pid} - ${displayProgress}%`)//'displayProgress=', displayProgress)
+                console.log(`pid=${process.pid}, status=${displayProgress}%`)//'displayProgress=', displayProgress)
             } catch (err) {
                 console.log('Failed to parse ffmpeg progress line', err);
             }
@@ -98,20 +114,27 @@ function handleProgress(process, outputDuration) {
 }
 
 function killProcess(pid) {
+    console.log('killProcess() PID=', pid)
+    //ipcRenderer.send('kill-process', pid);
+    /*
     const isWindows = process.platform === 'win32';
-    const killCommand = isWindows ? `taskkill /F /PID ${pid}` : `kill -SIGKILL ${pid}`;
-  
-    console.log('killProcess() ', pid)
+    const killCommand = isWindows ? `taskkill /PID ${pid} /F` : `kill -SIGKILL ${pid}`;
+    console.log('killProcess() killCommand=', killCommand)
+
     execa(killCommand, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`killProcess() Error killing process ${pid}: ${error}`);
-        console.error(stderr);
-        return;
-      }
-      console.log(`killProcess() Process ${pid} killed successfully`);
+        if (error) {
+            console.error(`killProcess() Error killing process ${pid}: ${error}`);
+            console.error(stderr);
+            return;
+        } else {
+            console.log('no err')
+        }
+        console.log(`killProcess() Process ${pid} killed successfully`);
+        console.error(stdout);
     });
-  }
-  
+    */
+}
+
 
 function FFmpeg(props) {
     return <></>;

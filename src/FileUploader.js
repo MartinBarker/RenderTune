@@ -35,7 +35,7 @@ const FileUploader = ({ onFilesSelect }) => {
 
   return (
     <div
-      className="file-uploader"
+      className={`file-uploader ${highlight ? 'drag-over' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
