@@ -13,13 +13,14 @@ function Project() {
     setSelectedFiles(files);
     let newTableData = [];
     for (var x = 0; x < files.length; x++) {
-      newTableData.push([
-        "itemId",
-        "<div style='cursor: pointer;'> = num</div>",
-        "<input type='checkbox'>",
-        `${files[x].name}`
-      ])
+      newTableData.push(
+        {
+          'fileName': `${files[x].name}`,
+          'length': 'zz:zz'
+        }
+      )
     }
+    console.log('newTableData=',newTableData)
     setTableData(newTableData);
   };
 
@@ -43,7 +44,6 @@ function Project() {
     });
   };
 
-
   const handleKillProcess = (pid) => {
     console.log('handleKillProcess()')
     let killStatus = killProcess(pid);
@@ -53,14 +53,18 @@ function Project() {
   return (<>
     <h2>Project.js</h2>
     <FileUploader onFilesSelect={handleFilesSelect} />
-    <Table tableData={tableData} />
-    <button onClick={handleRender}>Render</button>
+    
+    <br></br> <hr></hr>
+    <Table tableData={tableData}  />
+
+    <br></br> <hr></hr>
+    
+
 
     <ul>
       {Object.keys(renders).map((key) => (
         <li key={key}>
           <button onClick={() => handleKillProcess(key)}>X</button>
-
           <a>pid={key} / {renders[key].outputFilename}</a>
         </li>
       ))}

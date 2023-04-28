@@ -31,6 +31,10 @@ function createWindow() {
     frame: false,
     backgroundColor: '#FFF',
     webPreferences: {
+      // Set a Content Security Policy for the renderer process
+      // This example allows scripts and styles only from the same origin
+      // You should customize this policy to fit your app's needs
+      contentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self';",
       enableRemoteModule: true,
       nodeIntegration: true,
       contextIsolation: false
