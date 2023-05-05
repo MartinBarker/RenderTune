@@ -3,10 +3,95 @@ import { isPackaged } from 'electron-is-packaged';
 //import {taskkill} from 'taskkill';
 //import fkill from 'fkill';
 
-//const execa = window.require('execa');
+const execa = window.require('execa');
 const readline = window.require('readline');
 const moment = window.require("moment");
 const { ipcRenderer } = window.require('electron');
+
+function newstartRender(renderSettings={}){
+    console.log('Ffmpeg.js newstartRender() ',renderSettings)
+    let cmdArgs = createFfmpegCommand(renderSettings.audioFiles, renderSettings.imageFiles, renderSettings.outputFilepath, renderSettings.outputWidth, renderSettings.outputHeight)
+    const ffmpegPath = getFfmpegPath('ffmpeg');
+    const process = execa(ffmpegPath, cmdArgs);
+    handleProgress(process, 99);
+}
+
+  //function to create ffmpeg command for slideshow video
+  function createFfmpegCommand(audioInputs, imageInputs, outputFilepath, width, height) {
+    let imageAudioSync=false;
+    //create command
+    let cmdArgs = []
+
+    //get total duration
+    let outputDuration = 0;
+    for (var x = 0; x < audioInputs.length; x++) {
+      outputDuration += audioInputs[x].duration;
+    }
+
+    //determine how long to show each image (for slideshow)
+    let imgDuration = 0;
+    if (imageAudioSync) {
+      //sync audio / image transition(s)
+    } else {
+      //dont sync audio/image transitions, just split compeltely evenly accross video's entire duration
+      imgDuration = Math.round(((outputDuration / imageInputs.length) * 2) * 100) / 100;
+    }
+
+    //filter_complex (fc) consturction vars
+    let fc_audioFiles = '';
+    let fc_imgOrder = '';
+    let fc_finalPart = '';
+    let imgAudioSyncCount = 0;
+    //for each input file
+    for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
+      console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
+
+      //add input to ffmpeg cmd args
+      cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].path)
+
+      //if file is audio
+      if ([...audioInputs, ...imageInputs][x].type == 'audio') {
+        //add to filter_complex
+        fc_audioFiles = `${fc_audioFiles}[${x}:a]`
+
+      } else if ([...audioInputs, ...imageInputs][x].type == 'image') {
+        //if we need to sync image and audio file transitions (expects number of audio files and image files to be the same)
+        if (imageAudioSync) {
+          imgDuration = (audioInputs[imgAudioSyncCount].duration) * 2
+          imgAudioSyncCount++;
+        }
+        //if file is image
+        //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+        fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:-1:-1:color=white,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+
+        //[4:v]scale=1920:1898:force_original_aspect_ratio=decrease,pad=1920:1898:-1:-1,setsar=1,loop=580.03:580.03[v4];
+
+        fc_finalPart = `${fc_finalPart}[v${x}]`
+      }
+    }
+
+    //construct filter_complex audio files concat text
+    fc_audioFiles = `${fc_audioFiles}concat=n=${audioFiles.length}:v=0:a=1[a];`
+    //constuct final part
+    fc_finalPart = `${fc_finalPart}concat=n=${imageInputs.length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
+    //consturct final combined everything filter_complex value
+    let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
+
+    console.log('construct fitler complex: ')
+    console.log('fc_audioFiles: ', fc_audioFiles)
+    console.log('fc_imgOrder: ', fc_imgOrder)
+    console.log('fc_finalPart: ', fc_finalPart)
+    console.log('______')
+    console.log('filter_complex = ', filter_complex)
+
+    cmdArgs.push('-filter_complex', filter_complex)
+
+    cmdArgs.push('-map', '[v]', '-map', '[a]')
+    cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+    return cmdArgs
+  }
+
+///////////////////////////////
 
 function startRender(settings = {}) {
     console.log('startRender() settings:', settings);
@@ -135,9 +220,8 @@ function killProcess(pid) {
     */
 }
 
-
 function FFmpeg(props) {
     return <></>;
 }
 
-export { FFmpeg, startRender, killProcess };
+export { FFmpeg, startRender, newstartRender, killProcess };

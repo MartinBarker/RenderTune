@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import MaterialReactTable from 'material-react-table';
 
-const Table = ({ tableData }) => {
+const Table = ({ tableData, onSelectedRowsChanged }) => {
 
+    const [data, setData] = useState([]);
+    const [rowSelection, setRowSelection] = useState({});
 
+    //call setData() function every time tableData var changes
     useEffect(() => {
-        setData(tableData)
+        setData(tableData);
     }, [tableData]);
 
+    //call getSelectedRows() function every time rowSelection var changes    
+    useEffect(() => {
+        getSelectedRows();
+    }, [rowSelection]);
 
     //simple column definitions pointing to flat data
     const columns = useMemo(
@@ -17,19 +24,25 @@ const Table = ({ tableData }) => {
                 header: 'File Name',
             },
             {
+                accessorKey: 'filePath',
+                header: 'File Path',
+            },
+            {
                 accessorKey: 'length',
                 header: 'Length',
-            }
+            },
+            
         ],
         [],
     );
 
-    const [data, setData] = useState([]);
-    const [rowSelection, setRowSelection] = useState({});
-
-        function showRowSelection(){
-            console.log('show rowSelection, rowSelection=',rowSelection)
+    function getSelectedRows() {
+        let selectedRows = []
+        for (const [key, value] of Object.entries(rowSelection)) {
+            selectedRows.push(data[key])
         }
+        onSelectedRowsChanged(selectedRows)
+    }
 
     return (
         <>
@@ -37,7 +50,6 @@ const Table = ({ tableData }) => {
                 autoResetPageIndex={false}
                 columns={columns}
                 data={data}
-
                 enableRowSelection
                 onRowSelectionChange={setRowSelection}
                 state={{ rowSelection }}
@@ -46,13 +58,10 @@ const Table = ({ tableData }) => {
                     onClick: row.getToggleSelectedHandler(),
                     sx: { cursor: 'pointer' },
                 })}
-
                 enableRowNumbers
                 rowNumberMode="static"
                 initialState={{ density: 'compact' }}
                 enableTopToolbar={false}
-
-
                 enableRowOrdering
                 muiTableBodyRowDragHandleProps={({ table }) => ({
                     onDragEnd: () => {
@@ -67,10 +76,7 @@ const Table = ({ tableData }) => {
                         }
                     },
                 })}
-
             />
-        
-        <button onClick={()=>{console.log('rowSelection=',rowSelection)}} >Show rowSelection</button>
         </>
     );
 };
