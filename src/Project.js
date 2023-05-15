@@ -1,46 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import FileUploader from './FileUploader'
-import Table from './Table'
 import { FFmpeg, newstartRender, startRender, killProcess } from './FFmpeg';
 
+
+
+import FileUploader from './FileUploader'
+import Table from './Table'
+import Test from './Test'
+
 function Project() {
-
-  //all files selected via choose button / drag & drop
   const [selectedFiles, setSelectedFiles] = useState([]);
-  //all active renders
   const [renders, setRenders] = useState({});
-
-  //const [tableData, setTableData] = useState([]);
-
   const [imageTableData, setImageTableData] = useState([]);
   const [audioTableData, setAudioTableData] = useState([]);
-
   const [selectedImageRows, setSelectedImageRows] = useState([]);
   const [selectedAudioRows, setSelectedAudioRows] = useState([]);
 
-  //call when files are selected 
-  const handleFilesSelect = (files) => {
-    //set selected files
-    setSelectedFiles(files);
-    //sort files into audio / image files 
-    let newImageTableData = [];
-    let newAudioTableData = [];
-    for (var x = 0; x < files.length; x++) {
-      if (files[x].type.includes('image/')) {
-        newImageTableData.push({
-          'fileName': `${files[x].name}`,
-          'filePath': `${files[x].path}`,
-          'length': 'NA'
-        })
-      } else if (files[x].type.includes('audio/')) {
-        newAudioTableData.push({
-          'fileName': `${files[x].name}`,
-          'filePath': `${files[x].path}`,
-          'length': 'zz:zz'
-        })
-      }
-    }
-    //set image/audio file table data
+  //call when FileUploader component returns 
+  const handleFilesSelect = async (newAudioTableData, newImageTableData) => {
     setImageTableData(newImageTableData)
     setAudioTableData(newAudioTableData)
   };
@@ -87,17 +63,36 @@ function Project() {
     let outputFilepath = '';
     let outputWidth = 1920;
     let outputHeight = 1920;
-    //get output video folder/filepath
-    let firstAudioFilepath = selectedAudioRows[0]['filePath'];
+    //get splitChar based on os
     let splitChar = ''
-    if (window.require('os').platform() === 'darwin') {
+    console.log(`window.require('os').platform()=`, window.require('os').platform())
+    let platform = window.require('os').platform();
+    if (platform === 'darwin' || platform === 'linux' ) {
       splitChar = '/'
     } else if (window.require('os').platform() === 'win32') {
       splitChar = '\\'
-    }    
-    let firstAudioFolderpath = firstAudioFilepath.substring(0, firstAudioFilepath.lastIndexOf(splitChar) + 1);
+    }else{
+      throw "no platform found"
+    }
+    console.log('splitChar=',splitChar)
+    
+    //get output folder
+    let audio1 = selectedAudioRows[0]['filePath'];
+    console.log('audio1=',audio1)
+
+    let audio1SplitByChar = audio1.split(`${splitChar}`);
+    console.log('audio1SplitByChar=',audio1SplitByChar)
+    
+    audio1SplitByChar.pop();
+    console.log('audio1SplitByChar AFTER POP =',audio1SplitByChar)
+
+    var outputFolder = audio1SplitByChar.join(splitChar);
+    console.log('outputFolder=',outputFolder)
+
     outputFilename = `MyOutputVideo${new Date().getUTCMilliseconds()}`
-    outputFilepath = `${firstAudioFolderpath}${outputFilename}.${outputFileType}`
+    console.log('outputFilename=',outputFilename)
+    
+    outputFilepath = `${outputFolder}${splitChar}${outputFilename}.${outputFileType}`
     console.log('outputFilepath=', outputFilepath)
 
     newstartRender({
@@ -112,13 +107,35 @@ function Project() {
   }
 
   return (<>
+
     <FileUploader onFilesSelect={handleFilesSelect} />
 
     <h3>Audio Files</h3>
-    <Table tableData={audioTableData} onSelectedRowsChanged={(rows) => handleSelectedRowsChanged(rows, 'audio')} />
+    <Table
+      tableData={audioTableData}
+      onSelectedRowsChanged={(rows) => handleSelectedRowsChanged(rows, 'audio')}
+      columnInfo={[
+        {
+          accessorKey: 'fileName',
+          header: 'Name',
+        }, 
+        {
+          accessorKey: 'durationDisplay',
+          header: 'Length',
+        },
+      ]}
+    />
 
     <h3>Image Files</h3>
-    <Table tableData={imageTableData} onSelectedRowsChanged={(rows) => handleSelectedRowsChanged(rows, 'image')} />
+    <Table
+      tableData={imageTableData}
+      onSelectedRowsChanged={(rows) => handleSelectedRowsChanged(rows, 'image')}
+      columnInfo={[
+        {
+          accessorKey: 'fileName',
+          header: 'Name',
+        }
+      ]}/>
 
     <h3>Render Options</h3>
     <button onClick={startRender}>Start Render</button>

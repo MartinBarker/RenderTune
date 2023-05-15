@@ -10,10 +10,12 @@ const { ipcRenderer } = window.require('electron');
 
 function newstartRender(renderSettings={}){
     console.log('Ffmpeg.js newstartRender() ',renderSettings)
-    let cmdArgs = createFfmpegCommand(renderSettings.audioFiles, renderSettings.imageFiles, renderSettings.outputFilepath, renderSettings.outputWidth, renderSettings.outputHeight)
+    let {cmdArgs,outputDuration} = createFfmpegCommand(renderSettings.audioFiles, renderSettings.imageFiles, renderSettings.outputFilepath, renderSettings.outputWidth, renderSettings.outputHeight)
     const ffmpegPath = getFfmpegPath('ffmpeg');
+    console.log('outputDuration=',outputDuration)
+    console.log('cmdArgs=',cmdArgs.join(' '),'\n calling execa \n')
     const process = execa(ffmpegPath, cmdArgs);
-    handleProgress(process, 99);
+    handleProgress(process, outputDuration);
 }
 
   //function to create ffmpeg command for slideshow video
@@ -25,8 +27,9 @@ function newstartRender(renderSettings={}){
     //get total duration
     let outputDuration = 0;
     for (var x = 0; x < audioInputs.length; x++) {
-      outputDuration += audioInputs[x].duration;
+      outputDuration += parseFloat(audioInputs[x].durationSeconds);
     }
+    console.log('total output duration: ',outputDuration)
 
     //determine how long to show each image (for slideshow)
     let imgDuration = 0;
@@ -47,7 +50,7 @@ function newstartRender(renderSettings={}){
       console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
 
       //add input to ffmpeg cmd args
-      cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].path)
+      cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].filePath)
 
       //if file is audio
       if ([...audioInputs, ...imageInputs][x].type == 'audio') {
@@ -71,7 +74,7 @@ function newstartRender(renderSettings={}){
     }
 
     //construct filter_complex audio files concat text
-    fc_audioFiles = `${fc_audioFiles}concat=n=${audioFiles.length}:v=0:a=1[a];`
+    fc_audioFiles = `${fc_audioFiles}concat=n=${audioInputs.length}:v=0:a=1[a];`
     //constuct final part
     fc_finalPart = `${fc_finalPart}concat=n=${imageInputs.length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
     //consturct final combined everything filter_complex value
@@ -83,12 +86,10 @@ function newstartRender(renderSettings={}){
     console.log('fc_finalPart: ', fc_finalPart)
     console.log('______')
     console.log('filter_complex = ', filter_complex)
-
     cmdArgs.push('-filter_complex', filter_complex)
-
     cmdArgs.push('-map', '[v]', '-map', '[a]')
     cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
-    return cmdArgs
+    return { cmdArgs:cmdArgs, outputDuration:outputDuration }
   }
 
 ///////////////////////////////

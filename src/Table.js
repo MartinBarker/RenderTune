@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import MaterialReactTable from 'material-react-table';
 
-const Table = ({ tableData, onSelectedRowsChanged }) => {
+const Table = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
 
     const [data, setData] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
@@ -18,22 +18,8 @@ const Table = ({ tableData, onSelectedRowsChanged }) => {
 
     //simple column definitions pointing to flat data
     const columns = useMemo(
-        () => [
-            {
-                accessorKey: 'fileName',
-                header: 'File Name',
-            },
-            {
-                accessorKey: 'filePath',
-                header: 'File Path',
-            },
-            {
-                accessorKey: 'length',
-                header: 'Length',
-            },
-            
-        ],
-        [],
+        () => columnInfo,
+        [columnInfo],
     );
 
     function getSelectedRows() {
