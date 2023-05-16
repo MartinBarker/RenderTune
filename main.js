@@ -95,25 +95,24 @@ app.on('activate', function () {
   if (mainWindow === null) createWindow()
 });
 
-//
 // App verison update functions
-//
 ipcMain.on('app_version', (event) => {
   event.sender.send('app_version', { version: app.getVersion() });
 })
+
 ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall();
 });
+
 autoUpdater.on('update-available', () => {
   mainWindow.webContents.send('update_available');
 });
+
 autoUpdater.on('update-downloaded', () => {
   mainWindow.webContents.send('update_downloaded');
 });
 
-//
 // App window controls functions
-//
 
 // Register an event listener. When ipcRenderer sends a request to minimize the window; minimize the window if possible.
 ipcMain.on(`minimize-window`, function (e, args) {
@@ -184,8 +183,7 @@ ipcMain.handle('get-api-server-port', async (event) => {
   })
 })
 
-
-
+//open url in user's default browser
 ipcMain.handle('open-url', async (event, url) => {
   try {
     console.log(`open-url: ${url}`)
@@ -197,7 +195,28 @@ ipcMain.handle('open-url', async (event, url) => {
   }
 });
 
+//get image resolution
+ipcMain.handle('get-image-resolution', async (event, filename) => {
+  console.log('get-image-resolution()')
+  
+  return new Promise(async function (resolve, reject) {
+    resolve([99,22])
+    /*
+    sizeOf(filename, function (err, dimensions) {
+      if (!err) {
+        width = dimensions.width;
+        height = dimensions.height
+        resolve([width, height]);
+      } else {
+        console.log('err getting img dimmensions:', err)
+        reject(err)
+      }
+    });
+    */
+  })
+});
 
+//start http api server
 function startServer(port) {
   // Create an Express app and attach it to a Node.js HTTP server
   const app = express();
@@ -208,8 +227,11 @@ function startServer(port) {
   });
 
   app.get('/ytCode', function (req, res) {
-    console.log('/code url detected: ', req.url.toString().replace('/ytCode?code=', ''))
-    res.send();
+    let code = req.url.toString().replace('/ytCode?code=', '');
+    console.log('/code url detected, code=', code)
+    //send code to YouTube.js browser window
+    mainWindow.webContents.send('YouTubeCode', { 'code': code });
+    res.send('<html><body>Please return to your rendertune window!</body></html>');
   });
 
   // Attempt to listen on the specified port

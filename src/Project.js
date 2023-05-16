@@ -29,19 +29,6 @@ function Project() {
     }
   }
 
-  const handleRender = (settings = {}) => {
-    const uniqueId = Date.now().toString().slice(-5);
-    settings = {
-      'outputFilename': `AwesomeCoolVideo_${uniqueId}`,
-      'outputFormat': 'mkv'
-    }
-    let renderProcessInfo = startRender(settings);
-    setRenders(prevState => ({
-      ...prevState,
-      [renderProcessInfo.pid]: renderProcessInfo
-    }));
-  }
-
   const removeFromRenders = (pid) => {
     setRenders(prevState => {
       const { [pid]: omit, ...newState } = prevState;
@@ -159,4 +146,5 @@ function Project() {
     </ul>
   </>);
 }
+
 export default Project;

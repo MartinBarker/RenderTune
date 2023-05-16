@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 const { ipcRenderer, shell } = window.require('electron');
 
 const YouTube = () => {
 
+  const [YouTubeAuthCode, setYouTubeAuthCode] = useState('');
+
   const beginYt = async () => {
-    console.log('beginYt()')
 
     //get apiServerPort
     var apiServerPort = null;
@@ -13,40 +14,66 @@ const YouTube = () => {
     } catch (err) {
       console.log('apiServerPort err=', err)
     }
-    console.log('apiServerPort=', apiServerPort)
 
-    //get auth signin url
+    //get auth signin url from martinbarker.me
     var authSigninUrl = null;
     const url = `https://martinbarker.me/getYtUrl?port=${apiServerPort}`;
     await fetch(url)
       .then(response => response.json())
       .then(data => {
-        authSigninUrl = data.url; // set authSigninUrl to data.url
-        console.log('got rsp:', authSigninUrl);
+        authSigninUrl = data.url;
       })
       .catch(error => console.error('caught err=', error));
 
-    console.log('authSigninUrl=', authSigninUrl);
     //open url in your browser
-    let urlRsp = null;
     try {
-      console.log('pass: ', authSigninUrl)
-      urlRsp = await ipcRenderer.invoke('open-url', `${authSigninUrl}`);
+      await ipcRenderer.invoke('open-url', `${authSigninUrl}`);
     } catch (err) {
       console.log(err)
     }
-
   }
 
-  function openURL(url) {
-    shell.openPath(url)
-      .then(() => {
-        console.log('URL opened successfully');
-      })
-      .catch((err) => {
-        console.error('Failed to open URL:', err);
-      });
+  async function getYouTubeToken() {
+    if (YouTubeAuthCode != "" && YouTubeAuthCode != null) {
+      try {
+        console.log('getYouTubeToken() YouTubeAuthCode=',YouTubeAuthCode)
+        const encodedYouTubeAuthCode = encodeURIComponent(YouTubeAuthCode);
+        //const url = `https://martinbarker.me/getYtToken?code=${encodedYouTubeAuthCode}`;
+        const url = `http://localhost:8080/getYtToken?code=${encodedYouTubeAuthCode}`;
+
+        
+        await fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            console.log(`getYouTubeToken() data=`, data)
+          })
+          .catch(error => console.error('getYouTubeToken() err=', error));
+      } catch (err) {
+        console.error('getYouTubeToken() err=', err)
+      }
+    }
   }
+
+  useEffect(() => {
+    const handleYouTubeCode = (event, arg) => {
+      console.log('YouTubeCode Received: ', arg)
+      setYouTubeAuthCode(arg.code)
+    }
+    ipcRenderer.on('YouTubeCode', handleYouTubeCode);
+    return () => {
+      ipcRenderer.removeListener('YouTubeCode', handleYouTubeCode);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Function to call when YouTubeAuthCode changes
+    const myFunction = () => {
+      console.log('YouTubeAuthCode changed:', YouTubeAuthCode);
+      getYouTubeToken()
+    }
+    myFunction();
+  }, [YouTubeAuthCode]);
+
 
   return (
     <>
