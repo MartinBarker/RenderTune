@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FFmpeg, newstartRender, startRender, killProcess } from './FFmpeg';
 
-
-
+import YouTube from './YouTube'
 import FileUploader from './FileUploader'
 import Table from './Table'
 import Test from './Test'
@@ -88,8 +87,13 @@ function Project() {
 
     var outputFolder = audio1SplitByChar.join(splitChar);
     console.log('outputFolder=',outputFolder)
+    var backupOutputFolder = outputFolder;
+    backupOutputFolder=backupOutputFolder.split(`${splitChar}`)
+    var folderName=backupOutputFolder.pop();
+    console.log('folderName=',folderName)
 
-    outputFilename = `MyOutputVideo${new Date().getUTCMilliseconds()}`
+
+    outputFilename = `${folderName}_${new Date().getUTCMilliseconds()}`
     console.log('outputFilename=',outputFilename)
     
     outputFilepath = `${outputFolder}${splitChar}${outputFilename}.${outputFileType}`
@@ -107,7 +111,11 @@ function Project() {
   }
 
   return (<>
-
+    Begin.
+    <br/><hr/>
+    <YouTube/>
+    <br/><hr/>
+    
     <FileUploader onFilesSelect={handleFilesSelect} />
 
     <h3>Audio Files</h3>

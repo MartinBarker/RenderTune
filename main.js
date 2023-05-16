@@ -1,27 +1,21 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const serve = require('electron-serve');
 const loadURL = serve({ directory: 'build' });
 const { autoUpdater } = require('electron-updater');
+const express = require('express');
+const http = require('http');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+let server;
+let apiServerPort = 3001;
 
 function isDev() {
   return !app.isPackaged;
 }
-
-//start express app
-const express = require('express');
-let expressApp = express();
-let server = expressApp.listen(3001);
-
-expressApp.get('/ytCode', function (req, res) {
-  console.log('/code url detected: ', req.url.toString().replace('/ytCode?code=', ''))
-  res.send();
-});
 
 function createWindow() {
   // Create the browser window.
@@ -45,6 +39,9 @@ function createWindow() {
     // icon: path.join(__dirname, 'build/logo512.png'),
     show: false
   });
+
+  //start listening for http requests
+  startServer(apiServerPort)
 
   // This block of code is intended for development purpose only.
   // Delete this entire block of code when you are ready to package the application.
@@ -86,6 +83,7 @@ app.on('ready', createWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
+  stopServer()
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') app.quit()
@@ -164,12 +162,79 @@ ipcMain.on(`close-window`, function (e, args) {
 });
 
 //kill process
-ipcMain.handle('kill-process', async (event, pid) => {
-  console.log('kill-process pid=',pid)
+ipcMain.on('kill-process', async (event, pid) => {
+  console.log('kill-process pid=', pid)
   try {
 
   } catch (err) {
 
   }
-  return('done')
+  return ('done')
 });
+
+//return apiServerPort
+ipcMain.handle('get-api-server-port', async (event) => {
+  return new Promise(async function (resolve, reject) {
+    try {
+      resolve(apiServerPort);
+    } catch (err) {
+      console.log('hor err=', err)
+      reject(err)
+    }
+  })
+})
+
+
+
+ipcMain.handle('open-url', async (event, url) => {
+  try {
+    console.log(`open-url: ${url}`)
+    await shell.openExternal(url);
+    return 'URL opened successfully';
+  } catch (err) {
+    console.log('hor err=', err)
+    throw err;
+  }
+});
+
+
+function startServer(port) {
+  // Create an Express app and attach it to a Node.js HTTP server
+  const app = express();
+  server = http.createServer(app);
+
+  app.get('/', (req, res) => {
+    res.send('Hello, World!');
+  });
+
+  app.get('/ytCode', function (req, res) {
+    console.log('/code url detected: ', req.url.toString().replace('/ytCode?code=', ''))
+    res.send();
+  });
+
+  // Attempt to listen on the specified port
+  server.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+
+  // Handle errors if the port is already in use
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is already in use`);
+      stopServer();
+
+      // Find an available port and start the server on that port instead
+      apiServerPort = port + 1
+      startServer(port + 1);
+    }
+  });
+}
+
+function stopServer() {
+  // Stop listening for incoming HTTP requests
+  if (server) {
+    server.close(() => {
+      console.log('Server stopped');
+    });
+  }
+}

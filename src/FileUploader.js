@@ -33,14 +33,15 @@ const FileUploader = ({ onFilesSelect }) => {
             'fileName': `${file.name}`,
             'filePath': `${file.path}`,
             'durationSeconds': durationSeconds,
-            'durationDisplay': `${durationDisplay}`
+            'durationDisplay': `${durationDisplay}`,
+            'type':'audio'
           })
 
         }else if(fileType.includes('image/')){
           newImageTableData.push({
             'fileName': `${file.name}`,
             'filePath': `${file.path}`,
-            'resolution': 'NA'
+            'type':'image'
           })
         }else{
           console.log('file type = ', fileType)

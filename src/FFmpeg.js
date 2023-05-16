@@ -20,6 +20,7 @@ function newstartRender(renderSettings={}){
 
   //function to create ffmpeg command for slideshow video
   function createFfmpegCommand(audioInputs, imageInputs, outputFilepath, width, height) {
+    console.log(`createFfmpegCommand() \n audioInputs.length=${audioInputs.length} \n imageInputs.length=${imageInputs} \n outputFilepath=${outputFilepath} \n width=${width} \n height=${height} \n`)
     let imageAudioSync=false;
     //create command
     let cmdArgs = []
@@ -123,34 +124,40 @@ function startRender(settings = {}) {
     };
 }
 
-function getFfmpegPath(cmd) {
+function getFfmpegPath(cmd='ffmpeg') {
     try {
         const isDev = !isPackaged
         const os = window.require('os');
         const platform = os.platform();
-        console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
         let winInstallerBuild = "";
         let exeName = "";
+        console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
+
         if (platform === 'darwin') {
             return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+
         } else if (platform === 'win32') {
             //for win installer build with auto-updating, it installs with 'app.asar.unpacked' filepath before node_modules
             winInstallerBuild = "app.asar.unpacked/"
             exeName = `${cmd}.exe`;
+
         } else {
             exeName = cmd;
         }
+
         if (isDev) {
             exeName = `node_modules/ffmpeg-ffprobe-static/${exeName}`;
         } else {
             exeName = join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
         }
+
         //if snap build downloaded from store has wrong ffmpeg filepath:
         if (!isDev && platform === "linux" && exeName.match(/snap\/rendertune\/\d+(?=\/)\/resources/)) {
             console.log("getFfPath() snap linux path before: ", exeName)
             exeName = exeName.replace(/snap\/rendertune\/\d+(?=\/)\/resources/, "/snap/rendertune/current/resources/app.asar.unpacked/")
         }
         console.log("getFfPath() returning exeName=", exeName);
+
         return (exeName);
     } catch (err) {
         console.log('getFfPath cmd=', cmd, '. err = ', err)

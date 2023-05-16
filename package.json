@@ -258,9 +258,11 @@
     "express": "^4.18.2",
     "ffmpeg-ffprobe-static": "^4.4.0-rc.11",
     "fs": "0.0.1-security",
+    "http": "^0.0.1-security",
     "material-react-table": "^1.11.1",
     "moment": "^2.29.4",
     "music-metadata-browser": "^2.5.10",
+    "open": "^9.1.0",
     "path": "^0.12.7"
   },
   "devDependencies": {
