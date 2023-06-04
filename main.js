@@ -207,8 +207,18 @@ function startServer(port) {
     res.send('Hello, World!');
   });
 
-  app.get('/ytCode', function (req, res) {
-    console.log('/code url detected: ', req.url.toString().replace('/ytCode?code=', ''))
+  app.get('/ytCode', async function (req, res) {
+    //get code
+    let code = req.url.toString().replace('/ytCode?code=', '')
+    console.log('/code url detected: ', code)
+    //authenticate online
+    await fetch(`http://localhost:8080/getOauth2Client?token=${code}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('data rsp:', data);
+    })
+    .catch(error => console.error('caught err=', error));
+    
     res.send();
   });
 
