@@ -13,11 +13,14 @@ function Project() {
   const [audioTableData, setAudioTableData] = useState([]);
   const [selectedImageRows, setSelectedImageRows] = useState([]);
   const [selectedAudioRows, setSelectedAudioRows] = useState([]);
+  const [width, setWidth] = useState(2000);
+  const [height, setHeight] = useState(2000);
 
   //call when FileUploader component returns 
   const handleFilesSelect = async (newAudioTableData, newImageTableData) => {
-    setImageTableData(newImageTableData)
-    setAudioTableData(newAudioTableData)
+    console.log('handleFilesSelect()')
+    setImageTableData([...newImageTableData])
+    setAudioTableData([...newAudioTableData])
   };
 
   //call when table's selected rows are changed
@@ -27,19 +30,6 @@ function Project() {
     } else if (tableType == 'image') {
       setSelectedImageRows(rows)
     }
-  }
-
-  const handleRender = (settings = {}) => {
-    const uniqueId = Date.now().toString().slice(-5);
-    settings = {
-      'outputFilename': `AwesomeCoolVideo_${uniqueId}`,
-      'outputFormat': 'mkv'
-    }
-    let renderProcessInfo = startRender(settings);
-    setRenders(prevState => ({
-      ...prevState,
-      [renderProcessInfo.pid]: renderProcessInfo
-    }));
   }
 
   const removeFromRenders = (pid) => {
@@ -55,47 +45,55 @@ function Project() {
     removeFromRenders(pid)
   }
 
+  const handleWidthChange = (event) => {
+    setWidth(parseInt(event.target.value));
+  };
+
+  const handleHeightChange = (event) => {
+    setHeight(parseInt(event.target.value));
+  };
+
   const startRender = () => {
     console.log('startRender()')
     let outputFileType = 'mkv'
     let outputFilename = '';
     let outputFilepath = '';
-    let outputWidth = 1920;
-    let outputHeight = 1920;
+    let outputWidth = width;
+    let outputHeight = height;
     //get splitChar based on os
     let splitChar = ''
     console.log(`window.require('os').platform()=`, window.require('os').platform())
     let platform = window.require('os').platform();
-    if (platform === 'darwin' || platform === 'linux' ) {
+    if (platform === 'darwin' || platform === 'linux') {
       splitChar = '/'
     } else if (window.require('os').platform() === 'win32') {
       splitChar = '\\'
-    }else{
+    } else {
       throw "no platform found"
     }
-    console.log('splitChar=',splitChar)
-    
+    console.log('splitChar=', splitChar)
+
     //get output folder
     let audio1 = selectedAudioRows[0]['filePath'];
-    console.log('audio1=',audio1)
+    console.log('audio1=', audio1)
 
     let audio1SplitByChar = audio1.split(`${splitChar}`);
-    console.log('audio1SplitByChar=',audio1SplitByChar)
-    
+    console.log('audio1SplitByChar=', audio1SplitByChar)
+
     audio1SplitByChar.pop();
-    console.log('audio1SplitByChar AFTER POP =',audio1SplitByChar)
+    console.log('audio1SplitByChar AFTER POP =', audio1SplitByChar)
 
     var outputFolder = audio1SplitByChar.join(splitChar);
-    console.log('outputFolder=',outputFolder)
+    console.log('outputFolder=', outputFolder)
     var backupOutputFolder = outputFolder;
-    backupOutputFolder=backupOutputFolder.split(`${splitChar}`)
-    var folderName=backupOutputFolder.pop();
-    console.log('folderName=',folderName)
+    backupOutputFolder = backupOutputFolder.split(`${splitChar}`)
+    var folderName = backupOutputFolder.pop();
+    console.log('folderName=', folderName)
 
 
     outputFilename = `${folderName}_${new Date().getUTCMilliseconds()}`
-    console.log('outputFilename=',outputFilename)
-    
+    console.log('outputFilename=', outputFilename)
+
     outputFilepath = `${outputFolder}${splitChar}${outputFilename}.${outputFileType}`
     console.log('outputFilepath=', outputFilepath)
 
@@ -112,10 +110,10 @@ function Project() {
 
   return (<>
     Begin.
-    <br/><hr/>
-    <YouTube/>
-    <br/><hr/>
-    
+    <br /><hr />
+    <YouTube />
+    <br /><hr />
+
     <FileUploader onFilesSelect={handleFilesSelect} />
 
     <h3>Audio Files</h3>
@@ -126,7 +124,7 @@ function Project() {
         {
           accessorKey: 'fileName',
           header: 'Name',
-        }, 
+        },
         {
           accessorKey: 'durationDisplay',
           header: 'Length',
@@ -143,10 +141,33 @@ function Project() {
           accessorKey: 'fileName',
           header: 'Name',
         }
-      ]}/>
+      ]} />
 
     <h3>Render Options</h3>
-    <button onClick={startRender}>Start Render</button>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ marginRight: '10px' }}>
+        <label htmlFor="width">Width:</label>
+        <input
+          type="text"
+          id="width"
+          value={width}
+          onChange={handleWidthChange}
+          style={{ width: '6ch' }}
+        />
+      </div>
+      <div style={{ marginRight: '10px' }}>
+        <label htmlFor="height">Height:</label>
+        <input
+          type="text"
+          id="height"
+          value={height}
+          onChange={handleHeightChange}
+          style={{ width: '6ch' }}
+        />
+      </div>
+      <button onClick={startRender}>Start Render</button>
+    </div>
+
 
     <h3>Renders</h3>
     <ul>
@@ -159,4 +180,5 @@ function Project() {
     </ul>
   </>);
 }
+
 export default Project;
