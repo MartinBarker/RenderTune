@@ -5,6 +5,7 @@ import YouTube from './YouTube'
 import FileUploader from './FileUploader'
 import Table from './Table'
 import Test from './Test'
+import ExecaTest from './ExecaTest'
 
 function Project() {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -15,6 +16,12 @@ function Project() {
   const [selectedAudioRows, setSelectedAudioRows] = useState([]);
   const [width, setWidth] = useState(2000);
   const [height, setHeight] = useState(2000);
+  const [paddingCheckbox, setPaddingCheckbox] = useState(false)
+
+
+  const handlePaddingCheckboxChange = (event) => {
+    setPaddingCheckbox(event.target.checked);
+  };
 
   //call when FileUploader component returns 
   const handleFilesSelect = async (newAudioTableData, newImageTableData) => {
@@ -110,6 +117,7 @@ function Project() {
 
   return (<>
     Begin.
+    <ExecaTest />
     <br /><hr />
     <YouTube />
     <br /><hr />
@@ -145,6 +153,16 @@ function Project() {
 
     <h3>Render Options</h3>
     <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div>
+        <label htmlFor="paddingCheckbox">Padding:</label>
+        <input
+          type="checkbox"
+          id="paddingCheckbox"
+          checked={paddingCheckbox}
+          onChange={handlePaddingCheckboxChange}
+        />
+      </div>
+
       <div style={{ marginRight: '10px' }}>
         <label htmlFor="width">Width:</label>
         <input
