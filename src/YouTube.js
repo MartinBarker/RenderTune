@@ -54,9 +54,10 @@ const YouTube = () => {
     }
   }
 
+  /*
   useEffect(() => {
     const handleYouTubeCode = (event, arg) => {
-      console.log('YouTubeCode Received: ', arg)
+      console.log('YouTubeCode Rece ved: ', arg)
       setYouTubeAuthCode(arg.code)
     }
     ipcRenderer.on('YouTubeCode', handleYouTubeCode);
@@ -73,6 +74,8 @@ const YouTube = () => {
     }
     myFunction();
   }, [YouTubeAuthCode]);
+  
+  */
 
 
   return (

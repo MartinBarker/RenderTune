@@ -6,6 +6,9 @@ const loadURL = serve({ directory: 'build' });
 const { autoUpdater } = require('electron-updater');
 const express = require('express');
 const http = require('http');
+const fs = require('fs');
+const { google } = require('googleapis');
+const OAuth2 = google.auth.OAuth2;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -198,9 +201,8 @@ ipcMain.handle('open-url', async (event, url) => {
 //get image resolution
 ipcMain.handle('get-image-resolution', async (event, filename) => {
   console.log('get-image-resolution()')
-  
   return new Promise(async function (resolve, reject) {
-    resolve([99,22])
+    resolve([99, 22])
     /*
     sizeOf(filename, function (err, dimensions) {
       if (!err) {
@@ -216,6 +218,30 @@ ipcMain.handle('get-image-resolution', async (event, filename) => {
   })
 });
 
+ipcMain.handle('read-file', async (event, filename) => {
+  console.log('read-file()')
+  return new Promise(async function (resolve, reject) {
+    try {
+      let fileContents = await readAuthJSON(filename)
+      resolve(fileContents)
+    } catch (err) {
+      reject(err)
+    }
+  })
+});
+
+function readAuthJSON(filename) {
+  return new Promise(async function (resolve, reject) {
+    try {
+      const authData = fs.readFileSync(filename, 'utf8');
+      resolve(JSON.parse(authData));
+    } catch (err) {
+      console.error('Error reading auth.json:', err.message);
+      reject(null);
+    }
+  })
+}
+
 //start http api server
 function startServer(port) {
   // Create an Express app and attach it to a Node.js HTTP server
@@ -230,14 +256,16 @@ function startServer(port) {
     //get code
     let code = req.url.toString().replace('/ytCode?code=', '')
     console.log('/code url detected: ', code)
+
     //authenticate online
-    await fetch(`http://localhost:8080/getOauth2Client?token=${code}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log('data rsp:', data);
-    })
-    .catch(error => console.error('caught err=', error));
-    
+    //await fetch(`http://localhost:8080/getOauth2Client?token=${code}`)
+    //.then(response => response.json())
+    //.then(data => {
+    //  console.log('data rsp:', data);
+    //})
+    //.catch(error => console.error('caught err=', error));
+
+    //send code to main window
     mainWindow.webContents.send('YouTubeCode', { 'code': code });
     res.send('<html><body>Please return to your rendertune window!</body></html>');
   });
@@ -267,4 +295,182 @@ function stopServer() {
       console.log('Server stopped');
     });
   }
+}
+
+//-----------------------------------
+// youtube api commands below
+//-----------------------------------
+var oauth2Client = null;
+var authDotJsonRedirectUrl = '';
+
+//create oauth2client
+ipcMain.handle('create-oauth2client', async (event) => {
+  return new Promise(async function (resolve, reject) {
+    try {
+      let result = await createOauth2Client()
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }
+  })
+});
+
+function createOauth2Client() {
+  return new Promise(async function (resolve, reject) {
+    try {
+      //get client secret vars
+      let fileContents = await readAuthJSON(filename = "auth.json")
+      let clientSecret = fileContents.installed.client_secret;
+      let clientId = fileContents.installed.client_id;
+      let redirectUrl = fileContents.installed.redirect_uris[0];
+      authDotJsonRedirectUrl = redirectUrl
+      console.log(`\n createOauth2Client() redirectUrl=${redirectUrl}  \n`)
+      //create new OAuth2 object
+      oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
+      resolve('done')
+    } catch (err) {
+      console.log(err)
+      reject(err)
+    }
+  })
+}
+
+//get url
+ipcMain.handle('get-url', async (event) => {
+  return new Promise(async function (resolve, reject) {
+    try {
+      let result = await getUrl()
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }
+  })
+});
+
+function getUrl() {
+  return new Promise(async function (resolve, reject) {
+    try {
+      //generate auth url
+      var callbackUrl = `http://localhost:${apiServerPort}/ytCode`
+      var redirectUri = authDotJsonRedirectUrl
+      console.log(`\n getUrl() callbackUrl=${callbackUrl} \n`)
+      const authUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: ['https://www.googleapis.com/auth/youtube.upload'],
+        redirect_uri: redirectUri
+      });
+      resolve(authUrl);
+    } catch (err) {
+      console.log(err)
+      reject(err)
+    }
+  })
+}
+
+//auth user
+ipcMain.handle('auth-user', async (event, code) => {
+  return new Promise(async function (resolve, reject) {
+    try {
+      let result = await authUser(code)
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }
+  })
+});
+
+function authUser(code) {
+  return new Promise(async function (resolve, reject) {
+    console.log('authUser() code = ', code)
+    console.log('authUser() decodeURIComponent(code) = ', decodeURIComponent(code))
+    try {
+      oauth2Client.getToken(decodeURIComponent(code), function (err, token) {
+        if (err) {
+          console.log('authUser() Error trying to retrieve access token:', err)
+        }
+        oauth2Client.credentials = token;
+        console.log('authUser() done!')
+        resolve('done');
+      })
+    } catch (err) {
+      console.log(err)
+      reject(err)
+    }
+  })
+}
+
+//upload video
+ipcMain.handle('upload-video', async (event, code) => {
+  return new Promise(async function (resolve, reject) {
+    try {
+      let result = await uploadVideo()
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }
+  })
+});
+
+function uploadVideo(
+  title = 't',
+  description = 'd',
+  tags = 't',
+  videoFilePath = 'vid.mp4',
+  thumbFilePath = 'thumb.png'
+) {
+  return new Promise(async function (resolve, reject) {
+    console.log('uploadVideo()')
+    const categoryIds = {
+      Entertainment: 24,
+      Education: 27,
+      ScienceTechnology: 28
+    }
+    try {
+      const service = google.youtube('v3')
+      service.videos.insert({
+        auth: oauth2Client,
+        part: 'snippet,status',
+        requestBody: {
+          snippet: {
+            title,
+            description,
+            tags,
+            categoryId: categoryIds.ScienceTechnology,
+            defaultLanguage: 'en',
+            defaultAudioLanguage: 'en'
+          },
+          status: {
+            privacyStatus: "private"
+          },
+        },
+        media: {
+          body: fs.createReadStream(videoFilePath),
+        },
+      }, function (err, response) {
+        if (err) {
+          console.log('The API returned an error: ' + err);
+          return;
+        }
+        //console.log(response.data)
+
+        console.log('Video uploaded. Uploading the thumbnail now.')
+        service.thumbnails.set({
+          auth: oauth2Client,
+          videoId: response.data.id,
+          media: {
+            body: fs.createReadStream(thumbFilePath)
+          },
+        }, function (err, response) {
+          if (err) {
+            console.log('The API returned an error: ' + err);
+            return;
+          }
+          console.log(response.data)
+        })
+      });
+    } catch (err) {
+      console.log(err)
+      reject(err)
+    }
+  })
 }

@@ -15,7 +15,7 @@
     "url": "https://github.com/soulehshaikh99/create-react-electron-app/issues"
   },
   "browser": {
-    "fs": false,
+    "fs": true,
     "path": false,
     "os": false
   },
