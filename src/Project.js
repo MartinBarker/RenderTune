@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FFmpeg, newstartRender, startRender, killProcess } from './FFmpeg';
+import { FFmpeg, newstartRender, killProcess } from './FFmpeg';
 
 import YouTube from './YouTube'
 import FileUploader from './FileUploader'
@@ -17,11 +17,21 @@ function Project() {
   const [width, setWidth] = useState(2000);
   const [height, setHeight] = useState(2000);
   const [paddingCheckbox, setPaddingCheckbox] = useState(false)
-
+  const [forceOriginalAspectRatio, setForceOriginalAspectRatio] = useState(false)
+  const [processes, setProcesses] = useState({});
 
   const handlePaddingCheckboxChange = (event) => {
     setPaddingCheckbox(event.target.checked);
   };
+
+  const handleForceOriginalAspectRatioChange = (event) => {
+    setForceOriginalAspectRatio(event.target.checked);
+  }
+
+  const clearFiles = () => {
+    setImageTableData([])
+    setAudioTableData([])
+  }
 
   //call when FileUploader component returns 
   const handleFilesSelect = async (newAudioTableData, newImageTableData) => {
@@ -61,15 +71,13 @@ function Project() {
   };
 
   const startRender = () => {
-    console.log('startRender()')
     let outputFileType = 'mkv'
-    let outputFilename = '';
-    let outputFilepath = '';
+    let outputFilename, outputFilepath = '';
     let outputWidth = width;
     let outputHeight = height;
-    //get splitChar based on os
+
+    //set filepath splitChar based on os
     let splitChar = ''
-    console.log(`window.require('os').platform()=`, window.require('os').platform())
     let platform = window.require('os').platform();
     if (platform === 'darwin' || platform === 'linux') {
       splitChar = '/'
@@ -78,51 +86,55 @@ function Project() {
     } else {
       throw "no platform found"
     }
-    console.log('splitChar=', splitChar)
 
-    //get output folder
+    //set output folder location (currently: 1st audio file folderpath)
     let audio1 = selectedAudioRows[0]['filePath'];
-    console.log('audio1=', audio1)
-
     let audio1SplitByChar = audio1.split(`${splitChar}`);
-    console.log('audio1SplitByChar=', audio1SplitByChar)
-
     audio1SplitByChar.pop();
-    console.log('audio1SplitByChar AFTER POP =', audio1SplitByChar)
-
     var outputFolder = audio1SplitByChar.join(splitChar);
-    console.log('outputFolder=', outputFolder)
     var backupOutputFolder = outputFolder;
     backupOutputFolder = backupOutputFolder.split(`${splitChar}`)
     var folderName = backupOutputFolder.pop();
-    console.log('folderName=', folderName)
 
-
+    //set output filename
     outputFilename = `${folderName}_${new Date().getUTCMilliseconds()}`
-    console.log('outputFilename=', outputFilename)
 
+    //set output filepath (folder + filename)
     outputFilepath = `${outputFolder}${splitChar}${outputFilename}.${outputFileType}`
-    console.log('outputFilepath=', outputFilepath)
 
-    newstartRender({
-      audioFiles: selectedAudioRows,
-      imageFiles: selectedImageRows,
-      outputWidth: outputWidth,
-      outputHeight: outputHeight,
-      outputFilepath: outputFilepath,
-      outputFilename: outputFilename,
-      outputFileType: outputFileType,
-    })
+    //begin render
+    let renderProcess = newstartRender(
+      {
+        audioFiles: selectedAudioRows,
+        imageFiles: selectedImageRows,
+        outputWidth: outputWidth,
+        outputHeight: outputHeight,
+        outputFilepath: outputFilepath,
+        outputFilename: outputFilename,
+        outputFileType: outputFileType,
+        paddingCheckbox: paddingCheckbox
+      },
+      setProcesses
+    )
+    console.log('renderProcess.pid = ', renderProcess.pid)
+
+    //add render to 'renders' object
+    setRenders((prevState) => ({
+      ...prevState,
+      [renderProcess.pid]: {
+        'statusPercent':0
+      },
+    }));
   }
 
   return (<>
-    Begin.
-    <ExecaTest />
     <br /><hr />
     <YouTube />
     <br /><hr />
 
     <FileUploader onFilesSelect={handleFilesSelect} />
+
+    <button onClick={clearFiles}>Clear Files</button>
 
     <h3>Audio Files</h3>
     <Table
@@ -152,7 +164,9 @@ function Project() {
       ]} />
 
     <h3>Render Options</h3>
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    {/* <div style={{ display: 'flex', alignItems: 'center' }}> */}
+    <div>
+      {/* Padding Checkbox */}
       <div>
         <label htmlFor="paddingCheckbox">Padding:</label>
         <input
@@ -162,6 +176,20 @@ function Project() {
           onChange={handlePaddingCheckboxChange}
         />
       </div>
+      <br></br>
+
+      
+      {/* Force Original Aspect Ratio Checkbox */}
+      <div>
+        <label htmlFor="forceOriginalAspectRatio">Force Original Aspect Ratio:</label>
+        <input
+          type="checkbox"
+          id="forceOriginalAspectRatio"
+          checked={forceOriginalAspectRatio}
+          onChange={handleForceOriginalAspectRatioChange}
+        />
+      </div>
+      <br></br>
 
       <div style={{ marginRight: '10px' }}>
         <label htmlFor="width">Width:</label>
@@ -183,16 +211,16 @@ function Project() {
           style={{ width: '6ch' }}
         />
       </div>
-      <button onClick={startRender}>Start Render</button>
     </div>
 
 
-    <h3>Renders</h3>
+    <h3>Renders:</h3>
+    <button onClick={startRender}>Start Render</button>
     <ul>
-      {Object.keys(renders).map((key) => (
+      {Object.keys(processes).map((key) => (
         <li key={key}>
           <button onClick={() => handleKillProcess(key)}>X</button>
-          <a>pid={key} / {renders[key].outputFilename}</a>
+          <a>pid={key}, status={processes[key].status}</a>
         </li>
       ))}
     </ul>

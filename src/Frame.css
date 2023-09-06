@@ -33,6 +33,7 @@ body {
 /* Title bar */
 
 #titlebar {
+  z-index: 99;
   top: 0px;
   position: fixed;
   height: 40px;
