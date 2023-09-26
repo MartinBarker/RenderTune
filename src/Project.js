@@ -28,14 +28,25 @@ function Project() {
     setForceOriginalAspectRatio(event.target.checked);
   }
 
+  const handleWidthChange = (event) => {
+    setWidth(parseInt(event.target.value));
+  };
+
+  const handleHeightChange = (event) => {
+    setHeight(parseInt(event.target.value));
+  };
+
   const clearFiles = () => {
+    //todo: unclick select all / unsort / reset table
     setImageTableData([])
     setAudioTableData([])
+    setSelectedAudioRows([])
+    setSelectedFiles([])
+    setSelectedImageRows([])
   }
 
   //call when FileUploader component returns 
   const handleFilesSelect = async (newAudioTableData, newImageTableData) => {
-    console.log('handleFilesSelect()')
     setImageTableData([...newImageTableData])
     setAudioTableData([...newAudioTableData])
   };
@@ -57,18 +68,9 @@ function Project() {
   };
 
   const handleKillProcess = (pid) => {
-    console.log('handleKillProcess()')
     let killStatus = killProcess(pid);
     removeFromRenders(pid)
   }
-
-  const handleWidthChange = (event) => {
-    setWidth(parseInt(event.target.value));
-  };
-
-  const handleHeightChange = (event) => {
-    setHeight(parseInt(event.target.value));
-  };
 
   const startRender = () => {
     let outputFileType = 'mkv'

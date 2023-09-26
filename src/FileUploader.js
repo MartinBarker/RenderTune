@@ -6,12 +6,10 @@ import * as mmb from 'music-metadata-browser';
 const FileUploader = ({ onFilesSelect }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [highlight, setHighlight] = useState(false);
-
   const [imageTableData, setImageTableData] = useState([]);
   const [audioTableData, setAudioTableData] = useState([]);
 
   const handleFileInputChange = async (event) => {
-    console.log('handleFileInputChange')
     const files = event.target.files;
     updateFiles(files)
   };
@@ -43,7 +41,7 @@ const FileUploader = ({ onFilesSelect }) => {
       }).catch((error) => {
         console.log('getAudioMetadata() error: ', error)
       }).finally(() => {
-        console.log(' getAudioMetadata() finally')
+        //console.log(' getAudioMetadata() finally')
       })
   }
 
@@ -51,7 +49,7 @@ const FileUploader = ({ onFilesSelect }) => {
     let newImageTableData = [];
     let newAudioTableData = [];
     for (var x = 0; x < files.length; x++) {
-      try{
+      try {
         let file = files[x];
         let fileType = file.type;
         if (fileType.includes('audio/')) {
@@ -72,7 +70,6 @@ const FileUploader = ({ onFilesSelect }) => {
             'durationDisplay': `${durationDisplay}`,
             'type': 'audio'
           })
-          console.log('newAudioTableData=',newAudioTableData)
           onFilesSelect(newAudioTableData, newImageTableData);
 
         } else if (fileType.includes('image/')) {
@@ -91,12 +88,10 @@ const FileUploader = ({ onFilesSelect }) => {
         setSelectedFiles([...files]);
         //send back up outside of this component 
         onFilesSelect(newAudioTableData, newImageTableData);
-      }catch(err){
-        console.log('updateFiles() err=',err)
+      } catch (err) {
+        console.log('updateFiles() err=', err)
       }
-
-      }
-
+    }
   }
 
   const handleChooseFiles = () => {
@@ -113,8 +108,6 @@ const FileUploader = ({ onFilesSelect }) => {
     setHighlight(false);
   };
 
-
-
   const borderColor = highlight ? "white" : "grey";
 
   return (
@@ -127,7 +120,6 @@ const FileUploader = ({ onFilesSelect }) => {
     >
       <div className="file-uploader-box">
         <p>Drag or <button style={{ 'cursor': 'pointer' }}>choose</button> files</p>
-
       </div>
       <input
         type="file"

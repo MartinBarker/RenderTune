@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { isPackaged } from 'electron-is-packaged';
-//import {taskkill} from 'taskkill';
-//import fkill from 'fkill';
 
 const execa = window.require('execa');
 const readline = window.require('readline');
@@ -70,17 +68,16 @@ function createFfmpegCommand(
     paddingCheckbox,
     forceOriginalAspectRatio,
 ) {
-    console.log(`createFfmpegCommand() \n audioInputs.length=${audioInputs.length} \n imageInputs.length=${imageInputs} \n outputFilepath=${outputFilepath} \n width=${width} \n height=${height} \n`)
     let imageAudioSync = false;
+    
     //create command
     let cmdArgs = []
 
-    //get total duration
+    //get total output video duration
     let outputDuration = 0;
     for (var x = 0; x < audioInputs.length; x++) {
         outputDuration += parseFloat(audioInputs[x].durationSeconds);
     }
-    console.log('total output duration: ', outputDuration)
 
     //determine how long to show each image (for slideshow)
     let imgDuration = 0;
@@ -98,7 +95,7 @@ function createFfmpegCommand(
     let imgAudioSyncCount = 0;
     //for each input file
     for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
-        console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
+        //console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
 
         //add input to ffmpeg cmd args
         cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].filePath)
@@ -139,8 +136,10 @@ function createFfmpegCommand(
 
     //construct filter_complex audio files concat text
     fc_audioFiles = `${fc_audioFiles}concat=n=${audioInputs.length}:v=0:a=1[a];`
+    
     //constuct final part
     fc_finalPart = `${fc_finalPart}concat=n=${imageInputs.length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
+    
     //consturct final combined everything filter_complex value
     let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
 
