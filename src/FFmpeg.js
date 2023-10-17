@@ -21,6 +21,7 @@ function newstartRender(renderSettings, setProcesses) {
     //start ffmpeg command
     var process = null;
     try {
+        console.log('ffmpeg command = \n', cmdArgs.join(' '), '\n')
         process = execa(ffmpegPath, cmdArgs);
     } catch (err) {
         console.log('ffmpeg execa err: ', err)
