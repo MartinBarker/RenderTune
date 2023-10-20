@@ -6,6 +6,145 @@ const readline = window.require('readline');
 const moment = window.require("moment");
 const { ipcRenderer } = window.require('electron');
 
+function secondsToHMS(seconds) {
+    console.log(`secondsToHMS(${seconds})`)
+    let hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
+    let minutes = Math.floor(seconds / 60);
+    let secs = seconds % 60;
+
+    // Convert to strings and pad with zeros if needed
+    let hoursStr = String(hours).padStart(2, '0');
+    let minutesStr = String(minutes).padStart(2, '0');
+    let secsStr = String(secs).padStart(2, '0');
+
+    console.log(`secondsToHMS() return: `,`${hoursStr}:${minutesStr}:${secsStr}`)
+    return `${hoursStr}:${minutesStr}:${secsStr}`;
+}
+
+function generateCueVideoCommand(audioFiles, cueImages, outputDuration) {
+    console.log('generateCueVideoCommand() cueImages=',cueImages)
+    return new Promise(async function (resolve, reject) {
+        try {
+
+            let width = 1080;
+            let height = 1080;
+            let paddingCheckbox = false;
+            let forceOriginalAspectRatio = false;
+            let outputFilepath = "C:\\Users\\martin\\Documents\\projects\\cueFfmpeg\\cueSlideshowVideo.mkv"
+
+            let cmdArgs = [];
+
+            //overwrite video if it already exists
+            cmdArgs.push('-y')
+
+            //determine how long to show each image (for slideshow)
+            let hardCodedImgDuration = Math.round(((outputDuration / Object.keys(cueImages).length) * 2) * 100) / 100;
+            console.log(`${Object.keys(cueImages).length} images, duration=${outputDuration}, hardCodedImgDuration=${hardCodedImgDuration}`)
+
+            //filter_complex (fc) consturction vars
+            let fc_audioFiles = '';
+            let fc_imgOrder = '';
+            let fc_finalPart = '';
+
+            //get all img/audio paths in a single list
+            var imageFiles = Object.values(cueImages)
+            console.log('imageFiles=',imageFiles)
+            console.log('audioFiles=', audioFiles)
+            console.log('cueImages=', cueImages)
+            //const audioPaths = Object.values(audioFiles).map(entry => entry.filePath);
+            let inputFiles = [...audioFiles, ...imageFiles];
+            console.log('inputFiles=', inputFiles)
+            let totalImgLengthSeconds = 0;
+            //for each input file
+            for (var x = 0; x < inputFiles.length; x++) {
+                console.log(`x=${x}, inputFiles[x] = `,inputFiles[x])
+                console.log(`x=${x}, inputFiles[x].type = `,inputFiles[x].type)
+                //if file is audio
+                if (inputFiles[x].type == 'audio') {
+                    console.log(`audio type, push input: ${inputFiles[x].filePath}`)
+                    cmdArgs.push('-r', '2', '-i', inputFiles[x].filePath)
+                    console.log('cmdArgs = ', cmdArgs)
+
+                    //add to filter_complex
+                    fc_audioFiles = `${fc_audioFiles}[${x}:a]`
+
+                } else if (inputFiles[x].type != 'audio') {
+                    console.log(`udnefined input type, image path = `, inputFiles[x].image)
+                    
+                    cmdArgs.push('-r', '2', '-i', inputFiles[x].image)
+
+                    //determine if we want to add padding
+                    var fc_padding = '';
+                    if (paddingCheckbox) {
+                        fc_padding = 'pad=${width}:${height}:-1:-1:color=white,'
+                    }
+
+                    //determine if we want to add 'force_original_aspect_ratio=decrease'
+                    var fc_forceOriginalAspectRatio = '';
+                    if (forceOriginalAspectRatio) {
+                        fc_forceOriginalAspectRatio = 'force_original_aspect_ratio=decrease,'
+                    }
+
+                    //determine how long to display the image for
+                    
+
+                    let songLength = inputFiles[x].endSeconds - inputFiles[x].startSeconds; //Math.ceil((inputFiles[x].endSeconds - inputFiles[x].startSeconds) * 100) / 100;
+                    console.log(`start displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
+                    totalImgLengthSeconds = totalImgLengthSeconds + songLength;
+                    console.log(`end displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
+                    
+                    fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${fc_forceOriginalAspectRatio}${fc_padding},setsar=1,loop=${songLength*2}:${songLength*2}[v${x}];`
+
+                    fc_finalPart = `${fc_finalPart}[v${x}]`
+                }
+
+            }
+
+            //construct filter_complex audio files concat text
+            fc_audioFiles = `${fc_audioFiles}concat=n=${Object.keys(audioFiles).length}:v=0:a=1[a];`
+
+            //constuct final part
+            fc_finalPart = `${fc_finalPart}concat=n=${Object.keys(cueImages).length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
+
+            //consturct final combined everything filter_complex value
+            let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
+
+            console.log('construct fitler complex: ')
+            console.log('fc_audioFiles: ', fc_audioFiles)
+            console.log('fc_imgOrder: ', fc_imgOrder)
+            console.log('fc_finalPart: ', fc_finalPart)
+            console.log('______')
+            console.log('filter_complex = ', filter_complex)
+            cmdArgs.push('-filter_complex', filter_complex)
+            cmdArgs.push('-map', '[v]', '-map', '[a]')
+            cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+            
+            console.log('cueVideCmd: ',cmdArgs)
+
+            console.log('totalImgLengthSeconds=',totalImgLengthSeconds)
+            console.log('outputDuration=',outputDuration)
+            
+            resolve(cmdArgs);
+        } catch (err) {
+            console.log('err=', err)
+            reject(err)
+        }
+    })
+}
+
+function runFfmpegCommand(cmdArgs, outputDuration, setProcesses){
+    try {
+        const ffmpegPath = getFfmpegPath('ffmpeg'); 
+        var process = null;
+        console.log('ffmpeg command = \n', cmdArgs.join(' '), '\n')
+        process = execa(ffmpegPath, cmdArgs);
+        handleProgress(process, outputDuration, setProcesses);
+    } catch (err) {
+        console.log('ffmpeg execa err: ', err)
+    }
+}
+
 function newstartRender(renderSettings, setProcesses) {
     //create ffmpeg command
     let { cmdArgs, outputDuration } = createFfmpegCommand(
@@ -55,7 +194,7 @@ function killProcess(pid) {
 const updateProcessStatus = (pid, status, setProcesses) => {
     setProcesses((prevProcesses) => ({
         ...prevProcesses,
-        [pid]: { 'status':status },
+        [pid]: { 'status': status },
     }));
 };
 
@@ -70,7 +209,7 @@ function createFfmpegCommand(
     forceOriginalAspectRatio,
 ) {
     let imageAudioSync = false;
-    
+
     //create command
     let cmdArgs = []
 
@@ -137,10 +276,10 @@ function createFfmpegCommand(
 
     //construct filter_complex audio files concat text
     fc_audioFiles = `${fc_audioFiles}concat=n=${audioInputs.length}:v=0:a=1[a];`
-    
+
     //constuct final part
     fc_finalPart = `${fc_finalPart}concat=n=${imageInputs.length}:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]`
-    
+
     //consturct final combined everything filter_complex value
     let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
 
@@ -242,13 +381,13 @@ function handleProgress(process, outputDuration, setProcesses) {
 }
 
 function FFmpeg(props) {
-    
-  
 
 
-    
+
+
+
 
     return <></>;
 }
 
-export { FFmpeg, newstartRender, killProcess };
+export { FFmpeg, newstartRender, killProcess, generateCueVideoCommand, runFfmpegCommand };

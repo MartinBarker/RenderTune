@@ -6,3 +6,5 @@ Digify-mac.pkg
 build/*
 ffmpeg-mac/
 auth.json
+images/
+*.mkv

@@ -259,24 +259,23 @@ async function extractAlbumArt(filePath) {
       const metadata = await musicMetadata.parseFile(filePath);
       if (metadata.common.picture && metadata.common.picture.length > 0) {
         const { data, format } = metadata.common.picture[0];
-  
         if (!fs.existsSync('images')) {
           fs.mkdirSync('images');
         }
-  
         const imageName = path.basename(filePath, path.extname(filePath)) + '.' + format.split('/')[1];
         const outputPath = path.join('images', imageName);
-  
         fs.writeFileSync(outputPath, data);
         console.log(`Saved album art for ${filePath} to ${outputPath}`);
-        resolve(outputPath);
+        
+        const absolutePath = path.resolve(outputPath); // Get the absolute path
+        
+        resolve(absolutePath); // Return the absolute path
       } else {
         reject(`No album art found in ${filePath}`);
       }
-    }catch(err){
-      reject(err)
+    } catch(err) {
+      reject(err);
     }
-
   });
 };
 
