@@ -22,8 +22,29 @@ function secondsToHMS(seconds) {
     return `${hoursStr}:${minutesStr}:${secsStr}`;
 }
 
+function extractSongTitle(filePath) {
+    // Split the filePath by the forward slash and take the last part
+    const filename = filePath.split('/').pop();
+    
+    // Split the filename by the period and remove the last part (file extension)
+    const parts = filename.split('.');
+    parts.pop();
+    
+    return parts.join('.');
+}
+
 function generateCueVideoCommand(audioFiles, cueImages, outputDuration) {
     console.log('generateCueVideoCommand() cueImages=',cueImages)
+
+    let startTimes = []
+    Object.entries(cueImages).forEach(([key, value]) => {
+        const songTitle = extractSongTitle(key);
+        //console.log(key + ': ' + value);
+        startTimes.push(`${value.start} ${songTitle}`)
+    });
+    console.log(startTimes.join('\n'))
+    //print every start here
+
     return new Promise(async function (resolve, reject) {
         try {
 
@@ -70,7 +91,7 @@ function generateCueVideoCommand(audioFiles, cueImages, outputDuration) {
                     fc_audioFiles = `${fc_audioFiles}[${x}:a]`
 
                 } else if (inputFiles[x].type != 'audio') {
-                    console.log(`udnefined input type, image path = `, inputFiles[x].image)
+                    console.log(`cmd input type, image path = `, inputFiles[x].image)
                     
                     cmdArgs.push('-r', '2', '-i', inputFiles[x].image)
 
@@ -90,13 +111,15 @@ function generateCueVideoCommand(audioFiles, cueImages, outputDuration) {
                     
 
                     let songLength = inputFiles[x].endSeconds - inputFiles[x].startSeconds; //Math.ceil((inputFiles[x].endSeconds - inputFiles[x].startSeconds) * 100) / 100;
-                    console.log(`start displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
+                    console.log(`cmd start displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
                     totalImgLengthSeconds = totalImgLengthSeconds + songLength;
-                    console.log(`end displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
+                    console.log(`cmd end displaying image at ${totalImgLengthSeconds} aka ${secondsToHMS(totalImgLengthSeconds)}`)
+                    console.log(`cmd img duration: ${songLength}`)
                     
                     fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${fc_forceOriginalAspectRatio}${fc_padding},setsar=1,loop=${songLength*2}:${songLength*2}[v${x}];`
 
                     fc_finalPart = `${fc_finalPart}[v${x}]`
+                    console.log(`================================`)
                 }
 
             }

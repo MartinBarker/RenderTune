@@ -62,8 +62,9 @@ function CueSlideshowVid() {
           //console.log('line starts with FILE: ', line)
           let filePath = line.split('"')[1];
           //filePath = convertPathIfNeeded(filePath);
-          console.log('filePath: ', filePath);
-          console.log(`start=${start} / end=${end}`);
+          console.log('.cue filePath: ', filePath);
+          console.log(`.cue start=${start} / end=${end}`);
+          console.log(`.cue start=${timeToSeconds(start)} / end=${timeToSeconds(end)}`);
 
           //console.log('extracing art')
           var savedImgPath = null;
@@ -87,7 +88,16 @@ function CueSlideshowVid() {
             },
             ...newCueImages
           };
-          console.log('added: ', newCueImages[filePath])
+          console.log('.cue added: ', filePath, ':', newCueImages[filePath])
+          
+          if(newCueImages[filePath].start != start){
+            console.log("start does not match")
+          }
+          
+          if(newCueImages[filePath].end != end){
+            console.log("end does not match")
+          }
+
           console.log('----------------------------------------')
         } else if (line.startsWith('INDEX 01')) {
           //console.log('line starts with INDEX: ', line)
