@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { isPackaged } from 'electron-is-packaged';
-
+const path = window.require('path');
 const execa = window.require('execa');
 const readline = window.require('readline');
 const moment = window.require("moment");
@@ -330,7 +330,7 @@ function getFfmpegPath(cmd = 'ffmpeg') {
         console.log("getFfPath() platform = ", platform, ", isDev=", isDev);
 
         if (platform === 'darwin') {
-            return isDev ? `ffmpeg-mac/${cmd}` : join(window.process.resourcesPath, cmd);
+            return isDev ? `ffmpeg-mac/${cmd}` : path.join(window.process.resourcesPath, cmd);
 
         } else if (platform === 'win32') {
             //for win installer build with auto-updating, it installs with 'app.asar.unpacked' filepath before node_modules
@@ -341,11 +341,16 @@ function getFfmpegPath(cmd = 'ffmpeg') {
             exeName = cmd;
         }
 
+        console.log('getFfmpegPath() join:')
+        console.log('1: window.process.resourcesPath = ', window.process.resourcesPath)
+        console.log('2: ${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName} = ', `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`)
+
         if (isDev) {
             exeName = `node_modules/ffmpeg-ffprobe-static/${exeName}`;
         } else {
-            exeName = join(window.process.resourcesPath, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
+            exeName = path.join(`${window.process.resourcesPath}`, `${winInstallerBuild}node_modules/ffmpeg-ffprobe-static/${exeName}`);
         }
+        console.log('getFfmpegPath() exeName=',exeName)
 
         //if snap build downloaded from store has wrong ffmpeg filepath:
         if (!isDev && platform === "linux" && exeName.match(/snap\/rendertune\/\d+(?=\/)\/resources/)) {
@@ -357,7 +362,7 @@ function getFfmpegPath(cmd = 'ffmpeg') {
         return (exeName);
     } catch (err) {
         console.log('getFfPath cmd=', cmd, '. err = ', err)
-        return ("")
+        return(null)
     }
 }
 
