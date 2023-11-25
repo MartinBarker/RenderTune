@@ -110,6 +110,13 @@ function Frame() {
                         </div>
                     </div>
                 </header>
+                {/* Sidebar */}
+                <div class="sidenav">
+                  <div style={{ background: '#254053', height: '100%', width:'52px', position: 'fixed'}}>
+
+
+                  </div>
+              </div>
             </div>
             {/* Update Popup Notification */}
             <div id="updateNotificationPopup" className="hidden">

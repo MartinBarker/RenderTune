@@ -20,6 +20,7 @@
     "os": false
   },
   "scripts": {
+    "brw": " npm run build-react && npm run build-win",
     "build-react": "react-scripts build",
     "dev": "concurrently \"npm run start\" \"npm run electron\"",
     "start": "npx cross-env BROWSER=none react-scripts start",

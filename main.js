@@ -9,6 +9,7 @@ const http = require('http');
 const fs = require('fs');
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
+const musicMetadata = require('music-metadata');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -240,6 +241,66 @@ function readAuthJSON(filename) {
       reject(null);
     }
   })
+}
+
+ipcMain.handle('extract-album-art', async (event, filepath) => {
+  try {
+    let rsp = await extractAlbumArt(filepath);
+    return rsp;
+  } catch (err) {
+    console.log('extract-album-art err = ', err)
+    throw err;
+  }
+});
+
+async function extractAlbumArt(filePath) {
+  return new Promise(async function (resolve, reject) {
+    try{
+      const metadata = await musicMetadata.parseFile(filePath);
+      if (metadata.common.picture && metadata.common.picture.length > 0) {
+        const { data, format } = metadata.common.picture[0];
+        if (!fs.existsSync('images')) {
+          fs.mkdirSync('images');
+        }
+        const imageName = path.basename(filePath, path.extname(filePath)) + '.' + format.split('/')[1];
+        const outputPath = path.join('images', imageName);
+        fs.writeFileSync(outputPath, data);
+        console.log(`Saved album art for ${filePath} to ${outputPath}`);
+        
+        const absolutePath = path.resolve(outputPath); // Get the absolute path
+        
+        resolve(absolutePath); // Return the absolute path
+      } else {
+        reject(`No album art found in ${filePath}`);
+      }
+    } catch(err) {
+      reject(err);
+    }
+  });
+};
+
+ipcMain.handle('read-cue-file', async (event, filepath) => {
+  try {
+    let lines = await readCueFile(filepath);
+    return lines;
+  } catch (err) {
+    throw err;
+  }
+});
+
+function readCueFile(filepath) {
+  return new Promise(function (resolve, reject) {
+    fs.readFile(filepath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading .cue file:', err.message);
+        reject(err);
+      } else {
+        // Splitting the content by new lines
+        let lines = data.split('\n');
+        resolve(lines);
+      }
+    });
+  });
 }
 
 //start http api server
