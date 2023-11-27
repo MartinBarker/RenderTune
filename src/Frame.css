@@ -1,3 +1,6 @@
+/* Sidebar */
+
+
 /* General styles */
 
 html, body {
@@ -15,7 +18,6 @@ body {
   display: none;
 }
 
-
 /* Update notification popup */
 
 #updateNotificationPopup {
@@ -28,7 +30,6 @@ body {
   background-color: white;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
-
 
 /* Title bar */
 
