@@ -3,9 +3,11 @@ import Project from './Project';
 import CueSlideshowVid from './CueSlideshowVid';
 import YouTube2 from './YouTube2';
 import Sidebar from './Sidebar';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 
 function App() {
+  {/* 
   // Initialize state from localStorage
   const [projects, setProjects] = useState(() => {
     const savedProjects = localStorage.getItem('projects');
@@ -28,30 +30,32 @@ function App() {
     delete updatedProjects[key];
     setProjects(updatedProjects);
   };
+  */}
 
   return (
     <>
-      <Frame/>
-      
+      <Frame />
       <div style={{marginTop:"40px", marginLeft:'55px'}}>
-        {/*
-        <button onClick={addProject}>Add Project</button>
-        {Object.entries(projects).map(([key, value]) => (
-          <div key={key}>
-            {key}: {JSON.stringify(value)}
-            <button onClick={() => deleteProject(key)}>Delete</button>
-          </div>
-        ))}
-        */}
+      <Router>
+        <div>
+          {/* Navigation Links */}
+          <nav>
+            <Link to="/CueSlideshowVid"><h1>CueSlideshowVid</h1></Link>
+            <Link to="/YouTube2"><h1>YouTube2</h1></Link>
+            <Link to="/Project"><h1>Project</h1></Link>
+          </nav>
 
-
-        {/* */}
-        <CueSlideshowVid/>
-        <YouTube2/>
-        <Project/>
-        
+          {/* Route Configuration */}
+          <Routes>
+            <Route path="/CueSlideshowVid" element={<CueSlideshowVid />} />
+            <Route path="/YouTube2" element={<YouTube2 />} />
+            <Route path="/Project" element={<Project />} />
+          </Routes>
+        </div>
+      </Router>
       </div>
-      
+
+      {/* Your additional JSX */}
     </>
   );
 }

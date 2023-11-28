@@ -265,7 +265,8 @@
     "moment": "^2.29.4",
     "music-metadata-browser": "^2.5.10",
     "open": "^9.1.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "react-router-dom": "^6.20.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
