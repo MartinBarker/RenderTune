@@ -418,4 +418,4 @@ function FFmpeg(props) {
     return <></>;
 }
 
-export { FFmpeg, newstartRender, killProcess, generateCueVideoCommand, runFfmpegCommand };
+export { FFmpeg, getFfmpegPath, newstartRender, killProcess, generateCueVideoCommand, runFfmpegCommand };

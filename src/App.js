@@ -1,5 +1,6 @@
 import Frame from './Frame';
 import Project from './Project';
+import FfmpegErrorTest from './FfmpegErrorTest';
 import CueSlideshowVid from './CueSlideshowVid';
 import YouTube2 from './YouTube2';
 import Sidebar from './Sidebar';
@@ -43,6 +44,7 @@ function App() {
             <Link to="/CueSlideshowVid"><h1>CueSlideshowVid</h1></Link>
             <Link to="/YouTube2"><h1>YouTube2</h1></Link>
             <Link to="/Project"><h1>Project</h1></Link>
+            <Link to="/FfmpegErrorTest"><h1>FfmpegErrorTest</h1></Link>
           </nav>
 
           {/* Route Configuration */}
@@ -50,6 +52,7 @@ function App() {
             <Route path="/CueSlideshowVid" element={<CueSlideshowVid />} />
             <Route path="/YouTube2" element={<YouTube2 />} />
             <Route path="/Project" element={<Project />} />
+            <Route path="/FfmpegErrorTest" element={<FfmpegErrorTest />} />
           </Routes>
         </div>
       </Router>
