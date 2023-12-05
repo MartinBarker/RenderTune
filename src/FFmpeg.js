@@ -162,6 +162,10 @@ function runFfmpegCommand(cmdArgs, outputDuration, setProcesses){
         var process = null;
         console.log('ffmpeg command = \n', cmdArgs.join(' '), '\n')
         process = execa(ffmpegPath, cmdArgs);
+        process.catch((err) => {
+            const errorMessage = err.stderr.split('\n').find(line => line.includes('No such file or directory'));
+            console.log('ffmpeg execa err: ', errorMessage)
+        });
         handleProgress(process, outputDuration, setProcesses);
     } catch (err) {
         console.log('ffmpeg execa err: ', err)
@@ -194,24 +198,7 @@ function newstartRender(renderSettings, setProcesses) {
 
 function killProcess(pid) {
     console.log('killProcess() PID=', pid)
-    //ipcRenderer.send('kill-process', pid);
-    /*
-    const isWindows = process.platform === 'win32';
-    const killCommand = isWindows ? `taskkill /PID ${pid} /F` : `kill -SIGKILL ${pid}`;
-    console.log('killProcess() killCommand=', killCommand)
 
-    execa(killCommand, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`killProcess() Error killing process ${pid}: ${error}`);
-            console.error(stderr);
-            return;
-        } else {
-            console.log('no err')
-        }
-        console.log(`killProcess() Process ${pid} killed successfully`);
-        console.error(stdout);
-    });
-    */
 }
 
 const updateProcessStatus = (pid, status, setProcesses) => {
