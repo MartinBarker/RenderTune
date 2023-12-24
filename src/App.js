@@ -5,6 +5,7 @@ import CueSlideshowVid from './CueSlideshowVid';
 import YouTube2 from './YouTube2';
 import Sidebar from './Sidebar';
 import TableTest from './TableTest';
+import NewRender from './NewRender';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 
@@ -32,7 +33,6 @@ function App() {
     delete updatedProjects[key];
     setProjects(updatedProjects);
   };
-
 
   const tableTestData = [
     {
@@ -82,6 +82,7 @@ function App() {
               <Link to="/YouTube2"><h1>YouTube2</h1></Link>
               <Link to="/Project"><h1>Project</h1></Link>
               <Link to="/FfmpegErrorTest"><h1>FfmpegErrorTest</h1></Link>
+              <Link to="/NewRender"><h1>NewRender</h1></Link>
             </nav>
 
             {/* Route Configuration */}
@@ -90,6 +91,7 @@ function App() {
               <Route path="/YouTube2" element={<YouTube2 />} />
               <Route path="/Project" element={<Project />} />
               <Route path="/FfmpegErrorTest" element={<FfmpegErrorTest />} />
+              <Route path="/NewRender" element={<NewRender />} />
             </Routes>
           </div>
         </Router>
