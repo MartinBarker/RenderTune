@@ -149,7 +149,7 @@ function Project() {
         handleSelectedRowsChanged(rows, 'audio')}
       columnInfo={[
         {
-          accessorKey: 'fileName',
+          accessorKey: 'name',
           header: 'Name',
         },
         {

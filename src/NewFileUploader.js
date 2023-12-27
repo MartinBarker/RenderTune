@@ -9,6 +9,9 @@ const NewFileUploader = ({ onFilesSelect }) => {
   const [imageTableData, setImageTableData] = useState([]);
   const [audioTableData, setAudioTableData] = useState([]);
 
+  //
+  // Handle when to call updateFiles()
+  //
   const handleFileInputChange = async (event) => {
     const files = event.target.files;
     updateFiles(files)
@@ -21,6 +24,19 @@ const NewFileUploader = ({ onFilesSelect }) => {
     updateFiles(files)
   };
 
+  const handleChooseFiles = () => {
+    document.getElementById("fileInput").click();
+  };
+
+  //
+  // Misc helper functions
+  //
+  function generateUniqueID() {
+    const timestamp = Date.now().toString(36);
+    const randomString = Math.random().toString(36).substring(2, 15);
+    return timestamp + randomString;
+  }
+
   function formatDuration(duration) {
     const hours = Math.floor(duration / 3600);
     const minutes = Math.floor((duration % 3600) / 60);
@@ -31,7 +47,20 @@ const NewFileUploader = ({ onFilesSelect }) => {
     return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
   }
 
-  //get metadata for audio file
+  const getAudioDuration = (file) => {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      audio.addEventListener('loadedmetadata', () => {
+        resolve(audio.duration);
+        URL.revokeObjectURL(audio.src); // Clean up
+      });
+      audio.addEventListener('error', () => {
+        reject('Error loading audio file');
+      });
+    });
+  };
+
   const getAudioMetadata = async (file) => {
     console.log(`getAudioMetadata() Parsing file "${file.name}" of type ${file.type}`);
     return mmb.parseBlob(file, { native: true })
@@ -45,66 +74,47 @@ const NewFileUploader = ({ onFilesSelect }) => {
       })
   }
 
+  //
+  // Handle when new files are dropped/chosen
+  //
   async function updateFiles(files) {
-    let newImageTableData = [];
-    let newAudioTableData = [];
-    let newOtherTableData = [];
+    console.log(`updateFiles(${files})`)
+    let audioFiles = {};
+    let imageFiles = {};
+    let otherFiles = {};
     for (var x = 0; x < files.length; x++) {
-      try {
-        let file = files[x];
-        console.log('file=',file)
-        let fileType = file.type;
-        if (fileType.includes('audio/')) {
-          var durationSeconds = 0;
-          var durationDisplay = `00:00:00`;
-          //get audio metadata
-          try {
-            var metadata = await getAudioMetadata(file);
-            durationSeconds = metadata.format.duration;
-            durationDisplay = formatDuration(durationSeconds)
-          } catch (err) {
-            console.log('err getting duration: ', err)
-          }
-          newAudioTableData.push({
-            'fileName': `${file.name}`,
-            'filePath': `${file.path}`,
-            'durationSeconds': durationSeconds,
-            'durationDisplay': `${durationDisplay}`,
-            'type': 'audio'
-          })
-          onFilesSelect(newAudioTableData, newImageTableData, newOtherTableData);
+      let file = files[x];
+      let fileType = file.type;
+      const fileData = {
+        name: file.name,
+        path: file.path,
+        type: fileType,
+      };
+      console.log(`${x} file type: ${fileType} fileData: `, fileData)
 
-        } else if (fileType.includes('image/')) {
-          //get image metadata (length/width)
-          let [width, height] = await ipcRenderer.invoke('get-image-resolution', `${file.path}`);
+      if (fileType.startsWith('audio/')) {
 
-          //console.log(`${file.name}: w=${width} / h=${height}`)
-          newImageTableData.push({
-            'fileName': `${file.name}`,
-            'filePath': `${file.path}`,
-            'type': 'image'
-          })
-        } else {
-          console.log('file type = ', fileType)
-          newOtherTableData.push({
-            'fileName': `${file.name}`,
-            'filePath': `${file.path}`,
-            'type': 'other'
-          })
-        }
-        setSelectedFiles([...files]);
-        //send back up outside of this component 
-        onFilesSelect(newAudioTableData, newImageTableData, newOtherTableData);
-      } catch (err) {
-        console.log('updateFiles() err=', err)
+        //get audio duration in the background, once we get it, set fileData['durationDisplay'] = `${durationDisplay}` and make sure 'onFilesSelect' is triggered
+        
+        var uniqueID = generateUniqueID();
+        while(audioFiles[uniqueID]){uniqueID = generateUniqueID();}
+        audioFiles[uniqueID] = fileData
+
+
+      } else if (fileType.startsWith('image/')) {
+        imageFiles.push(fileData)
+      } else {
+        otherFiles.push(fileData)
       }
+
+      onFilesSelect(audioFiles, imageFiles, otherFiles)
+
     }
   }
 
-  const handleChooseFiles = () => {
-    document.getElementById("fileInput").click();
-  };
-
+  //
+  // Dragover / UI color change logic 
+  //
   const handleDragOver = (event) => {
     event.preventDefault();
     setHighlight(true);
