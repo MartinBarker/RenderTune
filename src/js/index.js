@@ -389,7 +389,7 @@ async function getImageColors(filename) {
 }
 //when you click 'create' in the new upload modal
 async function addNewUpload(uploadTitle) {
-  console.log('addNewUpload() uploadTitle=', uploadTitle, '. NewUploadFiles=', NewUploadFiles)
+  //console.log('addNewUpload() uploadTitle=', uploadTitle, '. NewUploadFiles=', NewUploadFiles)
   //if NewUploadFiles exists:
   if (NewUploadFiles) {
     //if there are no images:
@@ -410,6 +410,9 @@ async function addNewUpload(uploadTitle) {
         }
       }
 
+      //replace any non-alphanumeric or non-dash character with an empty string
+      uploadTitle = uploadTitle.replace(/[^a-zA-Z0-9-]/g, ''); 
+      uploadTitle = uploadTitle.trim();
       //if title is null, set to default
       if (uploadTitle.length < 1) {
         uploadTitle = `upload-${uploadNumber}`
