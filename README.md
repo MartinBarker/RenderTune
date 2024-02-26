@@ -80,3 +80,10 @@ This list is of future updates / improvements I plan to make for RenderTune (If 
 - New Feature: Append/Prepend video file to video we are rendering (Add MP4 intro/outro, add MP3 intro/outro)
 - New Feautre: Record, split, export and tag audio files.
 - New Feature: Upload files to YouTube / tag
+
+## Common Errors
+- Error: Missing 3rd Party Mac Developer Application"
+- Fix: You need to generate a new "Mac App Distribution" certificate online here: https://developer.apple.com/account/resources/certificates/add , download it, install it, make sure it appears in the mac os Keychain Access desktop application.
+
+- Error: editions-autoloader-none-broadened: Unable to determine a suitable edition, even after broadening. 
+- Fix: Use node v15.14.0
