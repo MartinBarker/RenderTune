@@ -6,6 +6,7 @@ import FileUploader from './FileUploader'
 import Table from './Table'
 import Test from './Test'
 import ExecaTest from './ExecaTest'
+import TableTest from './TableTest';
 
 function Project() {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -53,6 +54,7 @@ function Project() {
 
   //call when table's selected rows are changed
   const handleSelectedRowsChanged = (rows, tableType) => {
+    console.log("selected rows changed: ", rows);
     if (tableType == 'audio') {
       setSelectedAudioRows(rows)
     } else if (tableType == 'image') {
@@ -89,6 +91,8 @@ function Project() {
       throw "no platform found"
     }
 
+    console.log(`startRender() selectedAudioRows=`,selectedAudioRows)
+    console.log(`startRender() selectedImageRows=`,selectedImageRows)
     //set output folder location (currently: 1st audio file folderpath)
     let audio1 = selectedAudioRows[0]['filePath'];
     let audio1SplitByChar = audio1.split(`${splitChar}`);
@@ -141,7 +145,8 @@ function Project() {
     <h3>Audio Files</h3>
     <Table
       tableData={audioTableData}
-      onSelectedRowsChanged={(rows) => handleSelectedRowsChanged(rows, 'audio')}
+      onSelectedRowsChanged={(rows) => 
+        handleSelectedRowsChanged(rows, 'audio')}
       columnInfo={[
         {
           accessorKey: 'fileName',

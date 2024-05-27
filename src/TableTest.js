@@ -5,29 +5,16 @@ import React, {
     useMemo,
     useCallback
 } from "react";
-import MaterialReactTable from 'material-react-table';
+import MaterialReactTable from "material-react-table";
 
-const Table = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
-
+const TableTest = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
     const [data, setData] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
     const tableRef = useRef(null);
-
     //call setData() function every time tableData var changes
     useEffect(() => {
         setData(tableData);
     }, [tableData]);
-
-    //call getSelectedRows() function every time rowSelection var changes    
-    useEffect(() => {
-        getSelectedRows();
-    }, [rowSelection]);
-
-    //simple column definitions pointing to flat data
-    const columns = useMemo(
-        () => columnInfo,
-        [columnInfo],
-    );
 
     const getSelectedRows = useCallback(() => {
         const sortedData = tableRef.current
@@ -39,6 +26,14 @@ const Table = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
         }
         onSelectedRowsChanged(selectedRows);
     }, [rowSelection, onSelectedRowsChanged]);
+
+    //call getSelectedRows() function every time rowSelection var changes
+    useEffect(() => {
+        getSelectedRows();
+    }, [getSelectedRows]);
+
+    //simple column definitions pointing to flat data
+    const columns = useMemo(() => columnInfo, [columnInfo]);
 
     return (
         <>
@@ -53,11 +48,11 @@ const Table = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
                 //clicking anywhere on the row will select it
                 muiTableBodyRowProps={({ row }) => ({
                     onClick: row.getToggleSelectedHandler(),
-                    sx: { cursor: 'pointer' },
+                    sx: { cursor: "pointer" }
                 })}
                 enableRowNumbers
                 rowNumberMode="static"
-                initialState={{ density: 'compact' }}
+                initialState={{ density: "compact" }}
                 enableTopToolbar={false}
                 enableRowOrdering
                 muiTableBodyRowDragHandleProps={({ table }) => ({
@@ -67,15 +62,15 @@ const Table = ({ tableData, onSelectedRowsChanged, columnInfo }) => {
                             data.splice(
                                 hoveredRow.index,
                                 0,
-                                data.splice(draggingRow.index, 1)[0],
+                                data.splice(draggingRow.index, 1)[0]
                             );
                             setData([...data]);
                         }
-                    },
+                    }
                 })}
             />
         </>
     );
 };
 
-export default Table;
+export default TableTest;
