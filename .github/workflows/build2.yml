@@ -41,4 +41,7 @@ jobs:
       - name: Update npm to the latest version
         run: npm install -g npm@latest
 
+      - name: Install ffmpeg-static
+        run: npm install @ffmpeg-installer/ffmpeg
+
       - run: npm install
