@@ -35,4 +35,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Delete old package-lock.json
+        run: rm -f package-lock.json
+
+      - name: Update npm to the latest version
+        run: npm install -g npm@latest
+
       - run: npm install
