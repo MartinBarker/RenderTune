@@ -30,11 +30,9 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
 
-      - name: Install Node.js, NPM and Yarn
+      - name: Install Node.js and NPM
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'yarn'
 
-       # Because of timeout issue https://github.com/yarnpkg/yarn/issues/4890
-      - run: yarn install --immutable --network-timeout 1000000
+      - run: npm install
