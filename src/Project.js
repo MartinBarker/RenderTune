@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FFmpeg, newstartRender, killProcess } from './FFmpeg';
+import { FFmpeg, newstartRender, createNewRenderJob, killProcess } from './FFmpeg';
 
 import YouTube from './YouTube'
 import FileUploader from './FileUploader'

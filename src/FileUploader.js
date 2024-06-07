@@ -3,23 +3,61 @@ const { ipcRenderer } = window.require('electron');
 import './FileUploader.css'
 import * as mmb from 'music-metadata-browser';
 
-const FileUploader = ({ onFilesSelect }) => {
+const FileUploader = ({ onFilesSelected }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [highlight, setHighlight] = useState(false);
   const [imageTableData, setImageTableData] = useState([]);
   const [audioTableData, setAudioTableData] = useState([]);
 
-  const handleFileInputChange = async (event) => {
+  // Handle when user selects files using the click+popup window.
+  const handleFileInputOnChangeEvent = async (event) => {
+    // Get file blobs
     const files = event.target.files;
-    updateFiles(files)
+    // Call function to parse, sort, and return files
+    parseAndSendFiles(files)
   };
 
-  const handleDrop = (event) => {
+  // Handle when files are dropped into element.
+  const handleFileDropEvent = (event) => {
     event.preventDefault();
     setHighlight(false);
+    // Get file blobs
     const files = event.dataTransfer.files;
-    updateFiles(files)
+    // Call function to parse, sort, and return files
+    parseAndSendFiles(files)
   };
+
+  // Get all files selected
+  async function parseAndSendFiles(files) {
+    let fileData = []
+    // For each file
+    for (var x = 0; x < files.length; x++) {
+      let file = files[x];
+      // Get file contents
+      var fileContents = null;
+      try {
+        fileContents = await file.text();
+      } catch (error) {
+          console.error(`Error reading file ${file.name}:`, error);
+      }
+        // Get the file extension
+        let fileExtension = "";
+        if (file.name.includes(".")) {
+            fileExtension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2);
+        }     
+      // Add file data object to fileData list.
+      fileData.push({
+        'type': `${file.type}`,
+        'extension': `${fileExtension}`,
+        'fileName': `${file.name}`,
+        'path': `${file.path}`,
+        'contents': fileContents,
+        'durationSeconds': null,
+        'durationDisplay': null
+      })
+      onFilesSelected(fileData);
+    }
+  }
 
   function formatDuration(duration) {
     const hours = Math.floor(duration / 3600);
@@ -45,7 +83,7 @@ const FileUploader = ({ onFilesSelect }) => {
       })
   }
 
-  async function updateFiles(files) {
+  async function updateFilesComplex(files) {
     let newImageTableData = [];
     let newAudioTableData = [];
     for (var x = 0; x < files.length; x++) {
@@ -70,7 +108,7 @@ const FileUploader = ({ onFilesSelect }) => {
             'durationDisplay': `${durationDisplay}`,
             'type': 'audio'
           })
-          onFilesSelect(newAudioTableData, newImageTableData);
+          onFilesSelected(newAudioTableData, newImageTableData);
 
         } else if (fileType.includes('image/')) {
           //get image metadata (length/width)
@@ -87,7 +125,7 @@ const FileUploader = ({ onFilesSelect }) => {
         }
         setSelectedFiles([...files]);
         //send back up outside of this component 
-        onFilesSelect(newAudioTableData, newImageTableData);
+        onFilesSelected(newAudioTableData, newImageTableData);
       } catch (err) {
         console.log('updateFiles() err=', err)
       }
@@ -115,7 +153,7 @@ const FileUploader = ({ onFilesSelect }) => {
       className={`file-uploader ${highlight ? 'drag-over' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDrop={handleFileDropEvent}
       onClick={handleChooseFiles}
     >
       <div className="file-uploader-box">
@@ -124,7 +162,7 @@ const FileUploader = ({ onFilesSelect }) => {
       <input
         type="file"
         id="fileInput"
-        onChange={handleFileInputChange}
+        onChange={handleFileInputOnChangeEvent}
         multiple
         style={{ display: "none" }}
       />

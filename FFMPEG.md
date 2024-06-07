@@ -1,3 +1,19 @@
+## Extract / use image / thumbnail from audio file metadata (mp3,flac)
+# Working 1 song 1 image 
+ffmpeg 
+-loop 1 
+-framerate 2 -i "C:\Users\marti\Videos\ig_sf_6.5.24_highlights\apple image.jpg"  
+-i "C:\Users\marti\Videos\ig_sf_6.5.24_highlights\FITNESSS - F20 ⧸ FAITH.mp3"  
+-c:a pcm_s32le  
+-filter_complex concat=n=1:v=0:a=1  
+-vcodec libx264  
+-filter:v "scale=w=1920:h=1882,pad=ceil(iw/2)*2:ceil(ih/2)*2" 
+-crf 18 -pix_fmt yuv420p  
+-shortest  
+-tune stillimage  
+-t 254 "C:\Users\marti\Videos\ig_sf_6.5.24_highlights\oneSongOneImg.mkv"
+
+
 ### NEW: SLIDESHOW ADD IMAGE PADDING
 Files: E:\martinradio\rips\vinyl\parisplane\los pampas en montecarlo
 

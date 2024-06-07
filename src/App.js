@@ -3,6 +3,7 @@ import Project from './Project';
 import FfmpegErrorTest from './FfmpegErrorTest';
 import CueSlideshowVid from './CueSlideshowVid';
 import YouTube2 from './YouTube2';
+import BatchRenderSamples from './BatchRenderSamples'
 import Sidebar from './Sidebar';
 import TableTest from './TableTest';
 import NewRender from './NewRender';
@@ -80,6 +81,7 @@ function App() {
             <nav>
               <Link to="/CueSlideshowVid"><h1>CueSlideshowVid</h1></Link>
               <Link to="/YouTube2"><h1>YouTube2</h1></Link>
+              <Link to="/BatchRenderSamples"><h1>BatchRenderSamples</h1></Link>
               <Link to="/Project"><h1>Project</h1></Link>
               <Link to="/FfmpegErrorTest"><h1>FfmpegErrorTest</h1></Link>
               <Link to="/NewRender"><h1>NewRender</h1></Link>
@@ -89,6 +91,7 @@ function App() {
             <Routes>
               <Route path="/CueSlideshowVid" element={<CueSlideshowVid />} />
               <Route path="/YouTube2" element={<YouTube2 />} />
+              <Route path="/BatchRenderSamples" element={<BatchRenderSamples />} />
               <Route path="/Project" element={<Project />} />
               <Route path="/FfmpegErrorTest" element={<FfmpegErrorTest />} />
               <Route path="/NewRender" element={<NewRender />} />

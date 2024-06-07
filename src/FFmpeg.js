@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { isPackaged } from 'electron-is-packaged';
+import { ConnectingAirportsOutlined } from '@mui/icons-material';
 const path = window.require('path');
 const execa = window.require('execa');
 const readline = window.require('readline');
@@ -163,12 +164,100 @@ function runFfmpegCommand(cmdArgs, outputDuration, setProcesses){
         console.log('ffmpeg command = \n', cmdArgs.join(' '), '\n')
         process = execa(ffmpegPath, cmdArgs);
         process.catch((err) => {
-            const errorMessage = err.stderr.split('\n').find(line => line.includes('No such file or directory'));
-            console.log('ffmpeg execa err: ', errorMessage)
+            console.log('ffmpeg execa err: ', err)
         });
         handleProgress(process, outputDuration, setProcesses);
     } catch (err) {
         console.log('ffmpeg execa err: ', err)
+    }
+}
+
+function removeFileTypeExtension(audioFilename) {
+    var lastDotIndex = audioFilename.lastIndexOf('.');
+    if (lastDotIndex !== -1) { // Check if a dot is found
+        return audioFilename.substring(0, lastDotIndex); // Extract the part before the last dot
+    } else {
+        return audioFilename; // No dot found, return the original filename
+    }
+}
+
+function createNewRenderJob(
+    renderType, 
+    file, 
+    audioFilename, 
+    audioClipStart, 
+    audioClipEnd,
+    outputFolder
+){  
+    console.log("\ncreateNewRenderJob()")
+    var newRender = {
+        "renderId":"",
+        "renderType":renderType,
+        "renderStatus":"",
+        "commandArgs":[]
+    }
+    if(renderType == "singleSongClipAndImage"){
+        // Extract image file from mp3 and save it to outputFolder
+        var imageTempLocation = `${outputFolder}\\${audioFilename}-IMAGE.jpg`
+        let imageExtractionCmdArgs = [
+            "-i", 
+            `${file.filePath}`, 
+            "-vf", 
+            "scale=1920:-1", // Resize the image to 1920 pixels width (height is automatically adjusted to maintain aspect ratio)
+            "-q:v", 
+            "2", // Set the quality for the JPEG encoder (2 is a good compromise between file size and quality)
+            imageTempLocation
+        ];
+        console.log('imageExtractionCmdArgs=',imageExtractionCmdArgs)
+
+        var process = null;
+        const ffmpegPath = getFfmpegPath('ffmpeg')
+        process = execa(ffmpegPath, imageExtractionCmdArgs);
+        process.catch((err) => {
+            console.log('ffmpeg execa err: ', err)
+        });
+            // WAIT 4 SECONDS HERE
+    setTimeout(() => {
+        console.log("WAITED FOR 4 SECONDS");
+        // Create ffmpeg command to combine 1 audio file and 1 image file
+        console.log("CREATE VIDEO RENDER COMMAND");
+        var outputVideoFilepath = `${outputFolder}\\${audioFilename} - videoSnippit.mp4`;
+        var filenameWithoutExtension = removeFileTypeExtension(audioFilename);
+        console.log('overlay text filenameWithoutExtension = ', filenameWithoutExtension);
+
+        let { cmdArgs, outputDuration } = createFfmpegCommand(
+            [{
+                durationSeconds: 60,
+                filePath: `${file.filePath}`,
+                audioStartSeconds: audioClipStart,
+                type: 'audio'
+            }],
+            [{
+                filePath: `${imageTempLocation}`,
+                type: 'image',
+                textOverlay: null, //`${filenameWithoutExtension}`
+            }],
+            outputVideoFilepath,
+            2000,
+            2000,
+            false,
+            false,
+            "mp4"
+        );
+        console.log('ffmpeg command = \n', cmdArgs.join(' '), '\n');
+
+        // Run command, wait for it to compelte
+        process = null;
+        process = execa(ffmpegPath, cmdArgs);
+        process.catch((err) => {
+            console.log('ffmpeg execa err: ', err);
+        });
+        handleProgress(process, 30, null);
+        console.log("FINISHED RENDERING VIDEO \n \n");
+
+        // Delete image file
+        //delete imageTempLocation
+    }, 4000); // Wait for 4 seconds
     }
 }
 
@@ -217,6 +306,7 @@ function createFfmpegCommand(
     height,
     paddingCheckbox,
     forceOriginalAspectRatio,
+    outputFormat="mkv"
 ) {
     let imageAudioSync = false;
 
@@ -243,12 +333,27 @@ function createFfmpegCommand(
     let fc_imgOrder = '';
     let fc_finalPart = '';
     let imgAudioSyncCount = 0;
+
+    console.log('createFfmpegCommand() outputFormat = ', outputFormat)
+
     //for each input file
     for (var x = 0; x < [...audioInputs, ...imageInputs].length; x++) {
-        //console.log(`looking at file ${x}/${[...audioInputs, ...imageInputs].length}`) //, [...audioInputs, ...imageInputs][x]
+        const file = [...audioInputs, ...imageInputs][x];
+
+        console.log("looking at file: ", file)
 
         //add input to ffmpeg cmd args
-        cmdArgs.push('-r', '2', '-i', [...audioInputs, ...imageInputs][x].filePath)
+        cmdArgs.push('-r', '2')
+        
+        // If file is audio file with start tim, specify   
+        if(file.audioStartSeconds){
+            console.log('PUSH -SS')
+            cmdArgs.push('-ss', `${file.audioStartSeconds}`)
+        }else{
+            console.log('DONT PUSH -SS')
+        }
+
+        cmdArgs.push('-i', [...audioInputs, ...imageInputs][x].filePath)
 
         //if file is audio
         if ([...audioInputs, ...imageInputs][x].type == 'audio') {
@@ -274,9 +379,14 @@ function createFfmpegCommand(
                 fc_forceOriginalAspectRatio = 'force_original_aspect_ratio=decrease,'
             }
 
+            var textOverlay = "";
+            if(file.textOverlay){
+                textOverlay=`,drawtext=text='${file.textOverlay}':x=(w-text_w)/2:y=(h-text_h)/10:fontsize=34:fontcolor=black:box=1:boxcolor=white`
+            }
+
             //if file is image
             //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
-            fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${fc_forceOriginalAspectRatio}${fc_padding},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+            fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${fc_forceOriginalAspectRatio}${fc_padding},setsar=1,loop=${imgDuration}:${imgDuration}${textOverlay}[v${x}];`
             //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:-1:-1:color=white,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
             //[4:v]scale=1920:1898:force_original_aspect_ratio=decrease,pad=1920:1898:-1:-1,setsar=1,loop=580.03:580.03[v4];
 
@@ -293,15 +403,40 @@ function createFfmpegCommand(
     //consturct final combined everything filter_complex value
     let filter_complex = `${fc_audioFiles}${fc_imgOrder}${fc_finalPart}`;
 
-    console.log('construct fitler complex: ')
-    console.log('fc_audioFiles: ', fc_audioFiles)
-    console.log('fc_imgOrder: ', fc_imgOrder)
-    console.log('fc_finalPart: ', fc_finalPart)
-    console.log('______')
-    console.log('filter_complex = ', filter_complex)
+    //console.log('construct fitler complex: ')
+    //console.log('fc_audioFiles: ', fc_audioFiles)
+    //console.log('fc_imgOrder: ', fc_imgOrder)
+    //console.log('fc_finalPart: ', fc_finalPart)
+    //console.log('______')
+    //console.log('filter_complex = ', filter_complex)
     cmdArgs.push('-filter_complex', filter_complex)
     cmdArgs.push('-map', '[v]', '-map', '[a]')
-    cmdArgs.push('-c:a', 'pcm_s32le', '-c:v', 'libx264', '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+
+    if(outputFormat == 'mkv'){
+        cmdArgs.push('-c:a')
+        cmdArgs.push('pcm_s32le')
+        cmdArgs.push('-c:v')
+        cmdArgs.push('libx264')
+      }else if(outputFormat == 'mp4'){
+        cmdArgs.push('-c:a')
+        cmdArgs.push('aac')
+        cmdArgs.push('-b:a')
+        cmdArgs.push('320k')
+        cmdArgs.push('-c:v')
+        cmdArgs.push('h264')  
+        //cmdArgs.push('-movflags')
+        //cmdArgs.push('+faststart')
+        //cmdArgs.push('-profile:v')
+        //cmdArgs.push('high')
+        //cmdArgs.push('-level:v')
+        //cmdArgs.push('4.2 ')
+        //cmdArgs.push('-vcodec')
+        //cmdArgs.push('libx264')
+
+      }
+
+    cmdArgs.push( '-bufsize', '3M', '-crf', '18', '-pix_fmt', 'yuv420p', '-tune', 'stillimage', '-t', `${Math.round(outputDuration * 100) / 100}`, `${outputFilepath}`)
+    console.log('RETURNING cmdArgs = ', cmdArgs)
     return { cmdArgs: cmdArgs, outputDuration: outputDuration }
 }
 
@@ -353,7 +488,7 @@ function getFfmpegPath(cmd = 'ffmpeg') {
     }
 }
 
-function handleProgress(process, outputDuration, setProcesses) {
+function handleProgress(process, outputDuration, setProcesses=null) {
     try {
         console.log('handleProgress() begin for process=', process)
         //read progress from process
@@ -383,7 +518,9 @@ function handleProgress(process, outputDuration, setProcesses) {
                 }
                 console.log(`pid=${process.pid}, status=${displayProgress}%`)//'displayProgress=', displayProgress)
                 // Update the process status in the state
-                updateProcessStatus(process.pid, `${displayProgress}%`, setProcesses);
+                if(setProcesses){
+                    updateProcessStatus(process.pid, `${displayProgress}%`, setProcesses);
+                }
             } catch (err) {
                 console.log('Failed to parse ffmpeg progress line', err);
             }
@@ -396,13 +533,7 @@ function handleProgress(process, outputDuration, setProcesses) {
 }
 
 function FFmpeg(props) {
-
-
-
-
-
-
     return <></>;
 }
 
-export { FFmpeg, getFfmpegPath, newstartRender, killProcess, generateCueVideoCommand, runFfmpegCommand };
+export { FFmpeg, getFfmpegPath, newstartRender, createNewRenderJob, killProcess, generateCueVideoCommand, runFfmpegCommand };
