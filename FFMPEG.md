@@ -1,3 +1,110 @@
+# Merge audio + images into slideshow (last image stretched)
+```
+ffmpeg 
+-r 2 
+-i "03 Desember Panineungan (Last Christmas).flac" 
+-r 2 
+-i "04 Dunia.flac" 
+-r 2 
+-i "booklet_back.png" 
+-r 2 
+-i "booklet_front.png" 
+-r 2 
+-i "case_back.png" 
+-r 2 
+-i "obi_insert.png" 
+-filter_complex 
+"[0:a][1:a]concat=n=2:v=0:a=1[a];
+[2:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v2];
+[3:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v3];
+[4:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v4];
+[5:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v5];
+[v2][v3][v4][v5]concat=n=4:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]" 
+-map [v] 
+-map [a] 
+-c:a pcm_s32le 
+-c:v libx264 
+-bufsize 3M 
+-crf 18 
+-pix_fmt yuv420p 
+-tune stillimage 
+-t 526.93 
+"videos\slideshow_stretched.mkv" 
+```
+# WORKING!! slideshow with green padding on final image only
+ffmpeg 
+-r 2 
+-i "03 Desember Panineungan (Last Christmas).flac" 
+-r 2 
+-i "04 Dunia.flac" 
+-r 2 
+-i "booklet_back.png" 
+-r 2 
+-i "booklet_front.png" 
+-r 2 
+-i "case_back.png" 
+-r 2 
+-i "obi_insert.png" 
+-filter_complex 
+"[0:a][1:a]concat=n=2:v=0:a=1[a];
+[2:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v2];
+[3:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v3];
+[4:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v4];
+[5:v]scale=w=1000:h=1000:force_original_aspect_ratio=decrease,pad=1000:1000:(ow-iw)/2:(oh-ih)/2:color=#32a852,setsar=1,loop=263.47:263.47[v5];
+[v2][v3][v4][v5]concat=n=4:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]" 
+-map [v] 
+-map [a] 
+-c:a pcm_s32le 
+-c:v libx264 
+-bufsize 3M 
+-crf 18 
+-pix_fmt yuv420p 
+-tune stillimage 
+-t 526.93 
+"videos\slideshow_with_padding2.mkv" 
+## annotated
+ffmpeg 
+-r 2 
+-i "03 Desember Panineungan (Last Christmas).flac" 
+-r 2 
+-i "04 Dunia.flac" 
+-r 2 
+-i "booklet_back.png" 
+-r 2 
+-i "booklet_front.png" 
+-r 2 
+-i "case_back.png" 
+-r 2 
+-i "obi_insert.png" 
+-filter_complex 
+"[0:a][1:a]concat=n=2:v=0:a=1[a];
+[2:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v2];
+[3:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v3];
+[4:v]scale=w=1000:h=1000,setsar=1,loop=263.47:263.47[v4];
+[5:v]   
+        scale=w=1000:
+        h=1000:
+        force_original_aspect_ratio=decrease,
+        pad=1000:1000:
+        (ow-iw)/2:
+        (oh-ih)/2:
+        color=green,
+        setsar=1,
+        loop=263.47:
+        263.47
+[v5];
+[v2][v3][v4][v5]concat=n=4:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]" 
+-map [v] 
+-map [a] 
+-c:a pcm_s32le 
+-c:v libx264 
+-bufsize 3M 
+-crf 18 
+-pix_fmt yuv420p 
+-tune stillimage 
+-t 526.93 
+"videos\slideshow_with_padding.mkv"
+_________________________________
 ### NEW: SLIDESHOW ADD IMAGE PADDING
 Files: E:\martinradio\rips\vinyl\parisplane\los pampas en montecarlo
 

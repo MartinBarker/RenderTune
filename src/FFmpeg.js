@@ -274,12 +274,16 @@ function createFfmpegCommand(
                 fc_forceOriginalAspectRatio = 'force_original_aspect_ratio=decrease,'
             }
 
-            //if file is image
-            //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
-            fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${fc_forceOriginalAspectRatio}${fc_padding},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
-            //fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:-1:-1:color=white,setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
-            //[4:v]scale=1920:1898:force_original_aspect_ratio=decrease,pad=1920:1898:-1:-1,setsar=1,loop=580.03:580.03[v4];
+            var paddingColor = '#32a852'
+            var padding = `:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${paddingColor}`
 
+            var stretchImageToFit = false;
+            if(stretchImageToFit){
+                padding=``;
+            }
+
+            fc_imgOrder = `${fc_imgOrder}[${x}:v]scale=w=${width}:h=${height}${padding},setsar=1,loop=${imgDuration}:${imgDuration}[v${x}];`
+  
             fc_finalPart = `${fc_finalPart}[v${x}]`
         }
     }
