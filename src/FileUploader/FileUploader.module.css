@@ -1,0 +1,25 @@
+.fileUploader:hover {
+    cursor: pointer;
+    border: 2px dashed white !important;
+}
+
+.fileUploader.dragOver {
+    border-color: white;
+}
+
+.fileUploader {
+    border: 2px dashed grey;
+}
+
+.fileUploaderBox {
+    text-align: center;
+    padding: 20px;
+}
+
+.fileUploaderBox button {
+    cursor: pointer;
+}
+
+.fileUploaderBox button:hover {
+    cursor: pointer;
+}

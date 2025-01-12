@@ -1,88 +1,79 @@
 {
-  "name": "rendertune",
-  "productName": "RenderTune",
-  "version": "1.1.4",
-  "description": "combine audio and image files to create video files",
+  "name": "RenderTune",
+  "version": "1.1.46",
+  "description": "My Electron app",
+  "type": "module",
   "main": "main.js",
+  "author": "Your Name <your.email@example.com>",
+  "homepage": "./",
   "scripts": {
-    "start": "electron .",
-    "build-win": "electron-builder build --win --publish never",
-    "build-win-publish": "electron-builder build --win --publish always",
-    "build-mac": "electron-builder build --mac --publish never",
-    "build-mac-publish": "electron-builder build --mac --publish always",
-    "build-mas": "electron-builder build --mac && sh signmasscript.sh",
-    "build-linux-publish": "electron-builder build --linux --publish always",
-    "download-ffmpeg": "sh buildffmpeg.sh"
-  },
-  "browserslist": {
-    "production": [
-      "electron 8.0"
-    ],
-    "development": [
-      "electron 8.0"
-    ]
+    "build-react": "react-scripts build",
+    "build-electron": "electron-builder",
+    "build": "npm run build-react && electron-builder",
+    "help": "node -e \"console.log(Object.keys(require('./package.json').scripts).sort().map(s => 'npm run ' + s).join('\\n'))\"",
+    "start": "concurrently \"npm run start-react\" \"npm run start-electron\"",
+    "start-react": "cross-env BROWSER=none react-scripts start",
+    "start-electron": "wait-on tcp:127.0.0.1:3000 && electron .",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build-electron",
+    "download-ffmpeg-darwin-x64": "mkdirp ffmpeg/darwin-x64 && cd ffmpeg/darwin-x64 && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffmpeg-macos-X64 -O ffmpeg && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffprobe-macos-X64 -O ffprobe && chmod +x ffmpeg && chmod +x ffprobe",
+    "download-ffmpeg-darwin-arm64": "mkdirp ffmpeg/darwin-arm64 && cd ffmpeg/darwin-arm64 && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffmpeg-macos-ARM64 -O ffmpeg && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffprobe-macos-ARM64 -O ffprobe && chmod +x ffmpeg && chmod +x ffprobe",
+    "download-ffmpeg-linux-x64": "mkdirp ffmpeg/linux-x64 && cd ffmpeg/linux-x64 && wget https://github.com/mifi/ffmpeg-builds/releases/download/6.0/ffmpeg-n6.0-12-ga6dc92968a-linux64-gpl-shared-6.0.tar.xz -O ffmpeg-ffprobe.xz && tar -xv -f ffmpeg-ffprobe.xz && mv ffmpeg-n6.0-12-ga6dc92968a-linux64-gpl-shared-6.0 extracted && mkdirp lib && mv extracted/bin/ffmpeg extracted/bin/ffprobe extracted/lib/lib*.so* lib",
+    "download-ffmpeg-win32-x64": "mkdirp ffmpeg/win32-x64 && cd ffmpeg/win32-x64 && npx download-cli https://github.com/mifi/ffmpeg-builds/releases/download/6.0/ffmpeg-n6.0-12-ga6dc92968a-win64-gpl-shared-6.0.zip --out . --filename ffmpeg-ffprobe.zip && 7z x ffmpeg-ffprobe.zip && mkdirp lib && cd ffmpeg-n6.0-12-ga6dc92968a-win64-gpl-shared-6.0/bin && npx shx mv ffmpeg.exe ffprobe.exe *.dll ../../lib"
   },
   "build": {
-    "extraMetadata": {
-      "main": "main.js"
-    },
-    "afterSign": "scripts/notarize.js",
+    "appId": "com.martinbarker.digifyunique",
+    "productName": "RenderTune",
+    "artifactName": "${productName}-${os}-${arch}.${ext}",
     "directories": {
       "buildResources": "build"
     },
     "files": [
-      "main.js",
-      "src/",
-      "src/**/*",
+      "buildAssets/**/*",
       "build/**/*",
-      "node_modules/ffmpeg-ffprobe-static/ffmpeg",
-      "node_modules/ffmpeg-ffprobe-static/ffprobe"
+      "main.js",
+      "preload.js",
+      "package.json",
+      "node_modules/**/*",
+      "ffmpeg/**/*"
     ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
     "asar": {
-      "smartUnpack": true
+      "smartUnpack": false
     },
-    "win": {
-      "target": [
-        "nsis-web",
-        "portable",
-        "appx"
-      ]
-    },
-    "appx": {
-      "applicationId": "RenderTune",
-      "identityName": "1845martinbarker.digify",
-      "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
-      "publisherDisplayName": "martinbarker",
-      "backgroundColor": "#a0beeb"
-    },
+    "extraResources": [
+      {
+        "from": "build/",
+        "to": "build/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "mac": {
       "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "notarize": true,
       "appId": "com.martinbarker.digifyunique",
-      "artifactName": "${productName}-${os}.${ext}",
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
       "target": [
-        "mas"
-      ],
-      "asarUnpack": [
-        "node_modules/trash/**"
+        {
+          "target": "mas",
+          "arch": "universal"
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "electronLanguages": [
         "en"
       ],
-      "extraResources": [
-        {
-          "from": "ffmpeg-mac/ffmpeg",
-          "to": "ffmpeg"
-        },
-        {
-          "from": "ffmpeg-mac/ffprobe",
-          "to": "ffprobe"
-        }
-      ],
+      "icon": "buildAssets/icon.icns",
       "fileAssociations": [
         {
           "ext": [
@@ -182,84 +173,106 @@
     },
     "mas": {
       "hardenedRuntime": false,
+      "notarize": false,
       "entitlements": "entitlements.mas.plist",
       "entitlementsInherit": "entitlements.mas.inherit.plist",
-      "provisioningProfile": "embedded.provisionprofile",
-      "binaries": [
-        "dist/mas/RenderTune.app/Contents/Resources/ffmpeg",
-        "dist/mas/RenderTune.app/Contents/Resources/ffprobe"
-      ]
+      "provisioningProfile": "splitBySilence_macAppStore.provisionprofile"
+    },
+    "appx": {
+      "applicationId": "RenderTune",
+      "identityName": "1845martinbarker.digify",
+      "publisher": "CN=E69B865D-5831-4BE5-9AA4-08E27DAAD66C",
+      "publisherDisplayName": "martinbarker",
+      "backgroundColor": "#a0beeb"
+    },
+    "win": {
+      "target": [
+        "7z",
+        "appx",
+        "portable"
+      ],
+      "signAndEditExecutable": false,
+      "icon": "buildAssets/icon.icns"
     },
     "linux": {
-      "category": "public.app-category.productivity",
-      "icon": "build/icon.png",
+      "executableName": "rendertune",
+      "category": "AudioVideo",
+      "icon": "buildAssets/icon.icns",
       "target": [
-        "AppImage",
-        "snap"
-      ],
-      "asarUnpack": [
-        "node_modules/trash/**"
+        {
+          "arch": "x64",
+          "target": "tar.bz2"
+        },
+        {
+          "arch": "x64",
+          "target": "AppImage"
+        },
+        {
+          "arch": "x64",
+          "target": "snap"
+        },
+        {
+          "arch": "arm64",
+          "target": "tar.bz2"
+        },
+        {
+          "arch": "armv7l",
+          "target": "tar.bz2"
+        }
+      ]
+    },
+    "snap": {
+      "plugs": [
+        "default",
+        "removable-media"
       ]
     }
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MartinBarker/rendertune.git"
-  },
-  "keywords": [
-    "ffmpeg"
-  ],
-  "author": {
-    "name": "Martin Barker",
-    "email": "martinbarker99@gmail.com",
-    "url": "https://martinbarker.me/digify"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/MartinBarker/digify/issues"
-  },
-  "homepage": "https://github.com/MartinBarker/digify#readme",
-  "devDependencies": {
-    "electron": "11.3.0",
-    "electron-builder": "^22.10.5",
-    "electron-builder-notarize": "^1.1.2"
-  },
   "dependencies": {
-    "bootstrap": "^4.6.0",
-    "browser-window": "^0.4.0",
-    "crypto": "^1.0.1",
-    "datatables.net-dt": "^1.10.21",
-    "datatables.net-rowreorder-dt": "^1.2.7",
-    "dotenv": "^8.2.0",
-    "electron-builder-notarize": "^1.1.2",
-    "electron-is-dev": "^1.2.0",
-    "electron-notarize": "^1.0.0",
-    "electron-osx-sign": "^0.5.0",
-    "electron-routes": "^1.3.0",
-    "electron-updater": "^4.3.5",
-    "execa": "^5.0.0",
-    "express": "^4.17.2",
-    "ffmpeg-ffprobe-static": "^4.3.1-rc.2",
-    "ffmpeg-static": "^4.2.7",
-    "ffmpeg-static-electron": "^2.0.1",
-    "ffprobe-static": "^3.0.0",
-    "ffprobe-static-electron": "^2.0.0",
-    "find-config": "^1.0.0",
-    "fluent-ffmpeg": "^2.1.2",
-    "get-image-colors": "^4.0.1",
-    "http": "^0.0.1-security",
-    "image-size": "^0.9.3",
-    "jquery": "^3.5.1",
-    "moment": "^2.29.1",
-    "music-metadata": "^7.5.2",
-    "open": "^7.2.1",
-    "os": "^0.1.1",
-    "path": "^0.12.7",
-    "popper.js": "^1.16.1",
-    "readline": "^1.3.0",
-    "trash": "^6.1.1"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@emotion/react": "^11.14.0",
+    "@tanstack/react-table": "^8.20.6",
+    "axios": "^1.7.9",
+    "cross-env": "^7.0.3",
+    "electron-serve": "^2.1.1",
+    "electron-updater": "^6.3.9",
+    "execa": "^9.5.2",
+    "express": "^4.21.2",
+    "fs-extra": "^11.2.0",
+    "i18next-fs-backend": "^2.6.0",
+    "image-size": "^1.2.0",
+    "music-metadata-browser": "^2.5.11",
+    "nth-check": "^2.0.1",
+    "postcss": "^8.4.49",
+    "react-router-dom": "^7.0.2",
+    "readline": "^1.3.0"
   },
-  "resolutions": {
-    "electron-builder": "22.2.0"
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "cross-spawn": "^7.0.5",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.16.0",
+    "os-browserify": "^0.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-scripts": "^5.0.1",
+    "tsx": "^4.19.2",
+    "wait-on": "^8.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
