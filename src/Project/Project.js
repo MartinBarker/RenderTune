@@ -37,23 +37,16 @@ function Project() {
   const renderColumns = [
     { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => `${row.original.progress}%` },
     { accessorKey: 'id', header: 'Render ID' },
-    { accessorKey: 'outputFilename', header: 'Output Filename' },
+    { accessorKey: 'outputFilename', header: 'Output Filename', cell: ({ row }) => row.original.outputFilename },
     {
-      accessorKey: 'actions',
-      header: 'Actions',
+      accessorKey: 'openFolder',
+      header: <span>Open Folder</span>,
       cell: ({ row }) => (
-        <div>
-          <button onClick={() => removeRender(row.original.id)} title="Delete render">
-            ❌
-          </button>
-          <button onClick={() => alert('Placeholder for opening folder')} title="Open folder">
-            📂
-          </button>
-          <button onClick={() => alert('Placeholder for opening file')} title="Open file">
-            📄
-          </button>
-        </div>
-      )
+        <button onClick={() => alert('Placeholder for opening folder')} title="Open folder" className={styles.openFolderButton}>
+          📂
+        </button>
+      ),
+      enableSorting: false,
     },
   ];
 
@@ -342,32 +335,6 @@ function Project() {
     },
     { accessorKey: 'filename', header: 'File Name' }, // Use `filename`
     { accessorKey: 'dimensions', header: 'Dimensions' },
-    {
-      id: 'copy',
-      header: 'Copy',
-      cell: ({ row }) => (
-        <button
-          className={styles.copyButton}
-          onClick={() => copyImage(row.original.id)}
-          title="Copy this image"
-        >
-          📄
-        </button>
-      ),
-    },
-    {
-      id: 'remove',
-      header: 'Remove',
-      cell: ({ row }) => (
-        <button
-          className={styles.removeButton}
-          onClick={() => removeRender(row.original.id)}
-          title="Remove this image"
-        >
-          ❌
-        </button>
-      ),
-    },
   ];
   
 

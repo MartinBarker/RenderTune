@@ -1,3 +1,16 @@
+export function createBlurBackgroundCommand(inputFile, outputFile, bgWidth = 1920, bgHeight = 1080, blurStrength = 10) {
+    return {
+        cmdArgs: [
+            '-i', inputFile,
+            '-filter_complex',
+            `[0:v]scale=${bgWidth}:${bgHeight},boxblur=${blurStrength}:${blurStrength}[bg];` +
+            `[0:v]scale=-1:-1[fg];` +
+            `[bg][fg]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2`,
+            outputFile
+        ]
+    };
+}
+
 export function createFFmpegCommand(configs) {
     try {
         const {
@@ -8,7 +21,6 @@ export function createFFmpegCommand(configs) {
             height = 2000,    // Target height for the output video or scaled images.
             paddingCheckbox = false, // Option to enable/disable padding.
             backgroundColor = 'black', // Background color used for padding.
-            stretchImageToFit = false, // Option to stretch images to fit dimensions.
             repeatLoop = true,         // Option to enable/disable looping images.
             debugBypass = false        // Option to enable debug mode.
         } = configs;
@@ -55,17 +67,22 @@ export function createFFmpegCommand(configs) {
         imageInputs.forEach((image, index) => {
             const imgIndex = audioInputs.length + index; // Adjust index for images after audio inputs.
             // Scaling logic based on stretchImageToFit.
-            let scaleFilter = stretchImageToFit 
+            let scaleFilter = image.stretchImageToFit 
                 ? `scale=w=${width}:h=${height}` 
                 : `scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease`;
 
             // Padding logic based on stretchImageToFit.
-            let padFilter = stretchImageToFit 
+            let padFilter = image.stretchImageToFit 
                 ? '' 
                 : `,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${image.paddingColor || backgroundColor}`;
 
+            // Blur background logic.
+            let blurBackgroundFilter = image.useBlurBackground 
+                ? `scale=${width}:${height},boxblur=10:10[bg];[${imgIndex}:v]scale=-1:-1[fg];[bg][fg]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2` 
+                : '';
+
             // Add scale, aspect ratio correction, and optional loop for the image.
-            filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${Math.round(imgDuration * 25)}:1[v${imgIndex}];`;
+            filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter}${blurBackgroundFilter},setsar=1,loop=${Math.round(imgDuration * 25)}:1[v${imgIndex}];`;
         });
 
         // Step 5: Concatenate all processed images into a single video stream.

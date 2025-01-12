@@ -64,7 +64,6 @@ function Row({
   isExpanded,
   toggleRowSelected,
   removeRow,
-  copyRow,
   isImageTable,
   isRenderTable,
   setImageFiles,
@@ -78,45 +77,6 @@ function Row({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
-
-  const formatTimeInput = (value, isOverAnHour) => {
-    const cleanValue = value.replace(/[^0-9:]/g, '');
-    if (isOverAnHour) {
-      if (cleanValue.length > 4 && !cleanValue.includes(':')) {
-        return `${cleanValue.slice(0, 2)}:${cleanValue.slice(2, 4)}:${cleanValue.slice(4, 6)}`;
-      }
-    } else {
-      if (cleanValue.length > 2 && !cleanValue.includes(':')) {
-        return `${cleanValue.slice(0, 2)}:${cleanValue.slice(2, 4)}`;
-      }
-    }
-    return cleanValue;
-  };
-
-  const handleTimeInputChange = (e, field, rowId, isOverAnHour) => {
-    const formattedValue = formatTimeInput(e.target.value, isOverAnHour);
-    setAudioFiles((prev) =>
-      prev.map((audio) =>
-        audio.id === rowId
-          ? { ...audio, [field]: formattedValue }
-          : audio
-      )
-    );
-  };
-
-  const calculateEndTime = (startTime, length, isOverAnHour) => {
-    const [startHours, startMinutes, startSeconds] = isOverAnHour ? startTime.split(':').map(Number) : [0, ...startTime.split(':').map(Number)];
-    const [lengthHours, lengthMinutes, lengthSeconds] = isOverAnHour ? length.split(':').map(Number) : [0, ...length.split(':').map(Number)];
-    const totalStartSeconds = startHours * 3600 + startMinutes * 60 + startSeconds;
-    const totalLengthSeconds = lengthHours * 3600 + lengthMinutes * 60 + lengthSeconds;
-    const totalEndSeconds = totalStartSeconds + totalLengthSeconds;
-    const endHours = Math.floor(totalEndSeconds / 3600);
-    const endMinutes = Math.floor((totalEndSeconds % 3600) / 60);
-    const endSeconds = totalEndSeconds % 60;
-    return isOverAnHour
-      ? `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`
-      : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
   };
 
   const isOverAnHour = row.original.duration && row.original.duration >= 3600;
@@ -173,25 +133,10 @@ function Row({
                 </button>
               )}
 
-              {/* Render Copy Button */}
-              {columnHeader === "Copy" && (
-                <button
-                  className={styles.copyButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyRow(row.original.id);
-                  }}
-                  title="Copy this file"
-                >
-                  📄
-                </button>
-              )}
-
               {/* Render other cells */}
               {columnHeader !== "Expand" &&
                 columnHeader !== "Drag" &&
                 columnHeader !== "Remove" &&
-                columnHeader !== "Copy" &&
                 flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
           );
@@ -249,7 +194,7 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.stretchImageToFit || false}
+                  checked={row.original.stretchImageToFit !== undefined ? row.original.stretchImageToFit : true}
                   onChange={(e) =>
                     setImageFiles((prev) =>
                       prev.map((img) =>
@@ -276,8 +221,24 @@ function Row({
                       )
                     )
                   }
-                  disabled={row.original.stretchImageToFit} // Disable when stretchImageToFit is checked
+                  disabled={row.original.stretchImageToFit !== undefined ? row.original.stretchImageToFit : true} // Disable when stretchImageToFit is checked
                 />
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={row.original.useBlurBackground !== undefined ? row.original.useBlurBackground : false}
+                  onChange={(e) =>
+                    setImageFiles((prev) =>
+                      prev.map((img) =>
+                        img.id === row.original.id
+                          ? { ...img, useBlurBackground: e.target.checked }
+                          : img
+                      )
+                    )
+                  }
+                />
+                Use Blur Background Image
               </label>
             </div>
           </td>
@@ -322,19 +283,6 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       setData((prev) => {
         const updated = prev.filter((row) => row.id !== rowId);
         localStorage.setItem("audioFiles", JSON.stringify(updated));
-        return updated;
-      });
-    }
-  };
-
-  const copyRow = (rowId) => {
-    const rowToCopy = data.find((row) => row.id === rowId);
-    if (rowToCopy) {
-      const newRow = { ...rowToCopy, id: generateUniqueId() };
-      setData((prev) => {
-        const index = prev.findIndex((row) => row.id === rowId);
-        const updated = [...prev];
-        updated.splice(index + 1, 0, newRow);
         return updated;
       });
     }
@@ -390,7 +338,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     },
     ...columns.map((column) => ({
       ...column,
-      header: () => (
+      header: column.id === 'openFolder' ? column.header : () => (
         <div
           className={styles.sortableHeader}
           onClick={() => {
@@ -407,22 +355,6 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         </div>
       ),
     })),
-    {
-      id: "copy",
-      header: "Copy",
-      cell: ({ row }) => (
-        <button
-          className={styles.copyButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            copyRow(row.original.id);
-          }}
-          title="Copy this file"
-        >
-          📄
-        </button>
-      ),
-    },
     {
       id: "remove",
       header: "Remove",
@@ -512,7 +444,6 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                   toggleRowExpanded={toggleRowExpanded}
                   isExpanded={!!expandedRows[row.id]}
                   removeRow={removeRow}
-                  copyRow={copyRow}
                   isImageTable={isImageTable}
                   isRenderTable={isRenderTable}
                   setImageFiles={setImageFiles}
