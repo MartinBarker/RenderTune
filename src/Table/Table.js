@@ -79,6 +79,45 @@ function Row({
     transition,
   };
 
+  const formatTimeInput = (value, isOverAnHour) => {
+    const cleanValue = value.replace(/[^0-9:]/g, '');
+    if (isOverAnHour) {
+      if (cleanValue.length > 4 && !cleanValue.includes(':')) {
+        return `${cleanValue.slice(0, 2)}:${cleanValue.slice(2, 4)}:${cleanValue.slice(4, 6)}`;
+      }
+    } else {
+      if (cleanValue.length > 2 && !cleanValue.includes(':')) {
+        return `${cleanValue.slice(0, 2)}:${cleanValue.slice(2, 4)}`;
+      }
+    }
+    return cleanValue;
+  };
+
+  const handleTimeInputChange = (e, field, rowId, isOverAnHour) => {
+    const formattedValue = formatTimeInput(e.target.value, isOverAnHour);
+    setAudioFiles((prev) =>
+      prev.map((audio) =>
+        audio.id === rowId
+          ? { ...audio, [field]: formattedValue }
+          : audio
+      )
+    );
+  };
+
+  const calculateEndTime = (startTime, length, isOverAnHour) => {
+    const [startHours, startMinutes, startSeconds] = isOverAnHour ? startTime.split(':').map(Number) : [0, ...startTime.split(':').map(Number)];
+    const [lengthHours, lengthMinutes, lengthSeconds] = isOverAnHour ? length.split(':').map(Number) : [0, ...length.split(':').map(Number)];
+    const totalStartSeconds = startHours * 3600 + startMinutes * 60 + startSeconds;
+    const totalLengthSeconds = lengthHours * 3600 + lengthMinutes * 60 + lengthSeconds;
+    const totalEndSeconds = totalStartSeconds + totalLengthSeconds;
+    const endHours = Math.floor(totalEndSeconds / 3600);
+    const endMinutes = Math.floor((totalEndSeconds % 3600) / 60);
+    const endSeconds = totalEndSeconds % 60;
+    return isOverAnHour
+      ? `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`
+      : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
+  };
+
   const isOverAnHour = row.original.duration && row.original.duration >= 3600;
 
   return (
@@ -401,6 +440,8 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       }
     }
   };
+
+
 
   return (
     <div>
