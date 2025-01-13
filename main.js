@@ -204,8 +204,23 @@ function getFfmpegPath() {
     return join(process.resourcesPath, 'ffmpeg', process.platform, exeName);
   } else {
     // Development path
-    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
-    return join(__dirname, 'ffmpeg', platformFolder, 'lib', exeName);
+    if (process.platform === 'darwin') {
+      const arm64Path = '/Users/martinbarker/Documents/projects/RenderTune/ffmpeg/darwin-arm64';
+      const x64Path = '/Users/martinbarker/Documents/projects/RenderTune/ffmpeg/darwin-x64';
+      const arm64ExePath = join(arm64Path, exeName);
+      const x64ExePath = join(x64Path, exeName);
+
+      if (fs.existsSync(arm64ExePath)) {
+        return arm64ExePath;
+      } else if (fs.existsSync(x64ExePath)) {
+        return x64ExePath;
+      } else {
+        throw new Error('FFmpeg executable not found for macOS');
+      }
+    } else {
+      const platformFolder = process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
+      return join(__dirname, 'ffmpeg', platformFolder, 'lib', exeName);
+    }
   }
 }
 
