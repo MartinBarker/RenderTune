@@ -29,6 +29,8 @@ function Project() {
   const [alwaysUniqueFilenames, setAlwaysUniqueFilenames] = useState(localStorage.getItem('alwaysUniqueFilenames') === 'true');
   const [paddingColor, setPaddingColor] = useState(localStorage.getItem('paddingColor') || '#FFFFFF');
   const [stretchImageToFit, setStretchImageToFit] = useState(false);
+  const [videoWidth, setVideoWidth] = useState('');
+  const [videoHeight, setVideoHeight] = useState('');
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -36,8 +38,10 @@ function Project() {
 
   const renderColumns = [
     { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => `${row.original.progress}%` },
-    { accessorKey: 'id', header: 'Render ID' },
-    { accessorKey: 'outputFilename', header: 'Output Filename', cell: ({ row }) => row.original.outputFilename },
+    { accessorKey: 'outputFilename', header: 'Output Filename', cell: ({ row }) => {
+      const parts = row.original.outputFilename.split(pathSeparator);
+      return parts[parts.length - 1];
+    }},
     {
       accessorKey: 'openFolder',
       header: <span>Open Folder</span>,
@@ -63,6 +67,29 @@ function Project() {
   const [pathSeparator, setPathSeparator] = useState(localStorage.getItem('pathSeparator') || '');
 
   useEffect(() => {
+    const fetchPathSeparator = () => {
+      window.api.send('get-path-separator');
+      window.api.receive('path-separator-response', (separator) => {
+        setPathSeparator(separator);
+        localStorage.setItem('pathSeparator', separator); // Cache the separator
+      });
+    };
+
+    if (!pathSeparator) {
+      fetchPathSeparator();
+    }
+
+    window.api.receive('selected-folder', (folder) => {
+      setOutputFolder(folder);
+    });
+
+    // Cleanup the listener when the component unmounts
+    return () => {
+      window.api.removeAllListeners('selected-folder');
+    };
+  }, [pathSeparator]);
+
+  useEffect(() => {
     localStorage.setItem('renders', JSON.stringify(renders));
   }, [renders]);
 
@@ -81,26 +108,6 @@ function Project() {
     setRenders(updatedRenders);
   };
 
-  useEffect(() => {
-    if (!pathSeparator) {
-      // Fetch the path separator from the main process
-      window.api.send('get-path-separator');
-      window.api.receive('path-separator-response', (separator) => {
-        setPathSeparator(separator);
-        localStorage.setItem('pathSeparator', separator); // Cache the separator
-      });
-    }
-
-    window.api.receive('selected-folder', (folder) => {
-      setOutputFolder(folder);
-    });
-
-    // Cleanup the listener when the component unmounts
-    return () => {
-      window.api.removeAllListeners('selected-folder');
-    };
-  }, [pathSeparator]);
-
   const [audioFiles, setAudioFiles] = useState(getInitialState('audioFiles', []));
   const [imageFiles, setImageFiles] = useState(getInitialState('imageFiles', []));
   const [audioRowSelection, setAudioRowSelection] = useState(getInitialState('audioRowSelection', {}));
@@ -115,8 +122,6 @@ function Project() {
     return initialImageFile ? initialImageFile.filename.split('.').slice(0, -1).join('.') : 'output-video';
   });
   const [outputFormat, setOutputFormat] = useState(localStorage.getItem('outputFormat') || 'mp4');
-  const [videoWidth, setVideoWidth] = useState(localStorage.getItem('videoWidth') || '1920');
-  const [videoHeight, setVideoHeight] = useState(localStorage.getItem('videoHeight') || '1080');
   const [backgroundColor, setBackgroundColor] = useState(localStorage.getItem('backgroundColor') || '#000000');
   const [usePadding, setUsePadding] = useState(localStorage.getItem('usePadding') === 'true');
 
@@ -194,7 +199,13 @@ function Project() {
     if (imageFiles.length > 0) {
       getResolutionOptions(imageFiles).then(options => {
         setResolutionOptions(options);
-        setSelectedResolution(options[selectedImageIndex][2]); // Set default to original resolution
+        if (selectedResolution === '') {
+          const defaultResolution = options[selectedImageIndex][2]; // Set default to original resolution
+          setSelectedResolution(defaultResolution);
+          const [width, height] = defaultResolution.split('x');
+          setVideoWidth(width);
+          setVideoHeight(height);
+        }
       });
     }
   }, [imageFiles]);
@@ -202,7 +213,7 @@ function Project() {
   const handleImageSelectionChange = (e) => {
     const index = Number(e.target.value);
     setSelectedImageIndex(index);
-    setSelectedResolution(resolutionOptions[index][2]); // Set default to original resolution
+    // Do not change the resolution options or selected resolution here
   };
 
   const handleResolutionChange = (e) => {
@@ -212,8 +223,8 @@ function Project() {
     setSelectedResolution(e.target.value);
   };
 
-  const handleOutputFolderChange = (event) => {
-    setOutputFolder(event.target.value);
+  const handleOutputFolderChange = (e) => {
+    setOutputFolder(e.target.value);
   };
 
   const handleFilesSelect = (audioData, imageData) => {
@@ -486,22 +497,37 @@ function Project() {
     const renderId = generateUniqueId();
     const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
     const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-
+  
     if (selectedAudio.length === 0 || selectedImages.length === 0) {
       alert('Please select at least one audio and one image file.');
       return;
     }
-
+  
+    console.log('Selected Audio Files:', selectedAudio);
+    console.log('Selected Image Files:', selectedImages);
+  
+    let totalDuration = 0;
+    selectedAudio.forEach(audio => {
+      const lengthInSeconds = parseFloat(audio.duration);
+      totalDuration += lengthInSeconds;
+      console.log(`Audio File: ${audio.filename}, Duration: ${audio.duration}, Length in Seconds: ${lengthInSeconds}`);
+    });
+  
+    console.log('Total Duration:', totalDuration);
+  
     let finalOutputFilename = outputFilename;
     if (alwaysUniqueFilenames) {
       const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
       finalOutputFilename = `${outputFilename}_${timestamp}`;
     }
-
+  
     const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
-
+  
     const ffmpegCommand = createFFmpegCommand({
-      audioInputs: selectedAudio,
+      audioInputs: selectedAudio.map(audio => ({
+        ...audio,
+        duration: audio.duration || '0' // Ensure duration is defined
+      })),
       imageInputs: selectedImages.map(image => ({
         ...image,
         width: parseInt(videoWidth),
@@ -517,7 +543,7 @@ function Project() {
       stretchImageToFit: stretchImageToFit,
       repeatLoop: false,
     });
-
+  
     console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
     console.log('send duration:', ffmpegCommand.outputDuration);
     window.api.send('run-ffmpeg-command', {
@@ -525,29 +551,34 @@ function Project() {
       cmdArgs: ffmpegCommand.cmdArgs,
       outputDuration: ffmpegCommand.outputDuration,
     });
-
+  
     window.api.receive('ffmpeg-output', (data) => {
     });
-
+  
     window.api.receive('ffmpeg-error', (data) => {
       console.log('FFmpeg Error:', data);
-      setFfmpegError(data);
+      setFfmpegError({
+        ...data,
+        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`
+      });
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
-
+  
     addRender({
       id: renderId,
       pid: null,
       progress: 0,
-      outputFolder: 'test',
+      outputFolder: outputFolder, // Use the correct output folder
+      outputFilename: finalOutputFilename, // Use the correct output filename
       ffmpegCommand: ffmpegCommand.commandString
     });
-
+  
     window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
       updateRender(renderId, { pid, progress });
     });
-
+  
   };
+  
 
   const handleFilesMetadata = (filesMetadata) => {
 
@@ -738,21 +769,28 @@ function Project() {
             <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
               Output Folder
             </label>
-            <div className={styles.folderInputWrapper}>
+            <div className={styles.editableDropdownFolder}>
               <input
                 type="text"
                 id="outputFolder"
                 value={outputFolder}
                 onChange={handleOutputFolderChange}
                 placeholder="Choose output folder"
-                className={styles.folderInput}
-                readOnly
+                className={styles.renderOptionInput}
               />
               <button
                 onClick={handleChooseFolder}
                 className={styles.folderButton}
+                title="Choose Folder"
               >
-                Choose Folder
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className={styles.folderIcon}
+                >
+                  <path d="M10 4H2v16h20V6H12l-2-2zM4 8h16v10H4V8z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -812,9 +850,9 @@ function Project() {
                 onChange={handleImageSelectionChange}
                 className={styles.renderOptionSelect}
               >
-                {imageFiles.map((_, index) => (
+                {imageFiles.map((image, index) => (
                   <option key={index} value={index}>
-                    Image {index + 1}
+                    {image.filename}
                   </option>
                 ))}
               </select>
@@ -886,9 +924,13 @@ function Project() {
               <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
                 <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
                   <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.map((file) => (
-                      <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
-                    ))}
+                    {selectedImages.length === 0 ? (
+                      <p>No images selected</p>
+                    ) : (
+                      selectedImages.map((file) => (
+                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
+                      ))
+                    )}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -898,7 +940,7 @@ function Project() {
         <button
           className={styles.renderButton}
           onClick={handleRender}
-          disabled={!outputFolder || !outputFilename}
+          disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
         >
           Render
         </button>
@@ -908,20 +950,24 @@ function Project() {
         <div className={styles.errorContainer}>
           <button className={styles.closeButton} onClick={handleCloseError}>x</button>
           <h3>FFmpeg Error:</h3>
-          <p>{ffmpegError.message}</p>
-          <pre>{ffmpegError.lastOutput}</pre>
+          <pre className={styles.errorPre}>{ffmpegError.lastOutput}</pre>
+          <pre className={styles.errorPre}>{ffmpegError.fullCommand}</pre>
         </div>
       )}
 
       <div className={styles.rendersSection}>
         <h2>Renders List</h2>
         <Table
-          data={renders.map(render => ({
-            progress: render.progress,
-            id: render.id,
-            outputFilename: `${render.outputFolder}/${render.outputFilename || 'Unknown'}`,
-            ffmpegCommand: render.ffmpegCommand
-          }))}
+          data={renders.map(render => {
+            const parts = render.outputFilename.split(pathSeparator);
+            const filename = parts[parts.length - 1];
+            return {
+              progress: render.progress,
+              id: render.id,
+              outputFilename: filename, // Display only the filename with extension
+              ffmpegCommand: render.ffmpegCommand
+            };
+          })}
           columns={renderColumns}
           rowSelection={{}} // No row selection needed for this table
           setRowSelection={() => {}} // Dummy function

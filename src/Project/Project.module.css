@@ -129,7 +129,7 @@
 }
 
 .folderButton {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   background-color: #007bff;
   color: white;
   border: none;
@@ -137,10 +137,20 @@
   cursor: pointer;
   transition: background-color 0.2s;
   white-space: nowrap;
+  margin-left: 10px; /* Add margin to separate from input */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .folderButton:hover {
   background-color: #0056b3;
+}
+
+.folderIcon {
+  width: 20px;
+  height: 20px;
+  fill: white;
 }
 
 .renderOptionInput {
@@ -255,6 +265,13 @@
   overflow-wrap: break-word;
   padding-top: 0.5rem; /* Decrease padding above text */
   position: relative; /* For positioning the close button */
+  white-space: pre-wrap; /* Ensure text wraps onto the next line */
+}
+
+.errorPre {
+  white-space: pre-wrap; /* Ensure text wraps onto the next line */
+  word-wrap: break-word; /* Break long words onto the next line */
+  overflow-wrap: break-word; /* Ensure text wraps onto the next line */
 }
 
 /* Style for the close button */
@@ -430,7 +447,7 @@
 .thumbnail {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: none; 
 }
 
@@ -474,6 +491,10 @@
   justify-content: flex-start; /* Align items to the left */
   align-items: center;
   padding: 0.5rem 0; /* Adjust padding for a clean look */
+}
+
+#imageTimelineContent p {
+  color: black; /* Ensure text is black */
 }
 
 .resetButton {
@@ -527,6 +548,43 @@
   right: 10px;
   pointer-events: none;
   color: black;
+}
+
+.editableDropdownFolder::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: black;
+}
+
+.editableDropdownFolder select {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  opacity: 0;
+  cursor: pointer;
+}
+.editableDropdownFolder {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.editableDropdownFolder input {
+  flex: 1;
+  padding-right: 40px; /* Add padding to avoid overlap with dropdown arrow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editableDropdownFolder input:focus {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .openFolderButton {

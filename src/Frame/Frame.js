@@ -5,6 +5,7 @@ import styles from './Frame.module.css';
 const Sidebar = ({ children }) => {
   const [appVersion, setAppVersion] = useState('');
   const [windowStatus, setWindowStatus] = useState('init');
+  const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,6 +23,10 @@ const Sidebar = ({ children }) => {
     };
 }, []);
 
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.body.classList.toggle(styles.darkMode, !darkMode);
+  };
 
   const windowControls = {
     minimize: () => window.api.send('minimize-window'),
@@ -37,7 +42,7 @@ const Sidebar = ({ children }) => {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${darkMode ? styles.darkMode : ''}`}>
       <div className={styles.sidenav}>
         <div className={styles.sidenavHeader}>
           <svg
@@ -101,6 +106,17 @@ const Sidebar = ({ children }) => {
           >
             <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-8c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-6v-7h6v7z" />
           </svg>
+
+          {/* Dark Mode Toggle */}
+          <div className={styles.darkModeToggle}>
+            <label htmlFor="darkModeToggle">Dark Mode</label>
+            <input
+              type="checkbox"
+              id="darkModeToggle"
+              checked={darkMode}
+              onChange={toggleDarkMode}
+            />
+          </div>
 
           {/* Projects List */}
           <svg
