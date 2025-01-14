@@ -1,394 +1,328 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
-const { autoUpdater } = require('electron-updater');
-const musicMetadata = require('music-metadata');
-var path = require('path');
-const sizeOf = require('image-size');
-const getColors = require('get-image-colors');
-const { resolve } = require('dns');
-const { createServer } = require('http');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { app, BrowserWindow, ipcMain, protocol, session, dialog, Menu } from 'electron';
+import { nativeImage } from 'electron';
+import { execa } from 'execa';
+import pkg from 'electron-updater';
+import path from 'path';
+import fs from 'fs';
+import readline from 'readline';
+import musicMetadata from 'music-metadata';
+import sizeOf from 'image-size';
 
-const execa = require('execa');
-var ffmpegPath = '';
-
-//const {render} = require('./src/js/index.js');
-
-const port = 3030
-const http = require("http");
-const host = 'localhost';
-var qs = require('querystring');
-
-const requestListener = async function (req, res) {
-    try{
-        switch (req.url) {
-            //render api route hit
-            case "/render":
-                console.log('/render route')
-                let body = '';
-                let status = ''
-                //get body data
-                try{
-                    req.on('data', async function (data) {
-                        //try{
-                        body += data;
-                        // Too much POST data, kill the connection! 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
-                        if (body.length > 1e6) {
-                            req.connection.destroy();
-                        }
-                        try {
-                            //convert body to json
-                            body = JSON.parse(body)
-                            //console.log('body=',body)
-                            //for each render
-                            for(var x = 0; x < body.length; x++){
-                                //convert render options to ffmpeg arr
-                                let ffmpegArgs = await createFfmpegArgs(body[x]);
-                                
-                                console.log('main ffmpegPath = ',ffmpegPath)
-                                console.log('main ffmpegArgs = ',ffmpegArgs)
-                                
-                                const process = execa(ffmpegPath, ffmpegArgs)
-                            }
-                            //create renderOptions{} object
-                            let renderOptions = {}
-                            //call render() function
-
-                            /*
-                            let ffmpegPath = 'node_modules/ffmpeg-ffprobe-static/ffmpeg.exe';
-                            let ffmpegArgs = ["-loop", "1", "-framerate", "2", "-i", "C:\\Users\\marti\\Documents\\IMAGE.jpg", "-i", "C:\\Users\\marti\\Documents\\AUDIO.wav", "-c:a", "pcm_s32le", "-filter_complex", "concat=n=1:v=0:a=1", "-vcodec", "libx264", "-bufsize", "3M", "-filter:v", "scale=w=1920:h=1946,pad=ceil(iw/2)*2:ceil(ih/2)*2", "-crf", "18", "-pix_fmt", "yuv420p", "-shortest", "-tune", "stillimage", "-t", "297", "C:\\Users\\marti\\Documents\\VIDEO.mkv"];
-                            const process = execa(ffmpegPath, ffmpegArgs)
-                            */
-                            
-                            //console.log('process=',process)
-                            finishRequest(res, 'no issue')
-                        
-                        } catch (err) {
-                            console.log('inside req.data, err=', err)
-                            status='json err'
-                            console.log('inside err status=',status)
-                            finishRequest(res, status)
-                        }
-
-        
-                    });
-                }catch(err){
-                    console.log('req.on err=',err)
-                }
-                console.log('ending. status=',status)
-                //finishRequest(res, status)
-                
-        }
-    }catch(err){
-        console.log('e1:',err)
-    }
-};
-
-async function createFfmpegArgs(renderOptions){
-    
-    return new Promise(async function (resolve, reject) {
-   
-        console.log('createFfmpegArgs() called. renderOptions=',renderOptions)
-        //get output format
-
-        let cmdArr = []
-        cmdArr.push('-loop')
-        cmdArr.push('1')
-        cmdArr.push('-framerate')
-        cmdArr.push('2')
-        //image input
-        cmdArr.push('-i')
-        cmdArr.push(`${renderOptions.image}`)
-        //audio input(s)
-        var totalLength = 0
-        for(var x=0; x < renderOptions.audio.length; x++){
-          cmdArr.push('-i')
-          cmdArr.push(`${renderOptions.audio[x]}`)
-          //get length in seconds of audio file
-          let length = await getAudioLength(renderOptions.audio[x])
-          console.log(`${x} length=`,length)
-          totalLength=totalLength+parseFloat(length)
-        }
-        totalLength=Math.ceil(totalLength)
-        console.log('totalLength=',totalLength)
-        //audio codec depending on output video format
-        if(renderOptions.outputFormat == 'mkv'){
-          cmdArr.push('-c:a')
-          cmdArr.push('pcm_s32le')
-        }else if(renderOptions.outputFormat == 'mp4'){
-          cmdArr.push('-c:a')
-          cmdArr.push('libmp3lame')
-          cmdArr.push('-b:a')
-          cmdArr.push('320k')
-        }else{
-          throw 'invalid output video format selected'
-        }
-        //filter to concatenate audio
-        cmdArr.push('-filter_complex')
-        cmdArr.push(`concat=n=${renderOptions.audio.length}:v=0:a=1`)
-        //video codec
-        cmdArr.push('-vcodec')
-        cmdArr.push('libx264')
-        //buffer size
-        cmdArr.push('-bufsize')
-        cmdArr.push('3M')
-        //filter to set resolution/padding
-        cmdArr.push('-filter:v')
-        //if user has no padding option selected, render vid to exact width/height resolution 
-        if(renderOptions.padding.toLowerCase().trim() == 'none'){
-          cmdArr.push(`scale=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]},pad=ceil(iw/2)*2:ceil(ih/2)*2`)
-        //else padding will be padding hex(#966e6e) color 
-        }else{ 
-          //get hex color
-          var paddingColor = '';
-          if(renderOptions.padding.toLowerCase().trim()=='white'){
-            paddingColor='#ffffff'
-          }else if(renderOptions.padding.toLowerCase().trim()=='black'){
-            paddingColor='#000000'
-          }else{
-            paddingColor=renderOptions.padding
-          }
-          cmdArr.push(`format=rgb24,scale=w='if(gt(a,1.7777777777777777),${renderOptions.resolution.split('x')[0]},trunc(${renderOptions.resolution.split('x')[1]}*a/2)*2)':h='if(lt(a,1.7777777777777777),${renderOptions.resolution.split('x')[1]},trunc(${renderOptions.resolution.split('x')[0]}/a/2)*2)',pad=w=${renderOptions.resolution.split('x')[0]}:h=${renderOptions.resolution.split('x')[1]}:x='if(gt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[0]}-iw)/2)':y='if(lt(a,1.7777777777777777),0,(${renderOptions.resolution.split('x')[1]}-ih)/2)':color=${paddingColor}`)
-        }
-        //crf
-        cmdArr.push('-crf')
-        cmdArr.push('18')
-        //pix_fmt
-        cmdArr.push('-pix_fmt')
-        cmdArr.push('yuv420p')
-        //shortest
-        cmdArr.push('-shortest')
-        //stillimage
-        cmdArr.push('-tune')
-        cmdArr.push('stillimage')
-        
-        //set video length (seconds) to trim ending
-        cmdArr.push('-t')
-        cmdArr.push(`${Math.ceil(totalLength)}`)
-    
-        //output
-        cmdArr.push(`${renderOptions.outputFilepath}`)
-    
-        //console.log('cmdArr = ', cmdArr)
-
-
-        //let args = ["-loop", "1", "-framerate", "2", "-i", "C:\\Users\\marti\\Documents\\IMAGE.jpg", "-i", "C:\\Users\\marti\\Documents\\AUDIO.wav", "-c:a", "pcm_s32le", "-filter_complex", "concat=n=1:v=0:a=1", "-vcodec", "libx264", "-bufsize", "3M", "-filter:v", "scale=w=1920:h=1946,pad=ceil(iw/2)*2:ceil(ih/2)*2", "-crf", "18", "-pix_fmt", "yuv420p", "-shortest", "-tune", "stillimage", "-t", "297", "C:\\Users\\marti\\Documents\\VIDEO.mkv"]
-        resolve(cmdArr)
-
-    })
-}
-
-async function getAudioLength(filepath){
-    return new Promise(async function (resolve, reject) {
-        const metadata = await musicMetadata.parseFile(filepath, { duration: true });
-        //console.log(`getAudioLength(${filepath}) duration=`,metadata.format.duration)
-        resolve(metadata.format.duration);
-    })
-}
-
-async function finishRequest(res, status){
-    console.log('finishRequest() status=',status)
-    //res.writeHead(200)
-    res.write(`res write status=${status}`);
-    res.end('');
-}
-
-/*
-const server = http.createServer(requestListener);
-server.listen(port, host, () => {
-    console.log(`Server is running on http://${host}:${port}`);
-});
-*/
+const { autoUpdater } = pkg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 let mainWindow;
-function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-            enableRemoteModule: true,
-            nodeIntegration: true,
-            contextIsolation: false,
-            //debug tools
-            //showDevTools: false
-        },
-        //framless
-        frame: false,
-        backgroundColor: '#FFF',
-        icon: "./build/icon.png"
-    });
-    //load html
-    mainWindow.loadFile('./src/index.html');
-    //open devtools
-    //mainWindow.webContents.openDevTools()
-    //setup server
 
-    mainWindow.on('closed', function () {
-        mainWindow = null;
-    });
+// Define audio and image file extensions
+const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'aiff', 'wma', 'amr', 'opus', 'alac', 'pcm', 'mid', 'midi', 'aif', 'caf'];
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heif', 'heic', 'ico', 'svg', 'raw', 'cr2', 'nef', 'orf', 'arw', 'raf', 'dng', 'pef', 'sr2'];
 
-    // check if there are any updates availiable once main window is ready. if there are, automatically download 
-    mainWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify();
-    });
-    //notify that update is available
-    autoUpdater.on('update-available', () => {
-        mainWindow.webContents.send('update_available');
-    });
+// Custom protocol registration
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { secure: true, standard: true } },
+  { scheme: 'localfile', privileges: { secure: true, standard: true } },
+]);
 
-    //notify that update has downloaded
-    autoUpdater.on('update-downloaded', () => {
-        mainWindow.webContents.send('update_downloaded');
-    });
-}
+app.whenReady().then(() => {
 
-app.on('ready', () => {
-    createWindow();
-});
+  // Register custom protocol to handle local files
+  protocol.registerFileProtocol('localfile', (request, callback) => {
+    const filePath = path.normalize(decodeURIComponent(request.url.replace('localfile://', '')));
+    callback({ path: filePath });
+  });
 
-app.on('window-all-closed', function () {
-    app.quit();
-});
 
-app.on('activate', function () {
-    if (mainWindow === null) {
-        createWindow();
-    }
-});
+  protocol.registerBufferProtocol('thum', async (request, callback) => {
+    const url = decodeURIComponent(request.url.replace('thum:///', ''));
+    console.log('Thumbnail request for:', url);
 
-//send app version to main window
-ipcMain.on('app_version', (event) => {
-    event.sender.send('app_version', { version: app.getVersion() });
-});
-
-//auto-update quit and install
-ipcMain.on('restart_app', () => {
-    autoUpdater.quitAndInstall();
-});
-
-//open folder dir picker window and return string of folder path
-ipcMain.handle('choose-dir', async (event) => {
-    dir = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory'],
-        message: 'Choose your output folder',
-        buttonLabel: 'Select this folder'
-    });
-    return dir.filePaths[0];
-});
-
-//open directory 
-ipcMain.handle('open-dir', async (event, filepath) => {
-    shell.showItemInFolder(filepath) 
-});
-
-//open file with default application
-ipcMain.handle('open-file', async (event, filepath) => {
-    shell.openPath(filepath) 
-});
-
-//convert rgb string to hex
-function rgbToHex(color) {
-    return "#" + componentToHex(parseInt(color[0])) + componentToHex(parseInt(color[1])) + componentToHex(parseInt(color[2]));
-}
-//convert to int to hex
-function componentToHex(c) {
-    var hex = c.toString(16);
-    return hex.length == 1 ? "0" + hex : hex;
-}
-
-//get colors using vibrant.js for image file
-ipcMain.handle('get-image-colors', async (event, filename) => {
-    return new Promise(async function (resolve, reject) {
-        var colorData = []
-        try {
-            //get color data from image
-            //await getColors(path.join(__dirname, 'img.jpg')).then(colors => {
-            await getColors(filename).then(colors => {
-                //convert each swatch from rgb to hex and add to colorData{}
-                for (var x = 0; x < colors.length; x++) {
-                    let rgbColor = colors[x]._rgb
-                    let hexColor = rgbToHex(rgbColor)
-                    colorData.push(hexColor)
-                }
-            })
-            resolve(colorData);
-        } catch (err) {
-            reject(err)
-        }
-    })
-})
-
-//get metadata for audio file
-ipcMain.handle('get-audio-metadata', async (event, filename) => {
-    const metadata = await musicMetadata.parseFile(filename, { duration: true });
-    //console.log(`Music-metadata: track-number = ${metadata.common.track.no}, duration = ${metadata.format.duration} sec.`);
-    return metadata;
-});
-
-//get audio file length
-ipcMain.handle('get-audio-length', async (event, filename) => {
-    return(await getAudioLength(filename))
-});
-
-//set ffmpegPath as global var
-ipcMain.handle('set-ffmpeg-path', async (event, path) => {
-    ffmpegPath = path;
-});
-
-//set custom port
-ipcMain.handle('set-custom-port', async (event, newPort) => {
-    let status = '';
     try {
-        app.set('port', process.env.PORT || newPort);
-        status = 'success'
-    } catch (err) {
-        status = err
+
+      const fallbackImage = nativeImage.createFromPath(url).resize({ width: 200 });
+      callback({
+        mimeType: 'image/png',
+        data: fallbackImage.toPNG(),
+      });
+
+
+      /* //https://github.com/electron/electron/issues/45102
+      if (!fs.existsSync(url)) {
+        throw new Error(`File not found: ${url}`);
+      }
+  
+      const thumbnailSize = { width: 200, height: 200 }; // Only width matters on Windows
+      const thumbnail = await nativeImage.createThumbnailFromPath(url, { width: thumbnailSize.width });
+  
+      callback({
+        mimeType: 'image/png',
+        data: thumbnail.toPNG(),
+      });
+      */
+    } catch (error) {
+      console.error('Error generating thumbnail:', error);
+      // Provide an empty buffer and a valid MIME type to avoid breaking the app
+      callback({
+        mimeType: 'image/png',
+        data: Buffer.alloc(0), // Empty image buffer
+      });
+
+
     }
-    return (status)
-});
+  });
 
-ipcMain.handle('set-dir', async (event) => {
-    let defaultPath = path.dirname('/Users');
-    const { filePaths } = await dialog.showOpenDialog({
-        properties: ['openDirectory', 'createDirectory'],
-        defaultPath,
-        title: 'title',
-        message: 'message',
-        buttonLabel: 'buttonLabel'
+  createWindow();
+
+  // Content security policy
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline' http://localhost:3000; style-src 'self' 'unsafe-inline' http://localhost:3000; connect-src 'self' http://localhost:3000; img-src 'self' data: blob: localfile: thum:; font-src 'self';"]
+      }
     });
-    return (filePaths && filePaths.length === 1) ? filePaths[0] : undefined;
+  })
 
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 });
 
-
-
-ipcMain.handle('get-image-resolution', async (event, filename) => {
-    let width = '';
-    let height = '';
-    [width, height] = await getResolution(filename)
-    return [width, height];
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
-async function getResolution(filename) {
-    return new Promise(async function (resolve, reject) {
-        sizeOf(filename, function (err, dimensions) {
-            if (!err) {
-                width = dimensions.width;
-                height = dimensions.height
-                resolve([width, height]);
-            } else {
-                console.log('err getting img dimmensions:', err)
-                reject(err)
-            }
-        });
-    })
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    frame: false,
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      enableRemoteModule: false,
+      nodeIntegration: false,
+      devTools: true
+    },
+  });
+
+  console.log('filepath = ', path.join(__dirname, './build/index.html'))
+  mainWindow.loadURL(app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 'http://localhost:3000');
+
+  // Open the DevTools if in development mode
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+  mainWindow.webContents.on('did-fail-load', () => {
+    console.error('Failed to load app://./index.html');
+  });
+
+  setupAutoUpdater();
 }
-/*
-//handle auto-update events
-autoUpdater.on('update-available', () => {
+
+function setupAutoUpdater() {
+  autoUpdater.on('update-available', () => {
     mainWindow.webContents.send('update_available');
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update_downloaded');
+  });
+}
+
+// IPC event to run an FFmpeg command
+ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
+  try {
+    var cmdArgsList = ffmpegArgs.cmdArgs;
+    var duration = parseInt(ffmpegArgs.outputDuration, 10);
+    var renderId = ffmpegArgs.renderId;
+    console.log('Received FFmpeg command:', cmdArgsList);
+    console.log('duration:', duration);
+
+    const ffmpegPath = getFfmpegPath();
+    console.log('Using FFmpeg path:', ffmpegPath);
+    if (!app.isPackaged) {
+      //logStream.write(`FFmpeg command: ${ffmpegPath} ${cmdArgsList.join(' ')}\n`);
+    }
+
+    const process = execa(ffmpegPath, cmdArgsList);
+    const rl = readline.createInterface({ input: process.stderr });
+
+    let progress = 0;
+    const outputBuffer = [];
+
+    rl.on('line', (line) => {
+      if (!app.isPackaged) {
+        //logStream.write('FFmpeg output: ' + line + '\n');
+      }
+
+      outputBuffer.push(line);
+      if (outputBuffer.length > 10) {
+        outputBuffer.shift(); // Keep only the last 10 lines
+      }
+      const match = line.match(/time=([\d:.]+)/);
+      if (match) {
+        const elapsed = match[1].split(':').reduce((acc, time) => (60 * acc) + +time, 0);
+        progress = duration ? Math.min((elapsed / duration) * 100, 100) : 0;
+        progress = Math.round(progress);
+        event.reply('ffmpeg-progress', {
+          renderId: renderId,
+          pid: process.pid,
+          progress
+        });
+      }
+    });
+
+    const result = await process;
+    event.reply('ffmpeg-output', { stdout: result.stdout, progress: 100 });
+  } catch (error) {
+    console.error('FFmpeg command failed:', error.message);
+    if (!app.isPackaged) {
+      //logStream.write('error.message: ' + error.message + '\n');
+    }
+    const errorOutput = error.stderr ? error.stderr.split('\n').slice(-10).join('\n') : 'No error details';
+    event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput });
+  }
 });
 
-autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update_downloaded');
+// Function to determine FFmpeg path
+function getFfmpegPath() {
+  const exeName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+  if (app.isPackaged) {
+    // Production path
+    return join(process.resourcesPath, 'ffmpeg', process.platform, exeName);
+  } else {
+    // Development path
+    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
+    return join(__dirname, 'ffmpeg', platformFolder, 'lib', exeName);
+  }
+}
+
+ipcMain.on('get-audio-metadata', async (event, filePath) => {
+  try {
+    console.log('Getting metadata for file:', filePath);
+
+    console.log('Raw filePath:', filePath);
+    console.log('Encoded filePath:', encodeURI(filePath));
+    console.log('Decoded filePath:', decodeURI(encodeURI(filePath)));
+
+
+    const metadata = await musicMetadata.parseFile(filePath);
+    event.sender.send('audio-metadata-response', {
+      filepath: filePath,
+      filename: path.basename(filePath), // Use `filename`
+      duration: metadata.format.duration,
+    });
+  } catch (error) {
+    console.log('Failed to get metadata for file:', filePath);
+    event.sender.send('audio-metadata-response', {
+      filepath: filePath,
+      filename: path.basename(filePath), // Use `filename`
+      error: 'Failed to get metadata',
+    });
+  }
 });
-*/
+
+ipcMain.on('open-folder-dialog', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  });
+
+  if (!result.canceled) {
+    event.reply('selected-folder', result.filePaths[0]);
+  }
+});
+
+ipcMain.on('open-file-dialog', async (event) => {
+
+  try {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      const fileInfoArray = await Promise.all(
+        result.filePaths.map(async (filePath) => {
+          const normalizedPath = path.normalize(filePath);
+          const ext = path.extname(normalizedPath).toLowerCase().substring(1);
+          let fileType = 'other';
+          let dimensions = null;
+
+          if (audioExtensions.includes(ext)) {
+            fileType = 'audio';
+          } else if (imageExtensions.includes(ext)) {
+            fileType = 'image';
+            try {
+              const metadata = sizeOf(normalizedPath);
+              dimensions = `${metadata.width}x${metadata.height}`;
+            } catch (error) {
+              console.error('Error reading image dimensions:', error);
+            }
+          }
+
+          return {
+            filename: path.basename(normalizedPath),
+            filepath: normalizedPath,
+            filetype: fileType,
+            dimensions,
+          };
+        })
+      );
+
+      event.sender.send('selected-file-paths', fileInfoArray);
+    }
+  } catch (error) {
+    console.error('Error opening file dialog:', error);
+  }
+});
+
+
+ipcMain.on('get-path-separator', (event) => {
+  const separator = path.sep; // Get OS-specific path separator
+  event.reply('path-separator-response', separator); // Send back the separator
+});
+
+// Existing IPC events
+ipcMain.on('app_version', (event) => {
+  event.sender.send('app_version', { version: app.getVersion() });
+});
+
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('close-window', function () {
+  if (mainWindow) {
+    mainWindow.close();
+    app.quit();
+  }
+});
+
+ipcMain.on('minimize-window', function () {
+  if (mainWindow && mainWindow.minimizable) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.on('maximize-window', function () {
+  if (mainWindow && mainWindow.maximizable) {
+    mainWindow.maximize();
+  }
+});
+
+ipcMain.on('unmaximize-window', function () {
+  if (mainWindow) {
+    mainWindow.unmaximize();
+  }
+});

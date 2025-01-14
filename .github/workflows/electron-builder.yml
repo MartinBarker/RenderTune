@@ -1,0 +1,124 @@
+name: Build/release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    env:
+      is_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - run: git config --global core.autocrlf false
+
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      # # This global ffmpeg is used for screenshots (see below)
+      # - uses: FedericoCarboni/setup-ffmpeg@v3
+      #   with:
+      #     ffmpeg-version: release
+      #     # arm not yet supported on macos
+      #     architecture: ${{ matrix.os == 'macos-latest' && 'x64' || '' }}
+      #     # Linking type of the binaries. Use "shared" to download shared binaries and 
+      #     # "static" for statically linked ones. Shared builds are currently only available
+      #     # for windows releases. Defaults to "static"
+      #     linking-type: static
+      #     # As of version 3 of this action, builds are no longer downloaded from GitHub
+      #     # except on Windows: https://github.com/GyanD/codexffmpeg/releases.
+      #     github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+
+      # - run: ffmpeg -version
+
+      - run: yarn install --immutable --network-timeout 1000000
+
+      # Build React app before Electron
+      - name: Build React app
+        run: yarn build-react
+
+      # Clear Electron Builder cache
+      - name: Clear electron-builder cache
+        if: startsWith(matrix.os, 'ubuntu')
+        run: rm -rf ~/.cache/electron-builder
+
+      # Only for Linux: Install snapcraft
+      - name: Install snapcraft (Linux only)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo snap install snapcraft --classic
+
+      - name: (MacOS) Save provisioning profile
+        if: startsWith(matrix.os, 'macos')
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode > splitBySilence_macAppStore.provisionprofile
+
+      - name: (MacOS) Prepare for app notarization
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          mkdir -p ~/private_keys/
+          echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          release: ${{ env.is_tag == 'true' }}
+          max_attempts: 1
+          mac_certs: ${{ secrets.MAC_CERTS }}
+          mac_certs_password: ${{ secrets.MAC_CERTS_PASSWORD }}
+
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER }}
+
+      - name: Print contents of dist directory
+        run: ls -R dist/
+
+      - name: (MacOS) Capture .pkg filename
+        if: startsWith(matrix.os, 'macos') && env.is_tag == 'true'
+        id: capture-pkg
+        run: |
+          PKG_FILE=$(ls dist/mas-universal/*.pkg)
+          echo "PKG_FILE=$PKG_FILE" >> $GITHUB_ENV
+
+      - name: (MacOS) Upload to Mac App Store
+        if: startsWith(matrix.os, 'macos') && env.is_tag == 'true'
+        run: |
+          npx tsx script/xcrun-wrapper.mts $PKG_FILE ${{ secrets.APPLE_API_KEY_ID }} ${{ secrets.APPLE_API_ISSUER }} 1552674375 com.martinbarker.digifyunique
+
+      - name: (MacOS) Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: startsWith(matrix.os, 'macos') && env.is_tag == 'false'
+        with:
+          name: MacOS
+          path: |
+            dist/myCoolElectronApp-mac-arm64.dmg
+            dist/myCoolElectronApp-mac-x64.dmg
+            screenshot.jpeg
+
+      - name: (Windows) Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: startsWith(matrix.os, 'windows') && env.is_tag == 'false'
+        with:
+          name: Windows
+          path: |
+            dist/myCoolElectronApp-win-x64.7z
+            screenshot.jpeg
