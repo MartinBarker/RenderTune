@@ -527,9 +527,20 @@ function Project() {
   
     let totalDuration = 0;
     selectedAudio.forEach(audio => {
-      const lengthInSeconds = parseFloat(audio.duration);
+      let lengthInSeconds = parseFloat(audio.duration);
+  
+      if (audio.startTime && audio.endTime && audio.length) {
+        const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
+        const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
+        const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
+  
+        const startTimeInSeconds = startMinutes * 60 + startSeconds;
+        const endTimeInSeconds = endMinutes * 60 + endSeconds;
+        lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
+      }
+  
       totalDuration += lengthInSeconds;
-      console.log(`Audio File: ${audio.filename}, Duration: ${audio.duration}, Length in Seconds: ${lengthInSeconds}`);
+      console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
     });
   
     console.log('Total Duration:', totalDuration);
@@ -543,10 +554,17 @@ function Project() {
     const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
   
     const ffmpegCommand = createFFmpegCommand({
-      audioInputs: selectedAudio.map(audio => ({
-        ...audio,
-        duration: audio.duration || '0' // Ensure duration is defined
-      })),
+      audioInputs: selectedAudio.map(audio => {
+        const inputOptions = [];
+        if (audio.startTime) inputOptions.push('-ss', audio.startTime);
+        if (audio.endTime) inputOptions.push('-to', audio.endTime);
+        inputOptions.push('-i', audio.filepath);
+        return {
+          ...audio,
+          inputOptions,
+          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
+        };
+      }),
       imageInputs: selectedImages.map(image => {
         const [width, height] = image.dimensions.split('x').map(Number);
         return {
@@ -569,6 +587,12 @@ function Project() {
   
     console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
     console.log('send duration:', ffmpegCommand.outputDuration);
+  
+    // Clean up old listeners
+    window.api.removeAllListeners('ffmpeg-output');
+    window.api.removeAllListeners('ffmpeg-error');
+    window.api.removeAllListeners('ffmpeg-progress');
+  
     window.api.send('run-ffmpeg-command', {
       renderId: renderId,
       cmdArgs: ffmpegCommand.cmdArgs,
@@ -587,6 +611,10 @@ function Project() {
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
   
+    window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
+      updateRender(renderId, { pid, progress });
+    });
+  
     addRender({
       id: renderId,
       pid: null,
@@ -594,10 +622,6 @@ function Project() {
       outputFolder: outputFolder, // Use the correct output folder
       outputFilename: finalOutputFilename, // Use the correct output filename
       ffmpegCommand: ffmpegCommand.commandString
-    });
-  
-    window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
-      updateRender(renderId, { pid, progress });
     });
   
   };

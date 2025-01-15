@@ -41,11 +41,12 @@ export function createFFmpegCommand(configs) {
             const endTime = audio.endTime || audio.duration;
             const startTimeInSeconds = startTime.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
             const endTimeInSeconds = typeof endTime === 'string' ? endTime.split(':').reduce((acc, time) => (60 * acc) + +time, 0) : endTime;
-            cmdArgs.push('-i', `${audio.filepath.replace(/\\/g, '/')}`);
+            
             if (startTimeInSeconds !== 0 || endTimeInSeconds !== audio.duration) {
                 cmdArgs.push('-ss', startTimeInSeconds.toString());
                 cmdArgs.push('-to', endTimeInSeconds.toString());
             }
+            cmdArgs.push('-i', `${audio.filepath.replace(/\\/g, '/')}`);
         });
 
         imageInputs.forEach((image) => {
