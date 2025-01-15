@@ -14,15 +14,15 @@ export function createBlurBackgroundCommand(inputFile, outputFile, bgWidth = 192
 export function createFFmpegCommand(configs) {
     try {
         const {
-            audioInputs = [], 
-            imageInputs = [], 
-            outputFilepath,  
-            width = 2000,     
-            height = 2000,    
-            paddingCheckbox = false, 
-            backgroundColor = 'black', 
-            repeatLoop = true,         
-            debugBypass = false        
+            audioInputs = [],
+            imageInputs = [],
+            outputFilepath,
+            width = 2000,
+            height = 2000,
+            paddingCheckbox = false,
+            backgroundColor = 'black',
+            repeatLoop = true,
+            debugBypass = false
         } = configs;
 
         console.log('FFmpeg Configurations:', configs);
@@ -58,21 +58,32 @@ export function createFFmpegCommand(configs) {
         filterComplexStr += audioInputs.map((_, index) => `[${index}:a]`).join('');
         filterComplexStr += `concat=n=${audioInputs.length}:v=0:a=1[a];`;
 
+        console.log('image inputs = ', imageInputs);
+
         imageInputs.forEach((image, index) => {
+            console.log('\n---\nimage width = ', image.width);
+            console.log('image height = ', image.height);
+            console.log('output width = ', width);
+            console.log('output height = ', height);
             const imgIndex = audioInputs.length + index;
-            const imageAspectRatio = image.width / image.height;
-            const outputAspectRatio = width / height;
 
-            let scaleFilter;
-            let padFilter = '';
-            if (image.stretchImageToFit || imageAspectRatio === outputAspectRatio) {
-                scaleFilter = `scale=w=${width}:h=${height}`;
+            if (image.useBlurBackground) {
+                const blurBackground = `
+                    [${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,boxblur=20:20,crop=${width}:${height}:(iw-${width})/2:(ih-${height})/2,setsar=1[bg${index}];
+                    [${imgIndex}:v]scale=w=${width}:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];
+                    [bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];
+                `;
+                filterComplexStr += blurBackground;
             } else {
-                scaleFilter = `scale=w=${width}:h=-1:force_original_aspect_ratio=decrease`;
-                padFilter = `,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${image.paddingColor || backgroundColor}`;
+                let scaleFilter;
+                if (image.stretchImageToFit) {
+                    scaleFilter = `scale=w=${width}:h=${height}`;
+                } else {
+                    scaleFilter = `scale=w=${width}:h=-1:force_original_aspect_ratio=decrease`;
+                }
+                const padFilter = image.stretchImageToFit ? '' : `,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${image.paddingColor || backgroundColor}`;
+                filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`;
             }
-
-            filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`;
         });
 
         const imageRefs = imageInputs.map((_, index) => `[v${index}]`).join('');
@@ -117,4 +128,3 @@ export function createFFmpegCommand(configs) {
         return { error: error.message };
     }
 }
-

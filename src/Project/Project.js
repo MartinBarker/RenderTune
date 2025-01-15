@@ -31,6 +31,7 @@ function Project() {
   const [stretchImageToFit, setStretchImageToFit] = useState(false);
   const [videoWidth, setVideoWidth] = useState('');
   const [videoHeight, setVideoHeight] = useState('');
+  const [useBlurBackground, setUseBlurBackground] = useState(false);
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -422,6 +423,16 @@ function Project() {
         )
       );
     };
+
+    const handleBlurBackgroundChange = (e) => {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === file.id
+            ? { ...img, useBlurBackground: e.target.checked }
+            : img
+        )
+      );
+    };
   
     return (
       <div ref={setNodeRef} style={style} className={styles.imageItem} {...attributes} {...listeners}>
@@ -443,6 +454,14 @@ function Project() {
               onChange={handlePaddingColorChange}
               disabled={file.stretchImageToFit} // Disable when stretchImageToFit is checked
             />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={file.useBlurBackground || false}
+              onChange={handleBlurBackgroundChange}
+            />
+            Use Blur Background
           </label>
         </div>
       </div>
@@ -528,13 +547,17 @@ function Project() {
         ...audio,
         duration: audio.duration || '0' // Ensure duration is defined
       })),
-      imageInputs: selectedImages.map(image => ({
-        ...image,
-        width: parseInt(videoWidth),
-        height: parseInt(videoHeight),
-        stretchImageToFit: image.stretchImageToFit,
-        paddingColor: image.paddingColor || backgroundColor
-      })),
+      imageInputs: selectedImages.map(image => {
+        const [width, height] = image.dimensions.split('x').map(Number);
+        return {
+          ...image,
+          width: width, // Set to the actual image width
+          height: height, // Set to the actual image height
+          stretchImageToFit: image.stretchImageToFit,
+          paddingColor: image.paddingColor || backgroundColor,
+          useBlurBackground: image.useBlurBackground || false
+        };
+      }),
       outputFilepath: outputFilePath,
       width: parseInt(videoWidth),
       height: parseInt(videoHeight),
