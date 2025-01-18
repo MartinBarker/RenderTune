@@ -47,8 +47,8 @@ SNAPCRAFT_TOKEN
 ## How to set the following requirered Mac Apple Store credentials in GitHub Actions -> Repository Secrets
 
 - APPLE_API_KEY_ID
-    - Navigate to Apple App Store Connect (https://appstoreconnect.apple.com/) -> Users and Access -> Click the 'integrations' tab at the top of the page, click on 'App Store Connect API' on the left, and under 'Team Keys' click the blue plus icon to generate a new key with ADMIN access (https://appstoreconnect.apple.com/access/integrations/api).
-    - I generated a key with the name 'RenderTune_2025'
+    - Navigate to Apple App Store Connect (https://appstoreconnect.apple.com/) -> Users and Access -> Click the 'integrations' tab at the top of the page, click on 'App Store Connect API' on the left, and under 'Team Keys' click the blue plus icon to generate a new key with App Manager access (https://appstoreconnect.apple.com/access/integrations/api).
+    - I generated a key with the name 'RenderTune_2025_app_manager'
     - Copy the API Key ID, and save that as the secret value. 
 
 - APPLE_API_KEY 
