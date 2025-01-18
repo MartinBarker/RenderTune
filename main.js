@@ -193,7 +193,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
       //logStream.write('error.message: ' + error.message + '\n');
     }
     const errorOutput = error.stderr ? error.stderr.split('\n').slice(-10).join('\n') : 'No error details';
-    event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput });
+    event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
   }
 });
 
@@ -204,8 +204,7 @@ function getFfmpegPath() {
 
   if (app.isPackaged) {
     // Production path
-    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
-    ffmpegPath = path.join(process.resourcesPath, 'ffmpeg', platformFolder, 'lib', exeName);
+    ffmpegPath = path.join(process.resourcesPath, 'resources', exeName);
   } else {
     // Corrected development path
     const rootFolder = path.basename(path.resolve(__dirname));

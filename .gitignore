@@ -19,3 +19,6 @@ node_modules
 /app.log
 /ts-dist
 package-lock.json
+/build-resources
+.DS_Store
+*.provisionprofile

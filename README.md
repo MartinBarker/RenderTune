@@ -10,7 +10,8 @@
 `electron-builder --windows`
 
 ### How to trigger a release build:
-`git tag v1.0.8 && git push --tags`
+Tag a new version: `git tag v1.0.8`
+Push the tag to GitHub: `git push origin v1.0.8`
 
 # Common Errors:
 
