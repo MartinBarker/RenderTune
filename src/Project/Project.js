@@ -606,7 +606,8 @@ function Project() {
       console.log('FFmpeg Error:', data);
       setFfmpegError({
         ...data,
-        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`
+        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`,
+        ffmpegPath: data.ffmpegPath // Include the FFmpeg filepath
       });
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });

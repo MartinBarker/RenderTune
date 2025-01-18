@@ -7,15 +7,15 @@
   "author": "Your Name <your.email@example.com>",
   "homepage": "./",
   "scripts": {
-    "build-react": "react-scripts build",
-    "build-electron": "electron-builder",
-    "build": "npm run build-react && electron-builder",
+    "clean": "rimraf build-resources icon-build",
     "help": "node -e \"console.log(Object.keys(require('./package.json').scripts).sort().map(s => 'npm run ' + s).join('\\n'))\"",
     "start": "concurrently \"npm run start-react\" \"npm run start-electron\"",
     "start-react": "cross-env BROWSER=none react-scripts start",
     "start-electron": "wait-on tcp:127.0.0.1:3000 && electron .",
-    "pack": "electron-builder --dir",
-    "dist": "npm run build-electron",
+    "icon-gen": "mkdirp icon-build build-resources/appx && node script/icon-gen.js",
+    "build": "npm run build-react && npm run build-electron",
+    "build-react": "react-scripts build",
+    "build-electron": "electron-builder",
     "download-ffmpeg-darwin-x64": "mkdirp ffmpeg/darwin-x64 && cd ffmpeg/darwin-x64 && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffmpeg-macos-X64 -O ffmpeg && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffprobe-macos-X64 -O ffprobe && chmod +x ffmpeg && chmod +x ffprobe",
     "download-ffmpeg-darwin-arm64": "mkdirp ffmpeg/darwin-arm64 && cd ffmpeg/darwin-arm64 && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffmpeg-macos-ARM64 -O ffmpeg && wget https://github.com/mifi/ffmpeg-build-script/releases/download/6.0-1/ffprobe-macos-ARM64 -O ffprobe && chmod +x ffmpeg && chmod +x ffprobe",
     "download-ffmpeg-linux-x64": "mkdirp ffmpeg/linux-x64 && cd ffmpeg/linux-x64 && wget https://github.com/mifi/ffmpeg-builds/releases/download/6.0/ffmpeg-n6.0-12-ga6dc92968a-linux64-gpl-shared-6.0.tar.xz -O ffmpeg-ffprobe.xz && tar -xv -f ffmpeg-ffprobe.xz && mv ffmpeg-n6.0-12-ga6dc92968a-linux64-gpl-shared-6.0 extracted && mkdirp lib && mv extracted/bin/ffmpeg extracted/bin/ffprobe extracted/lib/lib*.so* lib",
@@ -80,7 +80,13 @@
       "electronLanguages": [
         "en"
       ],
-      "icon": "buildAssets/icon.icns",
+      "extraResources": [
+        {
+          "from": "ffmpeg/darwin-${arch}",
+          "to": "."
+        }
+      ],
+      "icon": "icon-build/app.icns",
       "fileAssociations": [
         {
           "ext": [
@@ -198,13 +204,19 @@
         "appx",
         "portable"
       ],
+      "extraResources": [
+        {
+          "from": "ffmpeg/win32-${arch}/lib",
+          "to": "resources"
+        }
+      ],
       "signAndEditExecutable": false,
-      "icon": "buildAssets/icon.icns"
+      "icon": "icon-build/app.ico" 
     },
     "linux": {
       "executableName": "rendertune",
       "category": "AudioVideo",
-      "icon": "buildAssets/icon.icns",
+      "icon": "icon-build/app-512.png",
       "target": [
         {
           "arch": "x64",
@@ -225,6 +237,12 @@
         {
           "arch": "armv7l",
           "target": "tar.bz2"
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "ffmpeg/linux-${arch}/lib",
+          "to": "."
         }
       ]
     },
@@ -258,6 +276,8 @@
     "readline": "^1.3.0"
   },
   "devDependencies": {
+    "icon-gen": "^4.0.0",
+    "sharp": "^0.32.6",
     "concurrently": "^9.1.0",
     "cross-spawn": "^7.0.5",
     "electron": "^33.2.1",
@@ -268,7 +288,8 @@
     "react-dom": "^19.0.0",
     "react-scripts": "^5.0.1",
     "tsx": "^4.19.2",
-    "wait-on": "^8.0.1"
+    "wait-on": "^8.0.1",
+    "rimraf": "^5.0.0"
   },
   "browserslist": {
     "production": [
