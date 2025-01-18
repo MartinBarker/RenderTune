@@ -164,6 +164,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
+        console.log('FFmpeg output:', line);
         //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
@@ -199,14 +200,20 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 // Function to determine FFmpeg path
 function getFfmpegPath() {
   const exeName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+  let ffmpegPath;
+
   if (app.isPackaged) {
     // Production path
-    return join(process.resourcesPath, 'ffmpeg', process.platform, exeName);
-  } else {
-    // Development path
     const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
-    return join(__dirname, 'ffmpeg', platformFolder, 'lib', exeName);
+    ffmpegPath = path.join(process.resourcesPath, 'ffmpeg', platformFolder, 'lib', exeName);
+  } else {
+    // Corrected development path
+    const rootFolder = path.basename(path.resolve(__dirname));
+    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
+    ffmpegPath = path.join(__dirname, '..', rootFolder, 'ffmpeg', platformFolder, 'lib', exeName);
   }
+
+  return ffmpegPath;
 }
 
 ipcMain.on('get-audio-metadata', async (event, filePath) => {

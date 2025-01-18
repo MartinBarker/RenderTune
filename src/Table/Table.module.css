@@ -158,6 +158,14 @@
   background-color: #0056b3;
 }
 
+.pageInput {
+  width: 50px;
+  margin-left: 5px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 /* Search Bar */
 .search {
   padding: 8px 12px;
@@ -181,8 +189,8 @@
 .footer {
   padding: 10px;
   font-size: 14px;
-  color: #555;
-  text-align: right;
+  color: white; /* Change text color to white */
+  text-align: left; /* Align text to the left */
 }
 
 /* Expand Icon Styles */
@@ -260,4 +268,30 @@
 
 .copyButton:hover {
   background-color: #218838;
+}
+
+.thumbnailWrapper {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumbnail {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Ensure the full image is always visible */
+  transition: none; 
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #cccccc; /* Grey placeholder */
 }

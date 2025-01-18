@@ -50,6 +50,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "ffmpeg/",
+        "to": "resources/ffmpeg/",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {

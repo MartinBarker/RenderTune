@@ -300,6 +300,11 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+
+  const generateUniqueId = () => {
+    return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+  };
 
   const toggleRowSelected = (rowId) => {
     setRowSelection((prev) => ({
@@ -313,6 +318,15 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       ...prev,
       [rowId]: !prev[rowId],
     }));
+  };
+
+  const toggleAllRowsSelected = () => {
+    const allRowsSelected = data.length === Object.keys(rowSelection).length;
+    setRowSelection(
+      allRowsSelected
+        ? {}
+        : data.reduce((acc, row) => ({ ...acc, [row.id]: true }), {})
+    );
   };
 
   const removeRow = (rowId) => {
@@ -340,18 +354,32 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     }
   };
 
+  const copyRow = (rowId) => {
+    setData((prev) => {
+      const index = prev.findIndex((row) => row.id === rowId);
+      if (index >= 0) {
+        const newRow = { ...prev[index], id: generateUniqueId() };
+        const updated = [...prev];
+        updated.splice(index + 1, 0, newRow);
+        return updated;
+      }
+      return prev;
+    });
+  };
+
   const tableColumns = React.useMemo(() => [
     {
       id: "select",
-      header: ({ table }) => (
-        <IndeterminateCheckbox
-          {...{
-            checked: table.getIsAllRowsSelected(),
-            indeterminate: table.getIsSomeRowsSelected(),
-            onChange: table.getToggleAllRowsSelectedHandler(),
-          }}
-        />
-      ),
+      header: () => {
+        const allRowsSelected = data.length === Object.keys(rowSelection).length;
+        return (
+          <IndeterminateCheckbox
+            checked={allRowsSelected}
+            indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
+            onChange={toggleAllRowsSelected}
+          />
+        );
+      },
       cell: ({ row }) => (
         <div className="px-1">
           <IndeterminateCheckbox
@@ -395,6 +423,22 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       ),
     })),
     {
+      id: "copy",
+      header: "Copy",
+      cell: ({ row }) => (
+        <button
+          className={styles.copyButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            copyRow(row.original.id);
+          }}
+          title="Copy this row"
+        >
+          📋
+        </button>
+      ),
+    },
+    {
       id: "remove",
       header: "Remove",
       cell: ({ row }) => (
@@ -415,9 +459,9 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   const table = useReactTable({
     data,
     columns: tableColumns,
-    state: { sorting },
+    state: { sorting, pagination, rowSelection },
     getRowId: (row) => row.id,
-    state: { rowSelection, globalFilter, sorting },
+    onPaginationChange: setPagination,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -441,7 +485,19 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     }
   };
 
-
+  const totalSelectedDuration = React.useMemo(() => {
+    if (!isImageTable && !isRenderTable) {
+      return Object.keys(rowSelection).reduce((total, rowId) => {
+        const selectedRow = data.find((row) => row.id === rowId);
+        if (selectedRow) {
+          const duration = selectedRow.duration || '0';
+          return total + parseFloat(duration);
+        }
+        return total;
+      }, 0);
+    }
+    return 0;
+  }, [rowSelection, data, isImageTable, isRenderTable]);
 
   return (
     <div>
@@ -512,6 +568,32 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           >
             Next
           </button>
+          <span>
+            | Go to page: 
+            <input
+              type="number"
+              min="1"
+              max={table.getPageCount()}
+              defaultValue={table.getState().pagination.pageIndex + 1}
+              onChange={(e) => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                table.setPageIndex(page);
+              }}
+              className={styles.pageInput}
+            />
+          </span>
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => {
+              table.setPageSize(Number(e.target.value));
+            }}
+          >
+            {[10, 20, 30, 40, 50].map((pageSize) => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
         </div>
       </DndContext>
       <div className={styles.footer}>
@@ -519,6 +601,11 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           {Object.keys(rowSelection).length} of {data.length} rows selected
         </span>
       </div>
+      {!isImageTable && !isRenderTable && (
+        <div className={styles.footer}>
+          <span>Total selected duration: {totalSelectedDuration.toFixed(2)} seconds</span>
+        </div>
+      )}
     </div>
   );
 }
