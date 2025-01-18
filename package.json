@@ -210,7 +210,7 @@
           "to": "resources"
         }
       ],
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
       "icon": "icon-build/app.ico" 
     },
     "linux": {
