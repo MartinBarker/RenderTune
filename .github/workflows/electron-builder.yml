@@ -76,6 +76,20 @@ jobs:
           mkdir -p ~/private_keys/
           echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: (MacOS) Download ffmpeg
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          npm run download-ffmpeg-darwin-x64
+          npm run download-ffmpeg-darwin-arm64
+
+      - name: (Windows) Download ffmpeg
+        if: startsWith(matrix.os, 'windows')
+        run: npm run download-ffmpeg-win32-x64
+
+      - name: (Linux) Download ffmpeg
+        if: startsWith(matrix.os, 'ubuntu')
+        run: npm run download-ffmpeg-linux-x64
+
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
