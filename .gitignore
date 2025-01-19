@@ -20,4 +20,3 @@ node_modules
 package-lock.json
 /build-resources
 .DS_Store
-*.provisionprofile
