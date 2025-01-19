@@ -251,7 +251,11 @@
         "default",
         "removable-media"
       ]
-    }
+    },
+    "x64ArchFiles": [
+      "resources/ffmpeg/darwin-x64/ffmpeg",
+      "resources/ffmpeg/darwin-x64/ffprobe"
+    ]
   },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
