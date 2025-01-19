@@ -2,6 +2,10 @@ name: Build/release
 
 on:
   workflow_dispatch:
+    inputs:
+      run_new_release:
+        description: 'Run a new release'
+        required: false
   push:
     tags:
       - 'v*'
@@ -12,7 +16,7 @@ jobs:
     timeout-minutes: 60
 
     env:
-      is_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      is_tag: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.run_new_release == 'true' }}
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
     strategy:

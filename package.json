@@ -52,11 +52,9 @@
         ]
       },
       {
-        "from": "ffmpeg/",
+        "from": "ffmpeg/darwin-${arch}",
         "to": "resources/ffmpeg/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       }
     ],
     "mac": {
@@ -189,7 +187,10 @@
       "notarize": false,
       "entitlements": "entitlements.mas.plist",
       "entitlementsInherit": "entitlements.mas.inherit.plist",
-      "provisioningProfile": "splitBySilence_macAppStore.provisionprofile"
+      "provisioningProfile": "splitBySilence_macAppStore.provisionprofile",
+      "binaries": [
+        "Contents/Resources/ffmpeg"
+      ]
     },
     "appx": {
       "applicationId": "RenderTune",
@@ -251,11 +252,7 @@
         "default",
         "removable-media"
       ]
-    },
-    "x64ArchFiles": [
-      "resources/ffmpeg/darwin-x64/ffmpeg",
-      "resources/ffmpeg/darwin-x64/ffprobe"
-    ]
+    }
   },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
