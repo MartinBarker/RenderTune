@@ -45,16 +45,12 @@
     },
     "extraResources": [
       {
-        "from": "build/",
-        "to": "build/",
-        "filter": [
-          "**/*"
-        ]
+        "from": "locales",
+        "to": "locales"
       },
       {
-        "from": "ffmpeg/darwin-${arch}",
-        "to": "resources/ffmpeg/",
-        "filter": ["**/*"]
+        "from": "./build/**/*",
+        "to": "resources/"
       }
     ],
     "mac": {

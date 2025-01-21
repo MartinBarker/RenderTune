@@ -112,8 +112,23 @@ function createWindow() {
     },
   });
 
-  console.log('filepath = ', path.join(__dirname, './build/index.html'))
-  mainWindow.loadURL(app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 'http://localhost:3000');
+  // load window
+  /*
+  mainWindow.loadURL(
+    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 
+    'http://localhost:3000'
+    );
+    */
+   /*
+    const startUrl = process.env.ELECTRON_START_URL || url.format({
+      pathname: path.join(__dirname, '../build/index.html'),
+      protocol: 'file:',
+      slashes: true
+    });
+    mainWindow.loadURL(startUrl);
+*/
+mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+
 
   // Open the DevTools if in development mode
   if (!app.isPackaged) {
