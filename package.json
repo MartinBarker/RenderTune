@@ -49,8 +49,8 @@
         "to": "locales"
       },
       {
-        "from": "./build/**/*",
-        "to": "resources/"
+        "from": "build",
+        "to": "build"
       }
     ],
     "mac": {
@@ -78,6 +78,10 @@
         {
           "from": "ffmpeg/darwin-${arch}",
           "to": "."
+        },
+        {
+          "from": "build",
+          "to": "build"
         }
       ],
       "icon": "icon-build/app.icns",

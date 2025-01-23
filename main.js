@@ -127,6 +127,8 @@ function createWindow() {
     });
     mainWindow.loadURL(startUrl);
 */
+
+// macos only 
 mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
 
 
@@ -219,16 +221,17 @@ function getFfmpegPath() {
 
   if (app.isPackaged) {
     // Production path
-    ffmpegPath = path.join(process.resourcesPath, 'resources', exeName);
+    ffmpegPath = process.platform === 'darwin'
+      ? path.join(process.resourcesPath, exeName) // macOS specific path
+      : path.join(process.resourcesPath, 'resources', exeName);
   } else {
-    // Corrected development path
-    const rootFolder = path.basename(path.resolve(__dirname));
-    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
-    ffmpegPath = path.join(__dirname, '..', rootFolder, 'ffmpeg', platformFolder, 'lib', exeName);
+    // Development path
+    ffmpegPath = path.join(__dirname, 'resources', exeName);
   }
 
   return ffmpegPath;
 }
+
 
 ipcMain.on('get-audio-metadata', async (event, filePath) => {
   try {
