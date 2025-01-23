@@ -69,11 +69,11 @@ export function createFFmpegCommand(configs) {
             const imgIndex = audioInputs.length + index;
 
             if (image.useBlurBackground) {
-                const blurBackground = `
-                    [${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,boxblur=20:20,crop=${width}:${height}:(iw-${width})/2:(ih-${height})/2,setsar=1[bg${index}];
-                    [${imgIndex}:v]scale=w=${width}:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];
-                    [bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];
-                `;
+                const blurBackground = [
+                    `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,boxblur=20:20,crop=${width}:${height}:(iw-${width})/2:(ih-${height})/2,setsar=1[bg${index}];`,
+                    `[${imgIndex}:v]scale=w=${width}:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];`,
+                    `[bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`
+                ].join('');
                 filterComplexStr += blurBackground;
             } else {
                 let scaleFilter;

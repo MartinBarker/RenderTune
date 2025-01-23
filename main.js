@@ -9,12 +9,16 @@ import fs from 'fs';
 import readline from 'readline';
 import musicMetadata from 'music-metadata';
 import sizeOf from 'image-size';
+import os from 'node:os';
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let mainWindow;
+
+// disable gpu acceleration
+app.disableHardwareAcceleration();
 
 // Define audio and image file extensions
 const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'aiff', 'wma', 'amr', 'opus', 'alac', 'pcm', 'mid', 'midi', 'aif', 'caf'];
@@ -112,8 +116,25 @@ function createWindow() {
     },
   });
 
-  console.log('filepath = ', path.join(__dirname, './build/index.html'))
-  mainWindow.loadURL(app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 'http://localhost:3000');
+  // load window
+  
+  mainWindow.loadURL(
+    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 
+    'http://localhost:3000'
+    );
+    
+   /*
+    const startUrl = process.env.ELECTRON_START_URL || url.format({
+      pathname: path.join(__dirname, '../build/index.html'),
+      protocol: 'file:',
+      slashes: true
+    });
+    mainWindow.loadURL(startUrl);
+*/
+
+// macos only 
+//mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+
 
   // Open the DevTools if in development mode
   if (!app.isPackaged) {
@@ -199,21 +220,35 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
 // Function to determine FFmpeg path
 function getFfmpegPath() {
+  console.log('getFfmpegPath()')
+  
+  var arch = os.arch();
+  var platform = process.platform;
+
+  console.log('os.arch = ', arch)
+  console.log('process.platform = ', platform)
+
+  const components = ['ffmpeg', `${platform}-${arch}`];
+  console.log('components = ', components)
+
   const exeName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
   let ffmpegPath;
 
   if (app.isPackaged) {
     // Production path
-    ffmpegPath = path.join(process.resourcesPath, 'resources', exeName);
+    ffmpegPath = process.platform === 'darwin'
+      ? path.join(process.resourcesPath, exeName) // macOS specific path
+      : path.join(process.resourcesPath, 'resources', exeName);
   } else {
-    // Corrected development path
+    // development path
     const rootFolder = path.basename(path.resolve(__dirname));
-    const platformFolder = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
+    const platformFolder = process.platform === 'darwin' ? `${platform}-${arch}` : process.platform === 'win32' ? 'win32-x64' : 'linux-x64';
     ffmpegPath = path.join(__dirname, '..', rootFolder, 'ffmpeg', platformFolder, 'lib', exeName);
   }
 
   return ffmpegPath;
 }
+
 
 ipcMain.on('get-audio-metadata', async (event, filePath) => {
   try {
