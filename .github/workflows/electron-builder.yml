@@ -18,6 +18,7 @@ jobs:
     env:
       is_tag: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.run_new_release == 'true' }}
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+      USE_HARD_LINKS: false  #This is a workaround for a bug in electron-builder https://github.com/electron-userland/electron-builder/issues/3179
 
     strategy:
       matrix:
