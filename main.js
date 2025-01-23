@@ -236,9 +236,11 @@ function getFfmpegPath() {
 
   if (app.isPackaged) {
     // Production path
-    ffmpegPath = process.platform === 'darwin'
-      ? path.join(process.resourcesPath, exeName) // macOS specific path
-      : path.join(process.resourcesPath, 'resources', exeName);
+    if (process.platform === 'darwin' || process.platform === 'linux') {
+      ffmpegPath = path.join(process.resourcesPath, exeName);
+    } else if (process.platform === 'win32') {
+      ffmpegPath = path.join(process.resourcesPath, 'resources', exeName);
+    }
   } else {
     // development path
     const rootFolder = path.basename(path.resolve(__dirname));
