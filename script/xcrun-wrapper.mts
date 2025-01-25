@@ -8,12 +8,12 @@ import { readFile } from 'node:fs/promises';
 // and it errors if binary already exists, we want it to just silently fail in that case
 
 const args = process.argv.slice(2);
-console.log('args = ', args)
+
 const filePath = args[0];
 const apiKeyId = args[1];
 const apiIssuer = args[2];
 const appleId = args[3];
-const bundleId = "com.martinbarker.digifyunique"; //args[4];
+const bundleId = args[4];
 
 // seems to be the same
 const ascPublicId = apiIssuer;
