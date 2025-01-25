@@ -81,11 +81,6 @@ jobs:
           mkdir -p ~/private_keys/
           echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
-     - name: (MacOS) Verify .p8 file creation
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          ls -la ~/private_keys/
-
       - name: (MacOS) Download ffmpeg
         if: startsWith(matrix.os, 'macos')
         run: |
