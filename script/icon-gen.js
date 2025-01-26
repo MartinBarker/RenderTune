@@ -24,7 +24,7 @@ const svg2png = (from, to, width, height) => {
 
 const main = async () => {
   // Base paths
-  const baseInputPath = path.join(resolvedDirname, '../build/svg');
+  const baseInputPath = path.join(resolvedDirname, '../buildAssets');
   const baseOutputPath = path.join(resolvedDirname, '../icon-build');
   const baseWindowsPath = path.join(resolvedDirname, '../build-resources/appx');
 
