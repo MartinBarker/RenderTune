@@ -75,6 +75,13 @@ jobs:
         run: |
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode > splitBySilence_macAppStore.provisionprofile
 
+      - name: (MacOS) Prepare for app notarization
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          mkdir -p ~/private_keys/
+          echo '${{ secrets.APPLE_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+
       - name: (MacOS) Download ffmpeg
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -113,24 +120,10 @@ jobs:
           PKG_FILE=$(ls dist/mas-universal/*.pkg)
           echo "PKG_FILE=$PKG_FILE" >> $GITHUB_ENV
 
-      - name: (MacOS) Prepare for app notarization
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          mkdir -p ~/private_keys/
-          echo "${{ secrets.APPLE_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
-          chmod 600 ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
-
-      - name: Check .p8 file and folder contents
-        if: startsWith(matrix.os, 'macos') && env.is_tag == 'true'
-        run: |
-          echo "Contents of ~/private_keys:"
-          ls -la ~/private_keys/
-
       - name: (MacOS) Upload to Mac App Store
         if: startsWith(matrix.os, 'macos') && env.is_tag == 'true'
         run: |
           npx tsx script/xcrun-wrapper.mts $PKG_FILE ${{ secrets.APPLE_API_KEY_ID }} ${{ secrets.APPLE_API_ISSUER }} 1552674375 com.martinbarker.digifyunique
-
 
       - name: (MacOS) Upload artifacts
         uses: actions/upload-artifact@v3
