@@ -113,18 +113,6 @@ jobs:
           PKG_FILE=$(ls dist/mas-universal/*.pkg)
           echo "PKG_FILE=$PKG_FILE" >> $GITHUB_ENV
 
-      # New step to check .p8 file existence and list folder contents
-      - name: Check .p8 file and folder contents
-        if: startsWith(matrix.os, 'macos') && env.is_tag == 'true'
-        run: |
-          if [ -f ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ]; then
-            echo ".p8 file exists"
-          else
-            echo ".p8 file is missing"
-          fi
-          echo "Contents of ~/private_keys:"
-          ls -la ~/private_keys/
-
       - name: (MacOS) Prepare for app notarization
         if: startsWith(matrix.os, 'macos')
         run: |
