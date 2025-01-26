@@ -6,12 +6,6 @@ import { readFile } from 'node:fs/promises';
 // Get arguments from the command line
 const [filePath, apiKeyId, apiIssuer, bundleId] = process.argv.slice(2);
 
-
-console.log('filePath:', filePath);
-console.log('apiKeyId:', apiKeyId);
-console.log('apiIssuer:', apiIssuer);
-console.log('bundleId:', bundleId);
-
 if (!filePath || !apiKeyId || !apiIssuer || !bundleId) {
   console.error('Usage: npx tsx xcrun-wrapper.mts <filePath> <apiKeyId> <apiIssuer> <bundleId>');
   process.exit(1);
@@ -31,8 +25,8 @@ async function runAttempt() {
     '--output-format', 'json',
     '--upload-package', filePath,
     '--type', 'macos',
-    '--apiKey', "K64CXD596U",
-    '--apiIssuer', "4c2a4671-9948-4fd3-be20-5c84c40be346",
+    '--apiKey', apiKeyId,
+    '--apiIssuer', apiIssuer,
   ];
 
   console.log('Running command: xcrun', xcrunArgs.join(' '));
