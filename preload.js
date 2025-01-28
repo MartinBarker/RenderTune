@@ -12,7 +12,11 @@ contextBridge.exposeInMainWorld('api', {
             'get-audio-metadata',  
             'open-file-dialog',
             'open-folder-dialog',
-            'get-path-separator'
+            'get-path-separator',
+            'stop-ffmpeg-render',
+            'pause-ffmpeg-render',
+            'resume-ffmpeg-render',
+            'delete-render-file'
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -27,7 +31,10 @@ contextBridge.exposeInMainWorld('api', {
             'selected-file-paths',
             'selected-folder',
             'path-separator-response',
-            'ffmpeg-progress'    
+            'ffmpeg-progress',
+            'ffmpeg-stop-response',
+            'ffmpeg-pause-response',
+            'ffmpeg-resume-response'
         ];
         if (validReceiveChannels.includes(channel)) {
             ipcRenderer.on(channel, (event, ...args) => func(...args));

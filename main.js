@@ -163,12 +163,14 @@ function setupAutoUpdater() {
 }
 
 // IPC event to run an FFmpeg command
+const ffmpegProcesses = new Map();
+
 ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
   try {
     var cmdArgsList = ffmpegArgs.cmdArgs;
     var duration = parseInt(ffmpegArgs.outputDuration, 10);
     var renderId = ffmpegArgs.renderId;
-    console.log('Received FFmpeg command:', cmdArgsList);
+    console.log('Received FFmpeg command');
     console.log('duration:', duration);
 
     const ffmpegPath = getFfmpegPath();
@@ -178,6 +180,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     }
 
     const process = execa(ffmpegPath, cmdArgsList);
+    ffmpegProcesses.set(renderId, process);
     const rl = readline.createInterface({ input: process.stderr });
 
     let progress = 0;
@@ -185,7 +188,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
-        console.log('FFmpeg output:', line);
+        //console.log('FFmpeg output:', line);
         //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
@@ -215,6 +218,49 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     }
     const errorOutput = error.stderr ? error.stderr.split('\n').slice(-10).join('\n') : 'No error details';
     event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+  }
+});
+
+ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
+  console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);
+  const process = ffmpegProcesses.get(renderId);
+  if (process) {
+    console.log(`Stopping FFmpeg process with PID: ${process.pid}`);
+    process.kill('SIGTERM');
+    ffmpegProcesses.delete(renderId);
+    console.log(`FFmpeg process with ID: ${renderId} stopped successfully`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped successfully' });
+  } else {
+    console.log(`Error: FFmpeg process with ID: ${renderId} not found`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Error: Process not found' });
+  }
+});
+
+ipcMain.on('pause-ffmpeg-render', (event, { renderId }) => {
+  console.log(`Received request to pause FFmpeg render with ID: ${renderId}`);
+  const process = ffmpegProcesses.get(renderId);
+  if (process) {
+    console.log(`Pausing FFmpeg process with PID: ${process.pid}`);
+    process.kill('SIGSTOP'); // Use 'SIGSTOP' to pause the process
+    console.log(`FFmpeg process with ID: ${renderId} paused successfully`);
+    event.reply('ffmpeg-pause-response', { renderId, status: 'Paused successfully' });
+  } else {
+    console.log(`Error: FFmpeg process with ID: ${renderId} not found`);
+    event.reply('ffmpeg-pause-response', { renderId, status: 'Error: Process not found' });
+  }
+});
+
+ipcMain.on('resume-ffmpeg-render', (event, { renderId }) => {
+  console.log(`Received request to resume FFmpeg render with ID: ${renderId}`);
+  const process = ffmpegProcesses.get(renderId);
+  if (process) {
+    console.log(`Resuming FFmpeg process with PID: ${process.pid}`);
+    process.kill('SIGCONT'); // Use 'SIGCONT' to resume the process
+    console.log(`FFmpeg process with ID: ${renderId} resumed successfully`);
+    event.reply('ffmpeg-resume-response', { renderId, status: 'Resumed successfully' });
+  } else {
+    console.log(`Error: FFmpeg process with ID: ${renderId} not found`);
+    event.reply('ffmpeg-resume-response', { renderId, status: 'Error: Process not found' });
   }
 });
 
@@ -367,5 +413,18 @@ ipcMain.on('maximize-window', function () {
 ipcMain.on('unmaximize-window', function () {
   if (mainWindow) {
     mainWindow.unmaximize();
+  }
+});
+
+ipcMain.on('delete-render-file', async (event, { outputFilePath }) => {
+  try {
+    if (fs.existsSync(outputFilePath)) {
+      fs.unlinkSync(outputFilePath);
+      console.log(`Deleted file: ${outputFilePath}`);
+    } else {
+      console.log(`File not found: ${outputFilePath}`);
+    }
+  } catch (error) {
+    console.error(`Error deleting file: ${outputFilePath}`, error);
   }
 });

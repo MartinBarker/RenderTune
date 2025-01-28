@@ -68,7 +68,8 @@ function Row({
   isRenderTable,
   setImageFiles,
   setAudioFiles,
-  ffmpegCommand
+  ffmpegCommand,
+  deleteRender
 }) {
   const { setNodeRef, transform, transition } = useSortable({
     id: row.original.id,
@@ -172,10 +173,26 @@ function Row({
                 </button>
               )}
 
+              {columnHeader === "Delete" && (
+                <button
+                  className={styles.deleteButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm("Are you sure you want to delete this render?")) {
+                      deleteRender(row.original.id);
+                    }
+                  }}
+                  title="Delete this render"
+                >
+                  🗑️
+                </button>
+              )}
+
               {/* Render other cells */}
               {columnHeader !== "Expand" &&
                 columnHeader !== "Drag" &&
                 columnHeader !== "Remove" &&
+                columnHeader !== "Delete" &&
                 flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
           );
@@ -287,7 +304,9 @@ function Row({
         <tr className={styles.expandedRow}>
           <td colSpan={row.getVisibleCells().length}>
             <div className={styles.expandedContent}>
-              <pre>{ffmpegCommand}</pre>
+              <pre>
+                Start: {row.original.startDateTime} | End: {row.original.endDateTime} | Duration: {row.original.duration} | Status: {row.original.status} | Command: {row.original.ffmpegCommand}
+              </pre>
             </div>
           </td>
         </tr>
@@ -296,7 +315,7 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender }) {
+function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, stopRender, pauseRender, resumeRender, deleteRender }) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
@@ -454,6 +473,72 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         </button>
       ),
     },
+    {
+      id: "stop",
+      header: "Stop",
+      cell: ({ row }) => (
+        <button
+          className={styles.stopButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            stopRender(row.original.id);
+          }}
+          title="Stop this render"
+        >
+          🛑
+        </button>
+      ),
+    },
+    {
+      id: "pause",
+      header: "Pause",
+      cell: ({ row }) => (
+        <button
+          className={styles.pauseButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            pauseRender(row.original.id);
+          }}
+          title="Pause this render"
+        >
+          ⏸️
+        </button>
+      ),
+    },
+    {
+      id: "resume",
+      header: "Resume",
+      cell: ({ row }) => (
+        <button
+          className={styles.resumeButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            resumeRender(row.original.id);
+          }}
+          title="Resume this render"
+        >
+          ▶️
+        </button>
+      ),
+    },
+    {
+      id: "delete",
+      header: "Delete",
+      cell: ({ row }) => (
+        <button
+          className={styles.deleteButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (window.confirm("Are you sure you want to delete this render?")) {
+              deleteRender(row.original.id);
+            }
+          }}
+          title="Delete this render"
+        >
+          🗑️
+        </button>
+      ),
+    },
   ]);
 
   const table = useReactTable({
@@ -546,6 +631,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                   setImageFiles={setImageFiles}
                   setAudioFiles={setAudioFiles}
                   ffmpegCommand={ffmpegCommand}
+                  deleteRender={deleteRender}
                 />
               ))}
             </tbody>

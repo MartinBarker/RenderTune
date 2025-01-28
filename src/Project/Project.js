@@ -170,6 +170,20 @@ function Project() {
     localStorage.setItem('stretchImageToFit', stretchImageToFit);
   }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit]);
 
+  useEffect(() => {
+    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
+      if (status === 'Stopped successfully') {
+        updateRender(renderId, { progress: 'Stopped' });
+      } else {
+        updateRender(renderId, { progress: 'Error stopping' });
+      }
+    });
+
+    return () => {
+      window.api.removeAllListeners('ffmpeg-stop-response');
+    };
+  }, []);
+
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
     const targetHeight = Math.round(targetWidth / aspectRatio);
@@ -770,6 +784,29 @@ function Project() {
   const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
   const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
 
+  const stopRender = (renderId) => {
+    updateRender(renderId, { progress: 'Stopping...' });
+    window.api.send('stop-ffmpeg-render', { renderId });
+  };
+
+  const pauseRender = (renderId) => {
+    updateRender(renderId, { progress: 'Pausing...' });
+    window.api.send('pause-ffmpeg-render', { renderId });
+  };
+
+  const resumeRender = (renderId) => {
+    updateRender(renderId, { progress: 'Resuming...' });
+    window.api.send('resume-ffmpeg-render', { renderId });
+  };
+
+  const deleteRender = (renderId) => {
+    const renderToDelete = renders.find(render => render.id === renderId);
+    if (renderToDelete) {
+      const outputFilePath = `${renderToDelete.outputFolder}${pathSeparator}${renderToDelete.outputFilename}`;
+      window.api.send('delete-render-file', { outputFilePath });
+      setRenders(renders => renders.filter(render => render.id !== renderId));
+    }
+  };
 
   return (
     <div className={styles.projectContainer}>
@@ -1023,6 +1060,10 @@ function Project() {
           isRenderTable={true}
           ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
           removeRender={removeRender}
+          stopRender={stopRender}
+          pauseRender={pauseRender}
+          resumeRender={resumeRender}
+          deleteRender={deleteRender}
         />
         {/*
         {renders.map(render => (
