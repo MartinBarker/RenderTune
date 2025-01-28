@@ -40,6 +40,12 @@ const FileUploader = ({ onFilesMetadata }) => {
       }
     });
 
+    // Set the output folder to the folder of the first file
+    if (filesArray.length > 0) {
+      const firstFileFolder = filesArray[0].filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+      window.api.send('set-output-folder', firstFileFolder);
+    }
+
     // Pass the files metadata to the parent component
     onFilesMetadata(filesArray);
   };

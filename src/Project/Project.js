@@ -170,6 +170,17 @@ function Project() {
     localStorage.setItem('stretchImageToFit', stretchImageToFit);
   }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit]);
 
+  useEffect(() => {
+    window.api.receive('output-folder-set', (folderPath) => {
+      setOutputFolder(folderPath);
+      localStorage.setItem('outputFolder', folderPath);
+    });
+  
+    return () => {
+      window.api.removeAllListeners('output-folder-set');
+    };
+  }, []);
+
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
     const targetHeight = Math.round(targetWidth / aspectRatio);
@@ -276,6 +287,7 @@ function Project() {
     setVideoHeight('1080');
     setBackgroundColor('#000000');
     setUsePadding(false);
+    setOutputFolder(''); // Clear the output folder value
     localStorage.removeItem('audioFiles');
     localStorage.removeItem('imageFiles');
     localStorage.removeItem('audioRowSelection');
@@ -286,6 +298,7 @@ function Project() {
     localStorage.removeItem('videoHeight');
     localStorage.removeItem('backgroundColor');
     localStorage.removeItem('usePadding');
+    localStorage.removeItem('outputFolder'); // Clear the output folder value in localStorage
   };
 
   const getSelectedAudioRows = () => {
@@ -635,8 +648,14 @@ function Project() {
       return;
     }
 
-    filesMetadata.forEach(file => {
-      //console.log('Project.js handleFilesMetadata:', file.filepath);
+    filesMetadata.forEach((file, index) => {
+      // Set output folder to the first new input file's folder if it's empty
+      if (index === 0 && file.filepath) {
+        const fileFolder = file.filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+        setOutputFolder(fileFolder);
+        localStorage.setItem('outputFolder', fileFolder);
+      }
+
       if (file.filetype === 'audio') {
         setAudioFiles(prev => {
           const index = prev.findIndex(f => f.filepath === file.filepath);

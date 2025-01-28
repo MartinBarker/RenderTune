@@ -369,3 +369,11 @@ ipcMain.on('unmaximize-window', function () {
     mainWindow.unmaximize();
   }
 });
+
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
+});
+
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
+});

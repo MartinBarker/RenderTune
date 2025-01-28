@@ -12,6 +12,10 @@
 ### How to trigger a release build:
 Tag a new version: `git tag v1.0.8`
 Push the tag to GitHub: `git push origin v1.0.8`
+# Delete existing tag:
+git tag -d v1.1.48 // local
+git push origin --delete v1.1.48 // remote
+
 
 # Common Errors:
 
