@@ -1,16 +1,3 @@
-export function createBlurBackgroundCommand(inputFile, outputFile, bgWidth = 1920, bgHeight = 1080, blurStrength = 10) {
-    return {
-        cmdArgs: [
-            '-i', inputFile,
-            '-filter_complex',
-            `[0:v]scale=${bgWidth}:${bgHeight},boxblur=${blurStrength}:${blurStrength}[bg];` +
-            `[0:v]scale=-1:-1[fg];` +
-            `[bg][fg]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2`,
-            outputFile
-        ]
-    };
-}
-
 export function createFFmpegCommand(configs) {
     try {
         const {
@@ -69,20 +56,32 @@ export function createFFmpegCommand(configs) {
             const imgIndex = audioInputs.length + index;
 
             if (image.useBlurBackground) {
+                
+                // create blurred background and foreground from same image
                 const blurBackground = [
                     `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,boxblur=20:20,crop=${width}:${height}:(iw-${width})/2:(ih-${height})/2,setsar=1[bg${index}];`,
-                    `[${imgIndex}:v]scale=w=${width}:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];`,
+                    `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];`,
                     `[bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`
                 ].join('');
                 filterComplexStr += blurBackground;
+            
             } else {
+                
+                // stretch image to fit or use solid color background
                 let scaleFilter;
                 if (image.stretchImageToFit) {
+                    
+                    // stretch image to fit frame
                     scaleFilter = `scale=w=${width}:h=${height}`;
                 } else {
-                    scaleFilter = `scale=w=${width}:h=-1:force_original_aspect_ratio=decrease`;
+
+                    // do not stretch image, keep aspect ratio and fit within frame
+                    scaleFilter = `scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease`;
                 }
+
+                // Add solid color background padding
                 const padFilter = image.stretchImageToFit ? '' : `,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${image.paddingColor || backgroundColor}`;
+                
                 filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`;
             }
         });
