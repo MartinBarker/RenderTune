@@ -1,5 +1,116 @@
 ###### This command works but some image are cropped
 
+```markdown
+
+ffmpeg -y 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac" 
+-r 2 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png" 
+-filter_complex "
+    [0:a]concat=n=1:v=0:a=1[a];
+    [1:v]scale=w=1920:h=-1:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=#000000,setsar=1,loop=1087:1087[v0];
+    [v0]concat=n=1:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+    " 
+-map "[v]" 
+-map "[a]" 
+-c:a aac 
+-b:a 320k 
+-c:v h264 
+-movflags +faststart 
+-profile:v high 
+-level:v 4.2 
+-bufsize 3M 
+-crf 18 
+-pix_fmt yuv420p 
+-tune stillimage 
+-t 543.3866666666667 
+"E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/single image centered black bkg_20250201T031958273Z.mp4"
+
+```
+
+
+ffmpeg -y -i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac" -r 2 -i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png" -filter_complex " [0:a]concat=n=1:v=0:a=1[a]; [1:v]scale=1920:1080:force_original_aspect_ratio=decrease, pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black, setsar=1, loop=1087:1087[v0]; [v0]concat=n=1:v=1:a=0, pad=ceil(iw/2)*2:ceil(ih/2)*2[v] " -map "[v]" -map "[a]" -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 543.3866666666667 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/single image centered black bkg_20250201T031958273Z.mp4"
+
+
+
+# ERROR: 
+- Use Case: Single image (square) with rectangle output resolution, no stretch, no background blur, solid black color background.
+# Error Command:
+```
+ffmpeg -y
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac"
+-r 2
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png"
+-filter_complex "
+    [0:a]concat=n=1:v=0:a=1[a];
+    [1:v]scale=w=1920:h=-1:force_original_aspect_ratio=decrease,
+             pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=#000000,
+             setsar=1,
+             loop=1087:1087[v0];
+
+    [v0]concat=n=1:v=1:a=0,
+             pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+"
+-map "[v]" -map "[a]"
+-c:a aac -b:a 320k
+-c:v h264
+-movflags +faststart
+-profile:v high -level:v 4.2
+-bufsize 3M
+-crf 18
+-pix_fmt yuv420p
+-tune stillimage
+-t 543.3866666666667
+"E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/single image centered black ERR.mp4"
+```
+
+# Fixed Command:
+```
+ffmpeg -y
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac"
+-r 2
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png"
+-filter_complex "
+  [0:a]concat=n=1:v=0:a=1[a];
+  [1:v]
+        scale=1920:1080:force_original_aspect_ratio=decrease,
+        pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,
+        setsar=1,
+        loop=1087:1087[v0];
+
+  [v0]concat=n=1:v=1:a=0,
+       pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+"
+-map "[v]" -map "[a]"
+-c:a aac -b:a 320k
+-c:v h264
+-movflags +faststart
+-profile:v high -level:v 4.2
+-bufsize 3M
+-crf 18
+-pix_fmt yuv420p
+-tune stillimage
+-t 543.3866666666667
+"E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/single image centered black FIXED.mp4"
+```
+# err2 background blur not apeparing for horizontal
+```
+ffmpeg -y 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac" 
+-r 2 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png" 
+-filter_complex "
+    [0:a]concat=n=1:v=0:a=1[a];
+    [1:v]scale=w=1920:h=1080:force_original_aspect_ratio=increase,boxblur=20:20,crop=1920:1080:(iw-1920)/2:(ih-1080)/2,setsar=1[bg0];
+    [1:v]scale=w=1920:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=1087:1087[fg0];
+    [bg0][fg0]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=1087:1087[v0];
+    [v0]concat=n=1:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+    " 
+-map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 543.3866666666667 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/HOR single image centered blur bkg_20250201T035441194Z.mp4"
+```
+
+###### This command works but some image are cropped
+
 # ------- cmd start -------
 ffmpeg -y 
 -i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/02 Inner Peace.flac" 
@@ -18,7 +129,7 @@ ffmpeg -y
     [bg1][fg1]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=1206:1206[v1];
     [v0][v1]concat=n=2:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
     " 
--map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 1206.1733333333332 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease\1st_pass_cropped.mp4"
+-map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 1206.1733333333332 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1st_pass_cropped.mp4"
 # ------- cmd end -------
 
 where i want the output to be a rectangle 5639x2790, and a slideshow of two images, where the first image is a square with resolution 2819x2815, I want the first image to appear fully on screen, centered both vertically and horizontally, right now the first image is appearing zoomed in and cut off / cropped, fix this
@@ -26,6 +137,8 @@ where i want the output to be a rectangle 5639x2790, and a slideshow of two imag
 give me the fixed ffmpeg command in one single line
 
 ###### Fixed: image has no crop/stretch, is centered with a black background. ######
+
+Changes: used "scale=5639:-1:" instead of "scale=w=5639:h=-1:"
 
 # ------- cmd start -------
 ffmpeg -y 
@@ -37,8 +150,8 @@ ffmpeg -y
 -i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/4_cdBook1.jpg" 
 -filter_complex "
     [0:a][1:a]concat=n=2:v=0:a=1[a];
-    [2:v]scale=5639:2790:force_original_aspect_ratio=decrease,setsar=1,pad=5639:2790:(ow-iw)/2:(oh-ih)/2[fg0];
     [2:v]scale=5639:2790:force_original_aspect_ratio=increase,boxblur=20:20,crop=5639:2790:(iw-5639)/2:(ih-2790)/2,setsar=1[bg0];
+    [2:v]scale=5639:2790:force_original_aspect_ratio=decrease,setsar=1,pad=5639:2790:(ow-iw)/2:(oh-ih)/2[fg0];
     [bg0][fg0]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=1206:1206[v0];
     [3:v]scale=5639:2790:force_original_aspect_ratio=increase,boxblur=20:20,crop=5639:2790:(iw-5639)/2:(ih-2790)/2,setsar=1[bg1];
     [3:v]scale=5639:-1:force_original_aspect_ratio=decrease,setsar=1,loop=1206:1206[fg1];
@@ -92,13 +205,42 @@ ffmpeg -y
 -i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/2_back.png" 
 -filter_complex "
     [0:a][1:a][2:a][3:a][4:a][5:a][6:a]concat=n=7:v=0:a=1[a];
-    [7:v]scale=5639:2790:force_original_aspect_ratio=decrease,setsar=1,pad=5639:2790:(ow-iw)/2:(oh-ih)/2[fg0];
     [7:v]scale=5639:2790:force_original_aspect_ratio=increase,boxblur=20:20,crop=5639:2790:(iw-5639)/2:(ih-2790)/2,setsar=1[bg0];
+    [7:v]scale=5639:2790:force_original_aspect_ratio=decrease,setsar=1,pad=5639:2790:(ow-iw)/2:(oh-ih)/2[fg0];
     [bg0][fg0]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=871:871[v0];
     [8:v]scale=5639:2790:force_original_aspect_ratio=increase,boxblur=20:20,crop=5639:2790:(iw-5639)/2:(ih-2790)/2,setsar=1[bg1];
-    [8:v]scale=5639:-1:force_original_aspect_ratio=decrease,setsar=1,loop=871:871[fg1];
+    [8:v]scale=5639:2790:force_original_aspect_ratio=decrease,setsar=1,pad=5639:2790:(ow-iw)/2:(oh-ih)/2[fg1];
     [bg1][fg1]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=871:871[v1];
     [v0][v1]concat=n=2:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
     " 
 -map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 3483.3599999999997 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/broking.mp4"
 # ------- cmd end -------
+
+# err2 background blur not appearing for horizontal frame but square image
+```
+ffmpeg -y 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac" 
+-r 2 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png" 
+-filter_complex "
+    [0:a]concat=n=1:v=0:a=1[a];
+    [1:v]scale=w=1920:h=1080:force_original_aspect_ratio=increase,boxblur=20:20,crop=1920:1080:(iw-1920)/2:(ih-1080)/2,setsar=1[bg0];
+    [1:v]scale=w=1920:h=-1:force_original_aspect_ratio=decrease,setsar=1,loop=1087:1087[fg0];
+    [bg0][fg0]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=1087:1087[v0];
+    [v0]concat=n=1:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+    " 
+-map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 543.3866666666667 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/HOR single image centered blur NOT WORKING.mp4"
+```
+# fix attempt 1
+ffmpeg -y 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/07 Natural Renewal.flac" 
+-r 2 
+-i "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/1_front.png" 
+-filter_complex "
+    [0:a]concat=n=1:v=0:a=1[a];
+    [1:v]scale=w=1920:h=1080:force_original_aspect_ratio=increase,boxblur=20:20,crop=1920:1080:(iw-1920)/2:(ih-1080)/2,setsar=1[bg0];
+    [1:v]scale=w=1920:h=1080:force_original_aspect_ratio=decrease,setsar=1,loop=1087:1087[fg0];
+    [bg0][fg0]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=1087:1087[v0];
+    [v0]concat=n=1:v=1:a=0,pad=ceil(iw/2)*2:ceil(ih/2)*2[v]
+    " 
+-map [v] -map [a] -c:a aac -b:a 320k -c:v h264 -movflags +faststart -profile:v high -level:v 4.2 -bufsize 3M -crf 18 -pix_fmt yuv420p -tune stillimage -t 543.3866666666667 "E:/martinradio/rips/cd/pet music cds/Michael Maxwell & Dr. Lee R. Bartel/Dogease/vids/HOR single image centered blur NOT WORKING fix attempt 1.mp4"
