@@ -12,7 +12,9 @@ contextBridge.exposeInMainWorld('api', {
             'get-audio-metadata',  
             'open-file-dialog',
             'open-folder-dialog',
-            'get-path-separator'
+            'get-path-separator',
+            'set-output-folder',
+            'get-color-palette'  
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -27,9 +29,10 @@ contextBridge.exposeInMainWorld('api', {
             'selected-file-paths',
             'selected-folder',
             'path-separator-response',
-            'ffmpeg-progress'    
+            'ffmpeg-progress',
+            'output-folder-set'
         ];
-        if (validReceiveChannels.includes(channel)) {
+        if (validReceiveChannels.includes(channel) || channel.startsWith('color-palette-response-')) {
             ipcRenderer.on(channel, (event, ...args) => func(...args));
         }
     },

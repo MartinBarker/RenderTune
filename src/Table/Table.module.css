@@ -19,8 +19,10 @@
   border-bottom: 1px solid #ccc;
   font-weight: bold;
   font-size: 14px;
-  position: relative; /* For sorting icon alignment */
-  user-select: none; /* Prevents text selection */
+  position: relative;
+  /* For sorting icon alignment */
+  user-select: none;
+  /* Prevents text selection */
 }
 
 .row {
@@ -37,9 +39,12 @@
   text-align: left;
   border-bottom: 1px solid #ddd;
   font-size: 13px;
-  white-space: nowrap; /* Prevent wrapping */
-  overflow: hidden; /* Prevent overflow */
-  text-overflow: ellipsis; /* Add "..." if truncated */
+  white-space: nowrap;
+  /* Prevent wrapping */
+  overflow: hidden;
+  /* Prevent overflow */
+  text-overflow: ellipsis;
+  /* Add "..." if truncated */
 }
 
 .dragHandle {
@@ -58,16 +63,20 @@
 .sortIcon {
   margin-left: 8px;
   font-size: 12px;
-  width: 16px; /* Fixed width */
-  height: 16px; /* Fixed height */
+  width: 16px;
+  /* Fixed width */
+  height: 16px;
+  /* Fixed height */
   text-align: center;
   line-height: 16px;
-  color: #ccc; /* Neutral unsorted state */
+  color: #ccc;
+  /* Neutral unsorted state */
   display: inline-block;
 }
 
 .sortIcon.active {
-  color: #000; /* Highlighted when sorted */
+  color: #000;
+  /* Highlighted when sorted */
 }
 
 .sortIcon:hover {
@@ -87,9 +96,12 @@
   align-items: center;
   border-top: 1px solid #ddd;
   font-size: 14px;
-  overflow-wrap: break-word; /* Ensure long text wraps properly */
-  word-break: break-word; /* Ensure long text breaks properly */
-  white-space: pre-wrap; /* Preserve whitespace and wrap text */
+  overflow-wrap: break-word;
+  /* Ensure long text wraps properly */
+  word-break: break-word;
+  /* Ensure long text breaks properly */
+  white-space: pre-wrap;
+  /* Preserve whitespace and wrap text */
 }
 
 .expandedContent label {
@@ -111,7 +123,6 @@
 
 .expandedContent input:focus {
   outline: none;
-  border-color: #1a73e8;
   background-color: #f9fcff;
 }
 
@@ -189,8 +200,10 @@
 .footer {
   padding: 10px;
   font-size: 14px;
-  color: white; /* Change text color to white */
-  text-align: left; /* Align text to the left */
+  color: white;
+  /* Change text color to white */
+  text-align: left;
+  /* Align text to the left */
 }
 
 /* Expand Icon Styles */
@@ -207,7 +220,8 @@
 }
 
 .expanded {
-  transform: rotate(180deg); /* Rotates the icon to display as "▽" */
+  transform: rotate(180deg);
+  /* Rotates the icon to display as "▽" */
 }
 
 .dragHandleWrapper {
@@ -220,6 +234,7 @@
   font-size: 14px;
   color: #555;
 }
+
 .sortableHeader {
   display: flex;
   align-items: center;
@@ -286,12 +301,42 @@
 .thumbnail {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* Ensure the full image is always visible */
-  transition: none; 
+  object-fit: contain;
+  /* Ensure the full image is always visible */
+  transition: none;
 }
 
 .placeholder {
   width: 100%;
   height: 100%;
-  background-color: #cccccc; /* Grey placeholder */
+  background-color: #cccccc;
+  /* Grey placeholder */
+}
+
+.colorBox {
+  width: 20px;
+  height: 20px;
+  margin: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.colorBox:hover {
+  transform: scale(1.2);
+}
+
+.selectedColorBox {
+  border: 2px solid #000;
+}
+
+.paddingColorInput {
+  color: #000;
+  border: 1px solid #d66;
+  width: 200px;
+  padding: 20px;
+  font-size: 20px;
+  text-shadow: 0px 0px 4px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff
 }

@@ -10,6 +10,7 @@ import readline from 'readline';
 import musicMetadata from 'music-metadata';
 import sizeOf from 'image-size';
 import os from 'node:os';
+import { Vibrant } from 'node-vibrant/node';
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -77,6 +78,35 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('get-color-palette', async (event, imagePath) => {
+    try {
+      console.log('Received request to get color palette for:', imagePath);
+
+      const swatches = await Vibrant.from(imagePath).getPalette();
+      let colors = {};
+
+      for (const [key, value] of Object.entries(swatches)) {
+        if (value) { // Ensure the swatch is not null/undefined
+          const rgbColor = value.rgb;
+          const hexColor = rgbToHex(rgbColor);
+          colors[key] = { hex: hexColor, rgb: rgbColor };
+        }
+      }
+
+      console.log('Extracted color palette:', colors.Vibrant.hex);
+      event.reply(`color-palette-response-${imagePath}`, colors);
+    } catch (error) {
+      console.error('Error extracting color palette:', error);
+      event.reply(`color-palette-response-${imagePath}`, {});
+    }
+  });
+
+  // Helper function to convert RGB array to HEX
+  function rgbToHex(rgb) {
+    return `#${rgb.map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+
   createWindow();
 
   // Content security policy
@@ -117,23 +147,23 @@ function createWindow() {
   });
 
   // load window
-  
+
   mainWindow.loadURL(
-    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 
-    'http://localhost:3000'
-    );
-    
-   /*
-    const startUrl = process.env.ELECTRON_START_URL || url.format({
-      pathname: path.join(__dirname, '../build/index.html'),
-      protocol: 'file:',
-      slashes: true
-    });
-    mainWindow.loadURL(startUrl);
+    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` :
+      'http://localhost:3000'
+  );
+
+  /*
+   const startUrl = process.env.ELECTRON_START_URL || url.format({
+     pathname: path.join(__dirname, '../build/index.html'),
+     protocol: 'file:',
+     slashes: true
+   });
+   mainWindow.loadURL(startUrl);
 */
 
-// macos only 
-//mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+  // macos only 
+  //mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
 
 
   // Open the DevTools if in development mode
@@ -185,7 +215,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
-        console.log('FFmpeg output:', line);
+        // console.log('FFmpeg output:', line);
         //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
@@ -221,7 +251,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 // Function to determine FFmpeg path
 function getFfmpegPath() {
   console.log('getFfmpegPath()')
-  
+
   var arch = os.arch();
   var platform = process.platform;
 
@@ -285,6 +315,14 @@ ipcMain.on('open-folder-dialog', async (event) => {
   if (!result.canceled) {
     event.reply('selected-folder', result.filePaths[0]);
   }
+});
+
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
+});
+
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
 });
 
 ipcMain.on('open-file-dialog', async (event) => {
