@@ -25,6 +25,22 @@ app.disableHardwareAcceleration();
 const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'aiff', 'wma', 'amr', 'opus', 'alac', 'pcm', 'mid', 'midi', 'aif', 'caf'];
 const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heif', 'heic', 'ico', 'svg', 'raw', 'cr2', 'nef', 'orf', 'arw', 'raf', 'dng', 'pef', 'sr2'];
 
+const thumbnailCacheDir = path.join(os.tmpdir(), 'RenderTune-thumbnails');
+if (!fs.existsSync(thumbnailCacheDir)) {
+  fs.mkdirSync(thumbnailCacheDir, { recursive: true });
+}
+console.log(`Thumbnail cache directory is set to: ${thumbnailCacheDir}`);
+
+const thumbnailMapPath = path.join(thumbnailCacheDir, 'thumbnails.json');
+let thumbnailMap = {};
+if (fs.existsSync(thumbnailMapPath)) {
+  thumbnailMap = JSON.parse(fs.readFileSync(thumbnailMapPath, 'utf-8'));
+}
+
+function saveThumbnailMap() {
+  fs.writeFileSync(thumbnailMapPath, JSON.stringify(thumbnailMap, null, 2));
+}
+
 // Custom protocol registration
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
@@ -46,7 +62,7 @@ app.whenReady().then(() => {
 
     try {
       const fallbackImage = nativeImage.createFromPath(url).resize({ width: 200 });
-      const thumbnailPath = path.join(__dirname, 'thumbnails', path.basename(url));
+      const thumbnailPath = path.join(thumbnailCacheDir, path.basename(url));
       console.log('Generated thumbnail path:', thumbnailPath);
 
       callback({
@@ -68,7 +84,9 @@ app.whenReady().then(() => {
     try {
       console.log('Received request to get color palette for:', imagePath);
 
-      const swatches = await Vibrant.from(imagePath).getPalette();
+      const thumbnailPath = thumbnailMap[imagePath] || imagePath;
+      console.log('Fetching color info using thumbnail path:', thumbnailPath);
+      const swatches = await Vibrant.from(thumbnailPath).getPalette();
       let colors = {};
 
       for (const [key, value] of Object.entries(swatches)) {
@@ -324,6 +342,7 @@ ipcMain.on('open-file-dialog', async (event) => {
           const ext = path.extname(normalizedPath).toLowerCase().substring(1);
           let fileType = 'other';
           let dimensions = null;
+          let thumbnailPath = null;
 
           if (audioExtensions.includes(ext)) {
             fileType = 'audio';
@@ -332,6 +351,11 @@ ipcMain.on('open-file-dialog', async (event) => {
             try {
               const metadata = sizeOf(normalizedPath);
               dimensions = `${metadata.width}x${metadata.height}`;
+              const image = nativeImage.createFromPath(normalizedPath).resize({ width: 100, height: 100 });
+              thumbnailPath = path.join(thumbnailCacheDir, path.basename(normalizedPath));
+              fs.writeFileSync(thumbnailPath, image.toPNG());
+              thumbnailMap[normalizedPath] = thumbnailPath;
+              saveThumbnailMap();
             } catch (error) {
               console.error('Error reading image dimensions:', error);
             }
@@ -342,6 +366,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             filepath: normalizedPath,
             filetype: fileType,
             dimensions,
+            thumbnailPath,
           };
         })
       );
