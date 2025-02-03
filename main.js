@@ -45,27 +45,15 @@ app.whenReady().then(() => {
     console.log('Thumbnail request for:', url);
 
     try {
-
       const fallbackImage = nativeImage.createFromPath(url).resize({ width: 200 });
+      const thumbnailPath = path.join(__dirname, 'thumbnails', path.basename(url));
+      console.log('Generated thumbnail path:', thumbnailPath);
+
       callback({
         mimeType: 'image/png',
         data: fallbackImage.toPNG(),
       });
 
-
-      /* //https://github.com/electron/electron/issues/45102
-      if (!fs.existsSync(url)) {
-        throw new Error(`File not found: ${url}`);
-      }
-  
-      const thumbnailSize = { width: 200, height: 200 }; // Only width matters on Windows
-      const thumbnail = await nativeImage.createThumbnailFromPath(url, { width: thumbnailSize.width });
-  
-      callback({
-        mimeType: 'image/png',
-        data: thumbnail.toPNG(),
-      });
-      */
     } catch (error) {
       console.error('Error generating thumbnail:', error);
       // Provide an empty buffer and a valid MIME type to avoid breaking the app
@@ -73,8 +61,6 @@ app.whenReady().then(() => {
         mimeType: 'image/png',
         data: Buffer.alloc(0), // Empty image buffer
       });
-
-
     }
   });
 
@@ -320,7 +306,6 @@ ipcMain.on('open-folder-dialog', async (event) => {
 ipcMain.on('set-output-folder', (event, folderPath) => {
   event.reply('output-folder-set', folderPath);
 });
-
 ipcMain.on('set-output-folder', (event, folderPath) => {
   event.reply('output-folder-set', folderPath);
 });

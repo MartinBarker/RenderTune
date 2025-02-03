@@ -134,23 +134,32 @@ function Row({
 
   useEffect(() => {
     if (isImageTable) {
-      console.log('Requesting color palette for:', row.original.filepath);
-      window.api.send('get-color-palette', row.original.filepath);
-      const responseChannel = `color-palette-response-${row.original.filepath}`;
-      window.api.receive(responseChannel, (colors) => {
-        console.log('Received color palette:', colors);
-        setColorPalette((prevPalette) => ({
-          Vibrant: colors.Vibrant || prevPalette.Vibrant,
-          DarkVibrant: colors.DarkVibrant || prevPalette.DarkVibrant,
-          LightVibrant: colors.LightVibrant || prevPalette.LightVibrant,
-          Muted: colors.Muted || prevPalette.Muted,
-          DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
-          LightMuted: colors.LightMuted || prevPalette.LightMuted
-        }));
-      });
-      return () => {
-        window.api.removeAllListeners(responseChannel);
-      };
+      const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
+      if (savedPalette) {
+        setColorPalette(JSON.parse(savedPalette));
+      } else {
+        console.log('Requesting color palette for:', row.original.filepath);
+        window.api.send('get-color-palette', row.original.filepath);
+        const responseChannel = `color-palette-response-${row.original.filepath}`;
+        window.api.receive(responseChannel, (colors) => {
+          console.log('Received color palette:', colors);
+          setColorPalette((prevPalette) => {
+            const newPalette = {
+              Vibrant: colors.Vibrant || prevPalette.Vibrant,
+              DarkVibrant: colors.DarkVibrant || prevPalette.DarkVibrant,
+              LightVibrant: colors.LightVibrant || prevPalette.LightVibrant,
+              Muted: colors.Muted || prevPalette.Muted,
+              DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
+              LightMuted: colors.LightMuted || prevPalette.LightMuted
+            };
+            localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
+            return newPalette;
+          });
+        });
+        return () => {
+          window.api.removeAllListeners(responseChannel);
+        };
+      }
     }
   }, [row.original.filepath, isImageTable]);
 

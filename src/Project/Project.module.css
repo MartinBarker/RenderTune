@@ -590,3 +590,19 @@
 .openFolderButton {
   cursor: pointer;
 }
+
+.deleteLocalStorageButton {
+  margin-left: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #fff;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.deleteLocalStorageButton:hover {
+  background-color: #c82333;
+}

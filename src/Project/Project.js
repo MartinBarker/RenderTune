@@ -170,6 +170,17 @@ function Project() {
     localStorage.setItem('stretchImageToFit', stretchImageToFit);
   }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit]);
 
+  useEffect(() => {
+    window.api.receive('output-folder-set', (folderPath) => {
+      setOutputFolder(folderPath);
+      localStorage.setItem('outputFolder', folderPath);
+    });
+  
+    return () => {
+      window.api.removeAllListeners('output-folder-set');
+    };
+  }, []);
+
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
     const targetHeight = Math.round(targetWidth / aspectRatio);
@@ -276,6 +287,7 @@ function Project() {
     setVideoHeight('1080');
     setBackgroundColor('#000000');
     setUsePadding(false);
+    setOutputFolder('');
     localStorage.removeItem('audioFiles');
     localStorage.removeItem('imageFiles');
     localStorage.removeItem('audioRowSelection');
@@ -286,6 +298,12 @@ function Project() {
     localStorage.removeItem('videoHeight');
     localStorage.removeItem('backgroundColor');
     localStorage.removeItem('usePadding');
+    localStorage.removeItem('outputFolder');
+  };
+
+  const deleteLocalStorage = () => {
+    localStorage.clear();
+    alert('Local storage has been cleared.');
   };
 
   const getSelectedAudioRows = () => {
@@ -635,8 +653,14 @@ function Project() {
       return;
     }
 
-    filesMetadata.forEach(file => {
-      //console.log('Project.js handleFilesMetadata:', file.filepath);
+    filesMetadata.forEach((file, index) => {
+      // Set output folder to the first new input file's folder if it's empty
+      if (index === 0 && file.filepath) {
+        const fileFolder = file.filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+        setOutputFolder(fileFolder);
+        localStorage.setItem('outputFolder', fileFolder);
+      }
+      
       if (file.filetype === 'audio') {
         setAudioFiles(prev => {
           const index = prev.findIndex(f => f.filepath === file.filepath);
@@ -777,6 +801,9 @@ function Project() {
         <h1 className={styles.projectTitle}>New Project</h1>
         <button className={styles.refreshButton} onClick={clearComponent}>
           Clear
+        </button>
+        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
+          Delete Local Storage
         </button>
       </div>
 
