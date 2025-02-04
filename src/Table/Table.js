@@ -1,5 +1,5 @@
 // Table.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -68,7 +68,9 @@ function Row({
   isRenderTable,
   setImageFiles,
   setAudioFiles,
-  ffmpegCommand
+  ffmpegCommand,
+  setErrors,
+  errors
 }) {
   const { setNodeRef, transform, transition } = useSortable({
     id: row.original.id,
@@ -119,6 +121,90 @@ function Row({
   };
 
   const isOverAnHour = row.original.duration && row.original.duration >= 3600;
+
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [colorPalette, setColorPalette] = useState({
+    Vibrant: { hex: '#FFFFFF' },
+    DarkVibrant: { hex: '#FFFFFF' },
+    LightVibrant: { hex: '#FFFFFF' },
+    Muted: { hex: '#FFFFFF' },
+    DarkMuted: { hex: '#FFFFFF' },
+    LightMuted: { hex: '#FFFFFF' }
+  });
+
+  useEffect(() => {
+    if (isImageTable) {
+      const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
+      if (savedPalette) {
+        setColorPalette(JSON.parse(savedPalette));
+      } else {
+        console.log('Requesting color palette for:', row.original.filepath);
+        window.api.send('get-color-palette', row.original.filepath);
+        const responseChannel = `color-palette-response-${row.original.filepath}`;
+        window.api.receive(responseChannel, (colors) => {
+          console.log('Received color palette:', colors);
+          setColorPalette((prevPalette) => {
+            const newPalette = {
+              Vibrant: colors.Vibrant || prevPalette.Vibrant,
+              DarkVibrant: colors.DarkVibrant || prevPalette.DarkVibrant,
+              LightVibrant: colors.LightVibrant || prevPalette.LightVibrant,
+              Muted: colors.Muted || prevPalette.Muted,
+              DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
+              LightMuted: colors.LightMuted || prevPalette.LightMuted
+            };
+            localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
+            return newPalette;
+          });
+        });
+        return () => {
+          window.api.removeAllListeners(responseChannel);
+        };
+      }
+    }
+  }, [row.original.filepath, isImageTable]);
+
+  const handleColorBoxClick = (color) => {
+    setSelectedColor(color);
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, paddingColor: color }
+          : img
+      )
+    );
+  };
+
+  const validateHexColor = (color) => {
+    const hexPattern = /^#([0-9A-Fa-f]{3}){1,2}$/;
+    return hexPattern.test(color);
+  };
+
+  const handlePaddingColorChange = (e) => {
+    let color = e.target.value;
+    if (color === "") {
+      color = "#FFFFFF";
+    }
+    setSelectedColor(color);
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, paddingColor: color }
+          : img
+      )
+    );
+
+    if (!validateHexColor(color)) {
+      setErrors((prev) => ({
+        ...prev,
+        [row.original.id]: 'Invalid hex color code'
+      }));
+    } else {
+      setErrors((prev) => {
+        const { [row.original.id]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
 
   return (
     <>
@@ -249,20 +335,29 @@ function Row({
               <label>
                 Padding Color:
                 <input
+                  id='paddingColorInput'
                   type="text"
                   value={row.original.paddingColor || "#FFFFFF"}
-                  onChange={(e) =>
-                    setImageFiles((prev) =>
-                      prev.map((img) =>
-                        img.id === row.original.id
-                          ? { ...img, paddingColor: e.target.value }
-                          : img
-                      )
-                    )
-                  }
-                  disabled={row.original.stretchImageToFit !== undefined ? row.original.stretchImageToFit : true} // Disable when stretchImageToFit is checked
+                  onChange={handlePaddingColorChange}
+                  className={styles.paddingColorInput}
+                  style={{
+                    backgroundColor: row.original.paddingColor || "#FFFFFF"
+                  }}
                 />
+                {errors[row.original.id] && (
+                  <span className={styles.errorText}>{errors[row.original.id]}</span>
+                )}
               </label>
+              <div>
+                {Object.values(colorPalette).map((color, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.colorBox} ${selectedColor === color.hex ? styles.selectedColorBox : ''}`}
+                    style={{ background: color.hex }}
+                    onClick={() => handleColorBoxClick(color.hex)}
+                  />
+                ))}
+              </div>
               <label>
                 <input
                   type="checkbox"
@@ -296,11 +391,14 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender }) {
-  const [globalFilter, setGlobalFilter] = useState("");
+function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
   const [sorting, setSorting] = useState([]);
-  const [expandedRows, setExpandedRows] = useState({});
+  const [expandedRows, setExpandedRows] = useState(() => {
+    const savedExpandedRows = localStorage.getItem('expandedRows');
+    return savedExpandedRows ? JSON.parse(savedExpandedRows) : {};
+  });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [errors, setErrors] = useState({});
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -314,10 +412,14 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   };
 
   const toggleRowExpanded = (rowId) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [rowId]: !prev[rowId],
-    }));
+    setExpandedRows((prev) => {
+      const newExpandedRows = {
+        ...prev,
+        [rowId]: !prev[rowId],
+      };
+      localStorage.setItem('expandedRows', JSON.stringify(newExpandedRows));
+      return newExpandedRows;
+    });
   };
 
   const toggleAllRowsSelected = () => {
@@ -459,15 +561,20 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   const table = useReactTable({
     data,
     columns: tableColumns,
-    state: { sorting, pagination, rowSelection },
+    state: { sorting, pagination, rowSelection, globalFilter },
     getRowId: (row) => row.id,
     onPaginationChange: setPagination,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      return String(value).toLowerCase().includes(String(filterValue).toLowerCase());
+    },
   });
 
   const handleDragEnd = (event) => {
@@ -546,6 +653,8 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                   setImageFiles={setImageFiles}
                   setAudioFiles={setAudioFiles}
                   ffmpegCommand={ffmpegCommand}
+                  setErrors={setErrors}
+                  errors={errors}
                 />
               ))}
             </tbody>

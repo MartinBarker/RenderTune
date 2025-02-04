@@ -10,12 +10,14 @@ import readline from 'readline';
 import musicMetadata from 'music-metadata';
 import sizeOf from 'image-size';
 import os from 'node:os';
+import { Vibrant } from 'node-vibrant/node';
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let mainWindow;
+let ffmpegProcesses = new Map();
 
 // disable gpu acceleration
 app.disableHardwareAcceleration();
@@ -23,6 +25,22 @@ app.disableHardwareAcceleration();
 // Define audio and image file extensions
 const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'aiff', 'wma', 'amr', 'opus', 'alac', 'pcm', 'mid', 'midi', 'aif', 'caf'];
 const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heif', 'heic', 'ico', 'svg', 'raw', 'cr2', 'nef', 'orf', 'arw', 'raf', 'dng', 'pef', 'sr2'];
+
+const thumbnailCacheDir = path.join(os.tmpdir(), 'RenderTune-thumbnails');
+if (!fs.existsSync(thumbnailCacheDir)) {
+  fs.mkdirSync(thumbnailCacheDir, { recursive: true });
+}
+console.log(`Thumbnail cache directory is set to: ${thumbnailCacheDir}`);
+
+const thumbnailMapPath = path.join(thumbnailCacheDir, 'thumbnails.json');
+let thumbnailMap = {};
+if (fs.existsSync(thumbnailMapPath)) {
+  thumbnailMap = JSON.parse(fs.readFileSync(thumbnailMapPath, 'utf-8'));
+}
+
+function saveThumbnailMap() {
+  fs.writeFileSync(thumbnailMapPath, JSON.stringify(thumbnailMap, null, 2));
+}
 
 // Custom protocol registration
 protocol.registerSchemesAsPrivileged([
@@ -44,27 +62,15 @@ app.whenReady().then(() => {
     console.log('Thumbnail request for:', url);
 
     try {
-
       const fallbackImage = nativeImage.createFromPath(url).resize({ width: 200 });
+      const thumbnailPath = path.join(thumbnailCacheDir, path.basename(url));
+      console.log('Generated thumbnail path:', thumbnailPath);
+
       callback({
         mimeType: 'image/png',
         data: fallbackImage.toPNG(),
       });
 
-
-      /* //https://github.com/electron/electron/issues/45102
-      if (!fs.existsSync(url)) {
-        throw new Error(`File not found: ${url}`);
-      }
-  
-      const thumbnailSize = { width: 200, height: 200 }; // Only width matters on Windows
-      const thumbnail = await nativeImage.createThumbnailFromPath(url, { width: thumbnailSize.width });
-  
-      callback({
-        mimeType: 'image/png',
-        data: thumbnail.toPNG(),
-      });
-      */
     } catch (error) {
       console.error('Error generating thumbnail:', error);
       // Provide an empty buffer and a valid MIME type to avoid breaking the app
@@ -72,10 +78,39 @@ app.whenReady().then(() => {
         mimeType: 'image/png',
         data: Buffer.alloc(0), // Empty image buffer
       });
-
-
     }
   });
+
+  ipcMain.on('get-color-palette', async (event, imagePath) => {
+    try {
+      console.log('Received request to get color palette for:', imagePath);
+
+      const thumbnailPath = thumbnailMap[imagePath] || imagePath;
+      console.log('Fetching color info using thumbnail path:', thumbnailPath);
+      const swatches = await Vibrant.from(thumbnailPath).getPalette();
+      let colors = {};
+
+      for (const [key, value] of Object.entries(swatches)) {
+        if (value) { // Ensure the swatch is not null/undefined
+          const rgbColor = value.rgb;
+          const hexColor = rgbToHex(rgbColor);
+          colors[key] = { hex: hexColor, rgb: rgbColor };
+        }
+      }
+
+      console.log('Extracted color palette:', colors.Vibrant.hex);
+      event.reply(`color-palette-response-${imagePath}`, colors);
+    } catch (error) {
+      console.error('Error extracting color palette:', error);
+      event.reply(`color-palette-response-${imagePath}`, {});
+    }
+  });
+
+  // Helper function to convert RGB array to HEX
+  function rgbToHex(rgb) {
+    return `#${rgb.map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+  }
+
 
   createWindow();
 
@@ -117,23 +152,23 @@ function createWindow() {
   });
 
   // load window
-  
+
   mainWindow.loadURL(
-    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` : 
-    'http://localhost:3000'
-    );
-    
-   /*
-    const startUrl = process.env.ELECTRON_START_URL || url.format({
-      pathname: path.join(__dirname, '../build/index.html'),
-      protocol: 'file:',
-      slashes: true
-    });
-    mainWindow.loadURL(startUrl);
+    app.isPackaged ? `file://${path.join(__dirname, "../build/index.html")}` :
+      'http://localhost:3000'
+  );
+
+  /*
+   const startUrl = process.env.ELECTRON_START_URL || url.format({
+     pathname: path.join(__dirname, '../build/index.html'),
+     protocol: 'file:',
+     slashes: true
+   });
+   mainWindow.loadURL(startUrl);
 */
 
-// macos only 
-//mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+  // macos only 
+  //mainWindow.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
 
 
   // Open the DevTools if in development mode
@@ -178,6 +213,8 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     }
 
     const process = execa(ffmpegPath, cmdArgsList);
+    ffmpegProcesses.set(renderId, process); // Store the process
+
     const rl = readline.createInterface({ input: process.stderr });
 
     let progress = 0;
@@ -206,8 +243,19 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
       }
     });
 
-    const result = await process;
-    event.reply('ffmpeg-output', { stdout: result.stdout, progress: 100 });
+    process.on('exit', (code, signal) => {
+      if (signal === 'SIGTERM') {
+        console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
+        event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
+      } else if (code === 0) {
+        ffmpegProcesses.delete(renderId); // Remove the process when done
+        event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
+      } else {
+        const errorOutput = process.stderr ? process.stderr.split('\n').slice(-10).join('\n') : 'No error details';
+        event.reply('ffmpeg-error', { message: `FFmpeg exited with code ${code}`, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+      }
+    });
+
   } catch (error) {
     console.error('FFmpeg command failed:', error.message);
     if (!app.isPackaged) {
@@ -218,10 +266,38 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
   }
 });
 
+ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
+  console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);
+  const process = ffmpegProcesses.get(renderId);
+  if (process) {
+    console.log(`Stopping FFmpeg process with PID: ${process.pid}`);
+    process.kill('SIGTERM');
+    ffmpegProcesses.delete(renderId);
+    console.log(`FFmpeg process with ID: ${renderId} stopped successfully`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
+  } else {
+    console.log(`Error: FFmpeg process with ID: ${renderId} not found`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Error: Process not found' });
+  }
+});
+
+ipcMain.on('delete-render-file', async (event, { outputFilePath }) => {
+  try {
+    if (fs.existsSync(outputFilePath)) {
+      fs.unlinkSync(outputFilePath);
+      console.log(`Deleted file: ${outputFilePath}`);
+    } else {
+      console.log(`File not found: ${outputFilePath}`);
+    }
+  } catch (error) {
+    console.error(`Error deleting file: ${outputFilePath}`, error);
+  }
+});
+
 // Function to determine FFmpeg path
 function getFfmpegPath() {
   console.log('getFfmpegPath()')
-  
+
   var arch = os.arch();
   var platform = process.platform;
 
@@ -287,6 +363,13 @@ ipcMain.on('open-folder-dialog', async (event) => {
   }
 });
 
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
+});
+ipcMain.on('set-output-folder', (event, folderPath) => {
+  event.reply('output-folder-set', folderPath);
+});
+
 ipcMain.on('open-file-dialog', async (event) => {
 
   try {
@@ -301,6 +384,7 @@ ipcMain.on('open-file-dialog', async (event) => {
           const ext = path.extname(normalizedPath).toLowerCase().substring(1);
           let fileType = 'other';
           let dimensions = null;
+          let thumbnailPath = null;
 
           if (audioExtensions.includes(ext)) {
             fileType = 'audio';
@@ -309,6 +393,11 @@ ipcMain.on('open-file-dialog', async (event) => {
             try {
               const metadata = sizeOf(normalizedPath);
               dimensions = `${metadata.width}x${metadata.height}`;
+              const image = nativeImage.createFromPath(normalizedPath).resize({ width: 100, height: 100 });
+              thumbnailPath = path.join(thumbnailCacheDir, path.basename(normalizedPath));
+              fs.writeFileSync(thumbnailPath, image.toPNG());
+              thumbnailMap[normalizedPath] = thumbnailPath;
+              saveThumbnailMap();
             } catch (error) {
               console.error('Error reading image dimensions:', error);
             }
@@ -319,6 +408,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             filepath: normalizedPath,
             filetype: fileType,
             dimensions,
+            thumbnailPath,
           };
         })
       );

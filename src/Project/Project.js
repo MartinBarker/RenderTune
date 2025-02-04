@@ -32,13 +32,19 @@ function Project() {
   const [videoWidth, setVideoWidth] = useState('');
   const [videoHeight, setVideoHeight] = useState('');
   const [useBlurBackground, setUseBlurBackground] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   };
 
   const renderColumns = [
-    { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => `${row.original.progress}%` },
+    { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => {
+      if (row.original.progress === 'Starting...') {
+        return <span className={styles.startingAnimation}>Starting...</span>;
+      }
+      return `${row.original.progress}%`;
+    }},
     { accessorKey: 'outputFilename', header: 'Output Filename', cell: ({ row }) => {
       const parts = row.original.outputFilename.split(pathSeparator);
       return parts[parts.length - 1];
@@ -49,6 +55,23 @@ function Project() {
       cell: ({ row }) => (
         <button onClick={() => alert('Placeholder for opening folder')} title="Open folder" className={styles.openFolderButton}>
           📂
+        </button>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'stop',
+      header: 'Stop',
+      cell: ({ row }) => (
+        <button
+          className={styles.stopButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.api.send('stop-ffmpeg-render', { renderId: row.original.id });
+          }}
+          title="Stop this render"
+        >
+          ⏹️
         </button>
       ),
       enableSorting: false,
@@ -170,6 +193,17 @@ function Project() {
     localStorage.setItem('stretchImageToFit', stretchImageToFit);
   }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit]);
 
+  useEffect(() => {
+    window.api.receive('output-folder-set', (folderPath) => {
+      setOutputFolder(folderPath);
+      localStorage.setItem('outputFolder', folderPath);
+    });
+  
+    return () => {
+      window.api.removeAllListeners('output-folder-set');
+    };
+  }, []);
+
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
     const targetHeight = Math.round(targetWidth / aspectRatio);
@@ -276,6 +310,7 @@ function Project() {
     setVideoHeight('1080');
     setBackgroundColor('#000000');
     setUsePadding(false);
+    setOutputFolder('');
     localStorage.removeItem('audioFiles');
     localStorage.removeItem('imageFiles');
     localStorage.removeItem('audioRowSelection');
@@ -286,6 +321,27 @@ function Project() {
     localStorage.removeItem('videoHeight');
     localStorage.removeItem('backgroundColor');
     localStorage.removeItem('usePadding');
+    localStorage.removeItem('outputFolder');
+  };
+
+  const deleteLocalStorage = () => {
+    localStorage.clear();
+    setAudioFiles([]);
+    setImageFiles([]);
+    setRenders([]);
+    setAudioRowSelection({});
+    setImageRowSelection({});
+    setOutputFolder('');
+    setOutputFilename('output-video');
+    setOutputFormat('mp4');
+    setVideoWidth('1920');
+    setVideoHeight('1080');
+    setBackgroundColor('#000000');
+    setUsePadding(false);
+    setAlwaysUniqueFilenames(false);
+    setPaddingColor('#FFFFFF');
+    setStretchImageToFit(false);
+    setUseBlurBackground(false);
   };
 
   const getSelectedAudioRows = () => {
@@ -592,6 +648,7 @@ function Project() {
     window.api.removeAllListeners('ffmpeg-output');
     window.api.removeAllListeners('ffmpeg-error');
     window.api.removeAllListeners('ffmpeg-progress');
+    window.api.removeAllListeners('ffmpeg-stop-response');
   
     window.api.send('run-ffmpeg-command', {
       renderId: renderId,
@@ -616,10 +673,17 @@ function Project() {
       updateRender(renderId, { pid, progress });
     });
   
+    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
+      updateRender(renderId, { progress: status });
+      if (status === 'Stopped') {
+        setFfmpegError(null); // Clear any existing error message
+      }
+    });
+  
     addRender({
       id: renderId,
       pid: null,
-      progress: 0,
+      progress: 'Starting...', // Set initial progress to "Starting..."
       outputFolder: outputFolder, // Use the correct output folder
       outputFilename: finalOutputFilename, // Use the correct output filename
       ffmpegCommand: ffmpegCommand.commandString
@@ -635,8 +699,14 @@ function Project() {
       return;
     }
 
-    filesMetadata.forEach(file => {
-      //console.log('Project.js handleFilesMetadata:', file.filepath);
+    filesMetadata.forEach((file, index) => {
+      // Set output folder to the first new input file's folder if it's empty
+      if (index === 0 && file.filepath) {
+        const fileFolder = file.filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+        setOutputFolder(fileFolder);
+        localStorage.setItem('outputFolder', fileFolder);
+      }
+      
       if (file.filetype === 'audio') {
         setAudioFiles(prev => {
           const index = prev.findIndex(f => f.filepath === file.filepath);
@@ -778,6 +848,9 @@ function Project() {
         <button className={styles.refreshButton} onClick={clearComponent}>
           Clear
         </button>
+        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
+          Delete Local Storage
+        </button>
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
@@ -790,6 +863,8 @@ function Project() {
         setData={setAudioFiles}
         columns={audioColumns}
         setAudioFiles={setAudioFiles}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
       />
 
       <h2>Image Files</h2>
@@ -801,6 +876,8 @@ function Project() {
         columns={imageColumns}
         isImageTable={true}
         setImageFiles={setImageFiles}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
       />
 
       <div className={styles.renderOptionsSection}>
