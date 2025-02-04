@@ -199,6 +199,8 @@ function setupAutoUpdater() {
 
 // Function to sanitize FFmpeg command arguments
 function sanitizeFFmpegArgs(args) {
+  return args;
+  /*
   const sanitizedArgs = args.map(arg => {
     if (typeof arg === 'string') {
       // Remove any potentially harmful characters
@@ -207,6 +209,7 @@ function sanitizeFFmpegArgs(args) {
     return arg;
   });
   return sanitizedArgs;
+  */
 }
 
 // IPC event to run an FFmpeg command
@@ -263,7 +266,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
         ffmpegProcesses.delete(renderId); // Remove the process when done
         event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
       } else {
-        const errorOutput = process.stderr ? process.stderr.split('\n').slice(-10).join('\n') : 'No error details';
+        const errorOutput = process.stderr ? process.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
         event.reply('ffmpeg-error', { message: `FFmpeg exited with code ${code}`, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
       }
     });
@@ -273,7 +276,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     if (!app.isPackaged) {
       //logStream.write('error.message: ' + error.message + '\n');
     }
-    const errorOutput = error.stderr ? error.stderr.split('\n').slice(-10).join('\n') : 'No error details';
+    const errorOutput = error.stderr ? error.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
     event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
   }
 });

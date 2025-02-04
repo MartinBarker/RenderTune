@@ -85,7 +85,7 @@ const FileUploader = ({ onFilesMetadata }) => {
       onClick={openNativeFileDialog}
     >
       <div className={styles.fileUploaderBox}>
-        Drag files here or click to select files
+        Click here to select files
       </div>
     </div>
   );
