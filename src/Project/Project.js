@@ -32,6 +32,7 @@ function Project() {
   const [videoWidth, setVideoWidth] = useState('');
   const [videoHeight, setVideoHeight] = useState('');
   const [useBlurBackground, setUseBlurBackground] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -817,6 +818,8 @@ function Project() {
         setData={setAudioFiles}
         columns={audioColumns}
         setAudioFiles={setAudioFiles}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
       />
 
       <h2>Image Files</h2>
@@ -828,6 +831,8 @@ function Project() {
         columns={imageColumns}
         isImageTable={true}
         setImageFiles={setImageFiles}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
       />
 
       <div className={styles.renderOptionsSection}>

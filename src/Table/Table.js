@@ -391,8 +391,7 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender }) {
-  const [globalFilter, setGlobalFilter] = useState("");
+function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -562,15 +561,20 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   const table = useReactTable({
     data,
     columns: tableColumns,
-    state: { sorting, pagination, rowSelection },
+    state: { sorting, pagination, rowSelection, globalFilter },
     getRowId: (row) => row.id,
     onPaginationChange: setPagination,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      return String(value).toLowerCase().includes(String(filterValue).toLowerCase());
+    },
   });
 
   const handleDragEnd = (event) => {
