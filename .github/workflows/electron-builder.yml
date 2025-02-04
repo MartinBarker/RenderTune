@@ -126,20 +126,20 @@ jobs:
           npx tsx script/xcrun-wrapper.mts $PKG_FILE ${{ secrets.APPLE_API_KEY_ID }} ${{ secrets.APPLE_API_ISSUER }} 1552674375 com.martinbarker.digifyunique
 
       - name: (MacOS) Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'macos') && env.is_tag == 'false'
         with:
           name: MacOS
           path: |
-            dist/myCoolElectronApp-mac-arm64.dmg
-            dist/myCoolElectronApp-mac-x64.dmg
+            dist/RenderTune-mac-arm64.dmg
+            dist/RenderTune-mac-x64.dmg
             screenshot.jpeg
 
       - name: (Windows) Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'windows') && env.is_tag == 'false'
         with:
           name: Windows
           path: |
-            dist/myCoolElectronApp-win-x64.7z
+            dist/RenderTune-win-x64.7z
             screenshot.jpeg
