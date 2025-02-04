@@ -17,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let mainWindow;
+let ffmpegProcesses = new Map();
 
 // disable gpu acceleration
 app.disableHardwareAcceleration();
@@ -212,6 +213,8 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     }
 
     const process = execa(ffmpegPath, cmdArgsList);
+    ffmpegProcesses.set(renderId, process); // Store the process
+
     const rl = readline.createInterface({ input: process.stderr });
 
     let progress = 0;
@@ -219,7 +222,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
-        // console.log('FFmpeg output:', line);
+        console.log('FFmpeg output:', line);
         //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
@@ -240,8 +243,19 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
       }
     });
 
-    const result = await process;
-    event.reply('ffmpeg-output', { stdout: result.stdout, progress: 100 });
+    process.on('exit', (code, signal) => {
+      if (signal === 'SIGTERM') {
+        console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
+        event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
+      } else if (code === 0) {
+        ffmpegProcesses.delete(renderId); // Remove the process when done
+        event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
+      } else {
+        const errorOutput = process.stderr ? process.stderr.split('\n').slice(-10).join('\n') : 'No error details';
+        event.reply('ffmpeg-error', { message: `FFmpeg exited with code ${code}`, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+      }
+    });
+
   } catch (error) {
     console.error('FFmpeg command failed:', error.message);
     if (!app.isPackaged) {
@@ -249,6 +263,34 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     }
     const errorOutput = error.stderr ? error.stderr.split('\n').slice(-10).join('\n') : 'No error details';
     event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+  }
+});
+
+ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
+  console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);
+  const process = ffmpegProcesses.get(renderId);
+  if (process) {
+    console.log(`Stopping FFmpeg process with PID: ${process.pid}`);
+    process.kill('SIGTERM');
+    ffmpegProcesses.delete(renderId);
+    console.log(`FFmpeg process with ID: ${renderId} stopped successfully`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
+  } else {
+    console.log(`Error: FFmpeg process with ID: ${renderId} not found`);
+    event.reply('ffmpeg-stop-response', { renderId, status: 'Error: Process not found' });
+  }
+});
+
+ipcMain.on('delete-render-file', async (event, { outputFilePath }) => {
+  try {
+    if (fs.existsSync(outputFilePath)) {
+      fs.unlinkSync(outputFilePath);
+      console.log(`Deleted file: ${outputFilePath}`);
+    } else {
+      console.log(`File not found: ${outputFilePath}`);
+    }
+  } catch (error) {
+    console.error(`Error deleting file: ${outputFilePath}`, error);
   }
 });
 

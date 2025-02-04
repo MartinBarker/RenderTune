@@ -263,6 +263,7 @@
     "@tanstack/react-table": "^8.20.6",
     "axios": "^1.7.9",
     "cross-env": "^7.0.3",
+    "electron-reload": "^2.0.0-alpha.1",
     "electron-serve": "^2.1.1",
     "electron-updater": "^6.3.9",
     "execa": "^9.5.2",

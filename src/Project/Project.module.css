@@ -606,3 +606,23 @@
 .deleteLocalStorageButton:hover {
   background-color: #c82333;
 }
+
+.startingAnimation {
+  display: inline-block;
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: 'Starting';
+  }
+  40% {
+    content: 'Starting.';
+  }
+  60% {
+    content: 'Starting..';
+  }
+  80%, 100% {
+    content: 'Starting...';
+  }
+}

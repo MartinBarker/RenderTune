@@ -39,7 +39,12 @@ function Project() {
   };
 
   const renderColumns = [
-    { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => `${row.original.progress}%` },
+    { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => {
+      if (row.original.progress === 'Starting...') {
+        return <span className={styles.startingAnimation}>Starting...</span>;
+      }
+      return `${row.original.progress}%`;
+    }},
     { accessorKey: 'outputFilename', header: 'Output Filename', cell: ({ row }) => {
       const parts = row.original.outputFilename.split(pathSeparator);
       return parts[parts.length - 1];
@@ -50,6 +55,23 @@ function Project() {
       cell: ({ row }) => (
         <button onClick={() => alert('Placeholder for opening folder')} title="Open folder" className={styles.openFolderButton}>
           📂
+        </button>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'stop',
+      header: 'Stop',
+      cell: ({ row }) => (
+        <button
+          className={styles.stopButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.api.send('stop-ffmpeg-render', { renderId: row.original.id });
+          }}
+          title="Stop this render"
+        >
+          ⏹️
         </button>
       ),
       enableSorting: false,
@@ -304,7 +326,22 @@ function Project() {
 
   const deleteLocalStorage = () => {
     localStorage.clear();
-    alert('Local storage has been cleared.');
+    setAudioFiles([]);
+    setImageFiles([]);
+    setRenders([]);
+    setAudioRowSelection({});
+    setImageRowSelection({});
+    setOutputFolder('');
+    setOutputFilename('output-video');
+    setOutputFormat('mp4');
+    setVideoWidth('1920');
+    setVideoHeight('1080');
+    setBackgroundColor('#000000');
+    setUsePadding(false);
+    setAlwaysUniqueFilenames(false);
+    setPaddingColor('#FFFFFF');
+    setStretchImageToFit(false);
+    setUseBlurBackground(false);
   };
 
   const getSelectedAudioRows = () => {
@@ -611,6 +648,7 @@ function Project() {
     window.api.removeAllListeners('ffmpeg-output');
     window.api.removeAllListeners('ffmpeg-error');
     window.api.removeAllListeners('ffmpeg-progress');
+    window.api.removeAllListeners('ffmpeg-stop-response');
   
     window.api.send('run-ffmpeg-command', {
       renderId: renderId,
@@ -635,10 +673,17 @@ function Project() {
       updateRender(renderId, { pid, progress });
     });
   
+    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
+      updateRender(renderId, { progress: status });
+      if (status === 'Stopped') {
+        setFfmpegError(null); // Clear any existing error message
+      }
+    });
+  
     addRender({
       id: renderId,
       pid: null,
-      progress: 0,
+      progress: 'Starting...', // Set initial progress to "Starting..."
       outputFolder: outputFolder, // Use the correct output folder
       outputFilename: finalOutputFilename, // Use the correct output filename
       ffmpegCommand: ffmpegCommand.commandString
