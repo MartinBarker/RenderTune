@@ -1,0 +1,8 @@
+.lightBlueLink {
+  color: #ADD8E6; /* Light blue color */
+  text-decoration: none;
+}
+
+.lightBlueLink:hover {
+  text-decoration: underline;
+}

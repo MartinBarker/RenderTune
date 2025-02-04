@@ -11,8 +11,8 @@ const Sidebar = ({ children }) => {
 
   useEffect(() => {
     const handleAppVersion = (version) => {
-        // Ensure you are setting a string, not an object
-        setAppVersion(version.version);  // Assuming the object has a property 'version'
+      // Ensure you are setting a string, not an object
+      setAppVersion(version.version);  // Assuming the object has a property 'version'
     };
 
     window.api.send('app_version');
@@ -21,7 +21,7 @@ const Sidebar = ({ children }) => {
     return () => {
       window.api.removeAllListeners('app_version');
     };
-}, []);
+  }, []);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -44,6 +44,8 @@ const Sidebar = ({ children }) => {
   return (
     <div className={`${styles.container} ${darkMode ? styles.darkMode : ''}`}>
       <div className={styles.sidenav}>
+
+        {/* Sidebar App Icon */}
         <div className={styles.sidenavHeader}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -54,27 +56,27 @@ const Sidebar = ({ children }) => {
           </svg>
         </div>
 
+        {/* Sidebar Content */}
         <div className={styles.sidenavContent}>
-          {/* Home Icon */}
+          {/* New Project Icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className={`${styles.icon} ${styles.sidebarIcon} ${
-              location.pathname === '/' ? styles.active : ''
-            }`}
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/' ? styles.active : ''}`}
             onClick={() => navigate('/')}
+            title="New Project"
           >
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
           </svg>
 
           {/* YouTube Icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 461.001 461.001"
-            className={`${styles.icon} ${styles.sidebarIcon} ${
-              location.pathname === '/youtube' ? styles.active : ''
-            }`}
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/youtube' ? styles.active : ''
+              }`}
             onClick={() => navigate('/youtube')}
+            title="YouTube"
             height="40px"
             width="40px"
           >
@@ -84,54 +86,52 @@ const Sidebar = ({ children }) => {
               c0-3.774,3.982-6.22,7.348-4.514l126.06,63.881C304.363,229.873,304.298,235.248,300.506,237.056z"/>
           </svg>
 
-          {/* Add New Project Icon */}
+          {/* Settings Icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className={`${styles.icon} ${styles.sidebarIcon} ${
-              location.pathname === '/settings' ? styles.active : ''
-            }`}
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/settings' ? styles.active : ''}`}
             onClick={() => navigate('/settings')}
+            title="Settings"
           >
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-          </svg>
-
-          {/* View Projects Library Icon */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            className={`${styles.icon} ${styles.sidebarIcon} ${
-              location.pathname === '/library' ? styles.active : ''
-            }`}
-          >
-            <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-8c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-6v-7h6v7z" />
-          </svg>
-
-          {/* Dark Mode Toggle */}
-          <div className={styles.darkModeToggle}>
-            <label htmlFor="darkModeToggle">Dark Mode</label>
-            <input
-              type="checkbox"
-              id="darkModeToggle"
-              checked={darkMode}
-              onChange={toggleDarkMode}
-            />
-          </div>
-
-          {/* Projects List */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 168.000000 149.000000"
-            className={`${styles.icon} ${styles.sidebarIcon} ${
-              location.pathname === '/settings' ? styles.active : ''
-            }`}
-            onClick={() => navigate('/settings')}
-          >
-            <g className="custom-svg" transform="translate(0.000000,149.000000) scale(0.100000,-0.100000)" fill="#818181" stroke="none">
-              <path d="M1045 1433 c-88 -29 -168 -56 -177 -59 -16 -5 -18 2 -18 45 l0 51 -190 0 -190 0 0 -730 0 -730 190 0 190 0 0 677 c0 373 4 673 9 668 4 -6 42 -111 84 -235 91 -273 379 -1114 381 -1117 1 -1 81 23 178 54 l176 56 -135 396 c-74 218 -177 522 -230 676 -52 154 -98 285 -102 291 -4 8 -58 -6 -166 -43z"></path>
-              <path d="M0 740 l0 -730 190 0 190 0 0 730 0 730 -190 0 -190 0 0 -730z"></path>
+            <g data-name="Layer 2">
+              <g data-name="menu-arrow-circle">
+                <rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"/>
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                <path d="M12 6a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0A1.5 1.5 0 1 1 12 11a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-1.16A3.49 3.49 0 0 0 12 6z"/>
+                <circle cx="12" cy="17" r="1"/>
+              </g>
             </g>
           </svg>
+
+          {/* Translate Icon */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/translate' ? styles.active : ''}`}
+            onClick={() => navigate('/translate')}
+            title="Translate"
+          >
+            <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+            <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
+          </svg>
+
+
+          {/* Bug Icon 
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 -0.06 33.834 33.834"
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/bug' ? styles.active : ''}`}
+            onClick={() => navigate('/bug')}
+            title="Bug Report"
+            height="40px"
+            width="40px"
+          >
+            <g transform="translate(-95.748 -577)">
+              <path d="M110.965,592.309a2.38,2.38,0,0,1,.489-1.434,9.29,9.29,0,0,1,1.443-1.482,10.139,10.139,0,0,0,1.321-1.372,1.985,1.985,0,0,0,.368-1.2,1.956,1.956,0,0,0-1.983-2,2.073,2.073,0,0,0-1.419.543,3.575,3.575,0,0,0-.954,1.582l-2.152-.939a5.029,5.029,0,0,1,1.724-2.656,4.626,4.626,0,0,1,2.9-.927,4.968,4.968,0,0,1,2.287.531,4.168,4.168,0,0,1,1.651,1.495,3.974,3.974,0,0,1,.612,2.175,3.688,3.688,0,0,1-.538,1.965,8.8,8.8,0,0,1-1.639,1.865,13.862,13.862,0,0,0-1.358,1.322,1.536,1.536,0,0,0-.379,1,2.85,2.85,0,0,0,.1.667h-2.2A2.737,2.737,0,0,1,110.965,592.309Zm1.467,6.968a1.851,1.851,0,0,1-1.357-.543,1.831,1.831,0,0,1-.551-1.359,1.875,1.875,0,0,1,.551-1.372,1.835,1.835,0,0,1,1.357-.556,1.87,1.87,0,0,1,1.909,1.928,1.834,1.834,0,0,1-.55,1.359A1.857,1.857,0,0,1,112.432,599.277Z"/>
+              <path d="M97.222,610.717a1.475,1.475,0,0,1-.626-.14,1.459,1.459,0,0,1-.848-1.333V580.572A3.576,3.576,0,0,1,99.32,577h26.69a3.576,3.576,0,0,1,3.572,3.572v20.416a3.576,3.576,0,0,1-3.572,3.571H106.038a2.555,2.555,0,0,0-1.637.594l-6.24,5.22A1.467,1.467,0,0,1,97.222,610.717ZM99.32,579a1.574,1.574,0,0,0-1.572,1.572V608.11l5.37-4.491a4.561,4.561,0,0,1,2.92-1.06H126.01a1.573,1.573,0,0,0,1.572-1.571V580.572A1.574,1.574,0,0,0,126.01,579Z"/>
+            </g>
+          </svg> */}
         </div>
       </div>
 
@@ -176,7 +176,7 @@ const Sidebar = ({ children }) => {
         </header>
       </div>
       <div className={styles.contentWrapper}>
-        {children} 
+        {children}
       </div>
     </div>
   );

@@ -197,10 +197,22 @@ function setupAutoUpdater() {
   });
 }
 
+// Function to sanitize FFmpeg command arguments
+function sanitizeFFmpegArgs(args) {
+  const sanitizedArgs = args.map(arg => {
+    if (typeof arg === 'string') {
+      // Remove any potentially harmful characters
+      return arg.replace(/[<>`"'&;]/g, '');
+    }
+    return arg;
+  });
+  return sanitizedArgs;
+}
+
 // IPC event to run an FFmpeg command
 ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
   try {
-    var cmdArgsList = ffmpegArgs.cmdArgs;
+    var cmdArgsList = sanitizeFFmpegArgs(ffmpegArgs.cmdArgs);
     var duration = parseInt(ffmpegArgs.outputDuration, 10);
     var renderId = ffmpegArgs.renderId;
     console.log('Received FFmpeg command:', cmdArgsList);
