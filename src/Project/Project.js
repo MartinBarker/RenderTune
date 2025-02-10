@@ -39,6 +39,21 @@ function Project() {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   };
 
+  const handleOpenFolder = (renderId) => {
+    const render = renders.find(r => r.id === renderId);
+    if (render) {
+      console.log('handleOpenFolder called with render:', render);
+      console.log('Complete output folder filepath location:', render.outputFilepath);
+      if (render.outputFilepath) {
+        window.api.send('open-dir', render.outputFilepath);
+      } else {
+        console.error('Output folder path is undefined');
+      }
+    } else {
+      console.error('Render not found for id:', renderId);
+    }
+  };
+
   const renderColumns = [
     { accessorKey: 'progress', header: 'Progress', cell: ({ row }) => {
       if (row.original.progress === 'Starting...') {
@@ -54,7 +69,11 @@ function Project() {
       accessorKey: 'openFolder',
       header: <span>Open Folder</span>,
       cell: ({ row }) => (
-        <button onClick={() => alert('Placeholder for opening folder')} title="Open folder" className={styles.openFolderButton}>
+        <button
+          onClick={() => handleOpenFolder(row.original.id)}
+          title="Open folder"
+          className={styles.openFolderButton}
+        >
           📂
         </button>
       ),
@@ -451,8 +470,6 @@ function Project() {
     );
   }, (prevProps, nextProps) => prevProps.src === nextProps.src);
   
-
-
   const SortableImage = ({ file, setImageFiles }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: file.id });
   
@@ -686,8 +703,17 @@ function Project() {
       pid: null,
       progress: 'Starting...', // Set initial progress to "Starting..."
       outputFolder: outputFolder, // Use the correct output folder
+      outputFilepath: outputFilePath, // Save the output file path
       outputFilename: finalOutputFilename, // Use the correct output filename
-      ffmpegCommand: ffmpegCommand.commandString
+      ffmpegCommand: ffmpegCommand.commandString,
+      videoWidth: videoWidth,
+      videoHeight: videoHeight,
+      backgroundColor: backgroundColor,
+      usePadding: usePadding,
+      stretchImageToFit: stretchImageToFit,
+      paddingColor: paddingColor,
+      useBlurBackground: useBlurBackground,
+      alwaysUniqueFilenames: alwaysUniqueFilenames
     });
   
   };

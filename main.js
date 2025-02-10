@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { app, BrowserWindow, ipcMain, protocol, session, dialog, Menu } from 'electron';
-import { nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, session, dialog, Menu, shell } from 'electron';
+import { nativeImage } from 'electron'; 
 import { execa } from 'execa';
 import pkg from 'electron-updater';
 import path from 'path';
@@ -514,5 +514,29 @@ ipcMain.on('maximize-window', function () {
 ipcMain.on('unmaximize-window', function () {
   if (mainWindow) {
     mainWindow.unmaximize();
+  }
+});
+
+//open directory 
+ipcMain.on('open-dir', async (event, folderPath) => {
+  try {
+    if (folderPath) {
+      console.log('Opening directory:', folderPath);
+      shell.showItemInFolder(folderPath);
+    } else {
+      console.error('Error: folderPath is undefined');
+    }
+  } catch (error) {
+    console.error('Error opening directory:', error);
+  }
+});
+
+//open file with default application
+ipcMain.on('open-file', async (event, filepath) => {
+  try {
+    console.log('Opening file:', filepath);
+    shell.openPath(filepath);
+  } catch (error) {
+    console.error('Error opening file:', error);
   }
 });

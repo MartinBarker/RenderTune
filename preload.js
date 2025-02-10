@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('api', {
             'get-audio-metadata',  
             'open-file-dialog',
             'open-folder-dialog',
+            'open-dir',
+            'open-file',
             'get-path-separator',
             'set-output-folder',
             'get-color-palette',
