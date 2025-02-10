@@ -35,7 +35,12 @@ console.log(`Thumbnail cache directory is set to: ${thumbnailCacheDir}`);
 const thumbnailMapPath = path.join(thumbnailCacheDir, 'thumbnails.json');
 let thumbnailMap = {};
 if (fs.existsSync(thumbnailMapPath)) {
-  thumbnailMap = JSON.parse(fs.readFileSync(thumbnailMapPath, 'utf-8'));
+  try {
+    thumbnailMap = JSON.parse(fs.readFileSync(thumbnailMapPath, 'utf-8'));
+  } catch (error) {
+    console.error('Error parsing thumbnails.json:', error);
+    thumbnailMap = {}; // Reset to an empty object if parsing fails
+  }
 }
 
 function saveThumbnailMap() {
@@ -237,7 +242,7 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
-        console.log('FFmpeg output:', line);
+        console.log('~~~~~~~ FFmpeg output:\n', line, '\n~~~~~~~\n');
         //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
@@ -260,14 +265,31 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     process.on('exit', (code, signal) => {
       if (signal === 'SIGTERM') {
-        console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
+        //console.log("!! ffmpeg exit SIGTERM !!")
+        //console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
         event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
       } else if (code === 0) {
         ffmpegProcesses.delete(renderId); // Remove the process when done
         event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
       } else {
+        //console.log(`!! ffmpeg unexpected exit, signal = ${signal} `)
+        /*
+        console.log(`process.stderr =`)
+        console.log(process.stderr)
+        console.log(`~~err~~`)
+
+        console.log(`process.stdout = `)
+        console.log(process.stdout)
+        console.log(`~~err~~`)
+
         const errorOutput = process.stderr ? process.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
-        event.reply('ffmpeg-error', { message: `FFmpeg exited with code ${code}`, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+        */
+        const relevantError = "extractRelevantError(errorOutput);"
+        //console.log("RETURNING ERR CODE ")
+        event.reply('ffmpeg-error', { 
+          message: `FFmpeg exited with code ${code}`, 
+          lastOutput: relevantError 
+        });
       }
     });
 
@@ -277,9 +299,16 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
       //logStream.write('error.message: ' + error.message + '\n');
     }
     const errorOutput = error.stderr ? error.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
-    event.reply('ffmpeg-error', { message: error.message, lastOutput: errorOutput, ffmpegPath: getFfmpegPath() });
+    const relevantError = extractRelevantError(errorOutput);
+    event.reply('ffmpeg-error', { message: error.message, lastOutput: relevantError });
   }
 });
+
+function extractRelevantError(errorOutput) {
+  const errorLines = errorOutput.split('\n');
+  const relevantLines = errorLines.filter(line => line.includes('Error') || line.includes('Failed') || line.includes('Invalid'));
+  return relevantLines.join('\n');
+}
 
 ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
   console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);

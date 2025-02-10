@@ -132,8 +132,8 @@ function Project() {
     setRenders(updatedRenders);
   };
 
-  const [audioFiles, setAudioFiles] = useState(getInitialState('audioFiles', []));
-  const [imageFiles, setImageFiles] = useState(getInitialState('imageFiles', []));
+  const [audioFiles, setAudioFiles] = useState(() => getInitialState('audioFiles', []));
+  const [imageFiles, setImageFiles] = useState(() => getInitialState('imageFiles', []));
   const [audioRowSelection, setAudioRowSelection] = useState(getInitialState('audioRowSelection', {}));
   const [imageRowSelection, setImageRowSelection] = useState(getInitialState('imageRowSelection', {}));
   const [ffmpegError, setFfmpegError] = useState(null);
@@ -662,10 +662,16 @@ function Project() {
     window.api.receive('ffmpeg-error', (data) => {
       console.log('FFmpeg Error:', data);
       setFfmpegError({
-        ...data,
-        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`,
-        ffmpegPath: data.ffmpegPath // Include the FFmpeg filepath
+        lastOutput: data.lastOutput
       });
+
+      /*
+      setFfmpegError({
+        ...data,
+        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`
+      });
+      */
+
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
   
@@ -1076,7 +1082,7 @@ function Project() {
           <button className={styles.closeButton} onClick={handleCloseError}>x</button>
           <h3>FFmpeg Error:</h3>
           <pre className={styles.errorPre}>{ffmpegError.lastOutput}</pre>
-          <pre className={styles.errorPre}>{ffmpegError.fullCommand}</pre>
+          {/* <pre className={styles.errorPre}>{ffmpegError.fullCommand}</pre> */}
         </div>
       )}
 
