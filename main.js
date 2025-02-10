@@ -540,3 +540,19 @@ ipcMain.on('open-file', async (event, filepath) => {
     console.error('Error opening file:', error);
   }
 });
+
+ipcMain.on('delete-file', async (event, filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted file: ${filePath}`);
+      event.reply('delete-file-response', { success: true, filePath });
+    } else {
+      console.log(`File not found: ${filePath}`);
+      event.reply('delete-file-response', { success: false, error: 'File not found' });
+    }
+  } catch (error) {
+    console.error(`Error deleting file: ${filePath}`, error);
+    event.reply('delete-file-response', { success: false, error: error.message });
+  }
+});

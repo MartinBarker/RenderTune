@@ -96,6 +96,35 @@ function Project() {
       ),
       enableSorting: false,
     },
+    {
+      accessorKey: 'openFile',
+      header: 'Open File',
+      cell: ({ row }) => (
+        <button
+          className={styles.openFileButton}
+          onClick={() => handleAction('open-file', row.original.id)}
+          title="Open file"
+          disabled={row.original.progress !== 100}
+        >
+          ▶️
+        </button>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'deleteFile',
+      header: 'Delete File',
+      cell: ({ row }) => (
+        <button
+          className={styles.deleteFileButton}
+          onClick={() => handleAction('delete-file', row.original.id)}
+          title="Delete file"
+        >
+          🗑️
+        </button>
+      ),
+      enableSorting: false,
+    },
   ];
 
   const getInitialState = (key, defaultValue) => {
@@ -568,6 +597,19 @@ function Project() {
           removeRender(renderId);
         }
         break;
+      case 'open-file':
+        const render = renders.find(r => r.id === renderId);
+        if (render && render.progress === 100) {
+          window.api.send('open-file', render.outputFilepath);
+        }
+        break;
+      case 'delete-file':
+        const renderToDelete = renders.find(r => r.id === renderId);
+        if (renderToDelete) {
+          window.api.send('delete-render-file', { outputFilePath: renderToDelete.outputFilepath });
+          removeRender(renderId);
+        }
+        break;
       default:
         console.error('Unknown action:', action);
     }
@@ -755,7 +797,7 @@ function Project() {
           const index = prev.findIndex(f => f.filepath === file.filepath);
           if (index >= 0) {
             const updatedImages = [...prev];
-            updatedImages[index] = { ...updatedImages[index], ...file };
+            updatedImages[index] = { ...updatedImages[index], ...file, useBlurBackground: true, stretchImageToFit: false };
             return updatedImages;
           } else {
             return [...prev, {
@@ -763,6 +805,8 @@ function Project() {
               filename: file.filename, // Use `filename`
               filepath: file.filepath,
               dimensions: file.dimensions || 'Unknown',
+              useBlurBackground: true,
+              stretchImageToFit: false
             }];
           }
         });

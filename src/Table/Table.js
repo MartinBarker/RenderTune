@@ -179,31 +179,46 @@ function Row({
     return hexPattern.test(color);
   };
 
-  const handlePaddingColorChange = (e) => {
-    let color = e.target.value;
-    if (color === "") {
-      color = "#FFFFFF";
+  useEffect(() => {
+    if (isImageTable) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: true, stretchImageToFit: false }
+            : img
+        )
+      );
     }
-    setSelectedColor(color);
+  }, [row.original.id, isImageTable]);
+
+  const handleStretchImageToFitChange = (e) => {
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: color }
+          ? { ...img, stretchImageToFit: e.target.checked, useBlurBackground: !e.target.checked, paddingColor: e.target.checked ? null : img.paddingColor }
           : img
       )
     );
+  };
 
-    if (!validateHexColor(color)) {
-      setErrors((prev) => ({
-        ...prev,
-        [row.original.id]: 'Invalid hex color code'
-      }));
-    } else {
-      setErrors((prev) => {
-        const { [row.original.id]: _, ...rest } = prev;
-        return rest;
-      });
-    }
+  const handlePaddingColorChange = (e) => {
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, paddingColor: e.target.value, stretchImageToFit: false, useBlurBackground: false }
+          : img
+      )
+    );
+  };
+
+  const handleBlurBackgroundChange = (e) => {
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, useBlurBackground: e.target.checked, stretchImageToFit: !e.target.checked, paddingColor: e.target.checked ? null : img.paddingColor }
+          : img
+      )
+    );
   };
 
   return (
@@ -319,16 +334,9 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.stretchImageToFit !== undefined ? row.original.stretchImageToFit : true}
-                  onChange={(e) =>
-                    setImageFiles((prev) =>
-                      prev.map((img) =>
-                        img.id === row.original.id
-                          ? { ...img, stretchImageToFit: e.target.checked }
-                          : img
-                      )
-                    )
-                  }
+                  checked={row.original.stretchImageToFit || false}
+                  onChange={handleStretchImageToFitChange}
+                  className={row.original.useBlurBackground || row.original.paddingColor ? styles.disabled : ''}
                 />
                 Stretch Image to Fit
               </label>
@@ -339,7 +347,7 @@ function Row({
                   type="text"
                   value={row.original.paddingColor || "#FFFFFF"}
                   onChange={handlePaddingColorChange}
-                  className={styles.paddingColorInput}
+                  className={`${styles.paddingColorInput} ${row.original.stretchImageToFit || row.original.useBlurBackground ? styles.disabled : ''}`}
                   style={{
                     backgroundColor: row.original.paddingColor || "#FFFFFF"
                   }}
@@ -361,16 +369,9 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.useBlurBackground !== undefined ? row.original.useBlurBackground : false}
-                  onChange={(e) =>
-                    setImageFiles((prev) =>
-                      prev.map((img) =>
-                        img.id === row.original.id
-                          ? { ...img, useBlurBackground: e.target.checked }
-                          : img
-                      )
-                    )
-                  }
+                  checked={row.original.useBlurBackground || false}
+                  onChange={handleBlurBackgroundChange}
+                  className={row.original.stretchImageToFit || row.original.paddingColor ? styles.disabled : ''}
                 />
                 Use Blur Background Image
               </label>
@@ -469,94 +470,120 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     });
   };
 
-  const tableColumns = React.useMemo(() => [
-    {
-      id: "select",
-      header: () => {
-        const allRowsSelected = data.length === Object.keys(rowSelection).length;
-        return (
-          <IndeterminateCheckbox
-            checked={allRowsSelected}
-            indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
-            onChange={toggleAllRowsSelected}
-          />
-        );
+  const tableColumns = React.useMemo(() => {
+    const baseColumns = [
+      {
+        id: "select",
+        header: () => {
+          const allRowsSelected = data.length === Object.keys(rowSelection).length;
+          return (
+            <IndeterminateCheckbox
+              checked={allRowsSelected}
+              indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
+              onChange={toggleAllRowsSelected}
+            />
+          );
+        },
+        cell: ({ row }) => (
+          <div className="px-1">
+            <IndeterminateCheckbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler(),
+              }}
+            />
+          </div>
+        ),
       },
-      cell: ({ row }) => (
-        <div className="px-1">
-          <IndeterminateCheckbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler(),
+      {
+        id: "expand",
+        header: "Expand",
+        cell: () => null,
+      },
+      {
+        id: "drag",
+        header: "Drag",
+        cell: () => null,
+      },
+      ...columns.map((column) => ({
+        ...column,
+        header: column.id === 'openFolder' ? column.header : () => (
+          <div
+            className={styles.sortableHeader}
+            onClick={() => {
+              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
+              const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
+              setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
             }}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "expand",
-      header: "Expand",
-      cell: () => null,
-    },
-    {
-      id: "drag",
-      header: "Drag",
-      cell: () => null,
-    },
-    ...columns.map((column) => ({
-      ...column,
-      header: column.id === 'openFolder' ? column.header : () => (
-        <div
-          className={styles.sortableHeader}
-          onClick={() => {
-            const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-            const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
-            setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
-          }}
-        >
-          {column.header || ""}
-          <span className={styles.sortIcon}>
-            {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
-            }
-          </span>
-        </div>
-      ),
-    })),
-    {
-      id: "copy",
-      header: "Copy",
-      cell: ({ row }) => (
-        <button
-          className={styles.copyButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            copyRow(row.original.id);
-          }}
-          title="Copy this row"
-        >
-          📋
-        </button>
-      ),
-    },
-    {
-      id: "remove",
-      header: "Remove",
-      cell: ({ row }) => (
-        <button
-          className={styles.removeButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            removeRow(row.original.id);
-          }}
-          title="Remove this file"
-        >
-          ❌
-        </button>
-      ),
-    },
-  ]);
+          >
+            {column.header || ""}
+            <span className={styles.sortIcon}>
+              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
+              }
+            </span>
+          </div>
+        ),
+      })),
+    ];
+
+    if (!isRenderTable) {
+      baseColumns.push(
+        {
+          id: "copy",
+          header: "Copy",
+          cell: ({ row }) => (
+            <button
+              className={styles.copyButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                copyRow(row.original.id);
+              }}
+              title="Copy this row"
+            >
+              📋
+            </button>
+          ),
+        },
+        {
+          id: "remove",
+          header: "Remove",
+          cell: ({ row }) => (
+            <button
+              className={styles.removeButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeRow(row.original.id);
+              }}
+              title="Remove this file"
+            >
+              ❌
+            </button>
+          ),
+        }
+      );
+    } else {
+      baseColumns.push({
+        id: "remove",
+        header: "Remove",
+        cell: ({ row }) => (
+          <button
+            className={styles.removeButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeRow(row.original.id);
+            }}
+            title="Remove this file"
+          >
+            ❌
+          </button>
+        ),
+      });
+    }
+
+    return baseColumns;
+  }, [columns, data, rowSelection, sorting, isRenderTable]);
 
   const table = useReactTable({
     data,

@@ -18,7 +18,8 @@ contextBridge.exposeInMainWorld('api', {
             'set-output-folder',
             'get-color-palette',
             'stop-ffmpeg-render',
-            'delete-render-file'
+            'delete-render-file',
+            'delete-file'
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);

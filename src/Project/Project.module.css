@@ -642,3 +642,36 @@
 .toggleErrorButton:hover {
   background-color: #0056b3;
 }
+
+.openFileButton {
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.openFileButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.openFileButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.deleteFileButton {
+  padding: 0.5rem 1rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteFileButton:hover {
+  background-color: #c82333;
+}
