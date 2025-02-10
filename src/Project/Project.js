@@ -33,6 +33,7 @@ function Project() {
   const [videoHeight, setVideoHeight] = useState('');
   const [useBlurBackground, setUseBlurBackground] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [showFullErrorLog, setShowFullErrorLog] = useState(false);
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -662,15 +663,9 @@ function Project() {
     window.api.receive('ffmpeg-error', (data) => {
       console.log('FFmpeg Error:', data);
       setFfmpegError({
-        lastOutput: data.lastOutput
+        lastOutput: data.lastOutput,
+        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
       });
-
-      /*
-      setFfmpegError({
-        ...data,
-        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`
-      });
-      */
 
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
@@ -827,8 +822,13 @@ function Project() {
     setStretchImageToFit(e.target.checked);
   };
 
+  const handleToggleErrorLog = () => {
+    setShowFullErrorLog((prev) => !prev);
+  };
+
   const handleCloseError = () => {
     setFfmpegError(null);
+    setShowFullErrorLog(false);
   };
 
   const resetToDefault = () => {
@@ -1081,8 +1081,12 @@ function Project() {
         <div className={styles.errorContainer}>
           <button className={styles.closeButton} onClick={handleCloseError}>x</button>
           <h3>FFmpeg Error:</h3>
-          <pre className={styles.errorPre}>{ffmpegError.lastOutput}</pre>
-          {/* <pre className={styles.errorPre}>{ffmpegError.fullCommand}</pre> */}
+          <pre className={styles.errorPre}>
+            {showFullErrorLog ? ffmpegError.fullErrorLog : ffmpegError.lastOutput}
+          </pre>
+          <button onClick={handleToggleErrorLog} className={styles.toggleErrorButton}>
+            {showFullErrorLog ? 'Show error message only' : 'Show full error message'}
+          </button>
         </div>
       )}
 

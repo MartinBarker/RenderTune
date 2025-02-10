@@ -224,13 +224,10 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     var duration = parseInt(ffmpegArgs.outputDuration, 10);
     var renderId = ffmpegArgs.renderId;
     console.log('Received FFmpeg command:', cmdArgsList);
-    console.log('duration:', duration);
+    console.log('Duration:', duration);
 
     const ffmpegPath = getFfmpegPath();
     console.log('Using FFmpeg path:', ffmpegPath);
-    if (!app.isPackaged) {
-      //logStream.write(`FFmpeg command: ${ffmpegPath} ${cmdArgsList.join(' ')}\n`);
-    }
 
     const process = execa(ffmpegPath, cmdArgsList);
     ffmpegProcesses.set(renderId, process); // Store the process
@@ -238,19 +235,21 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     const rl = readline.createInterface({ input: process.stderr });
 
     let progress = 0;
-    const outputBuffer = [];
+    let errorBuffer = []; // Store all stderr lines
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
         console.log('~~~~~~~ FFmpeg output:\n', line, '\n~~~~~~~\n');
-        //logStream.write('FFmpeg output: ' + line + '\n');
       }
 
-      outputBuffer.push(line);
-      if (outputBuffer.length > 10) {
-        outputBuffer.shift(); // Keep only the last 10 lines
+      // Store full FFmpeg stderr logs
+      errorBuffer.push(line);
+      if (errorBuffer.length > 100) {
+        errorBuffer.shift(); // Keep the last 100 lines to avoid memory overflow
       }
-      const match = line.match(/time=([\d:.]+)/);
+
+      // Extract progress updates
+      let match = line.match(/time=([\d:.]+)/);
       if (match) {
         const elapsed = match[1].split(':').reduce((acc, time) => (60 * acc) + +time, 0);
         progress = duration ? Math.min((elapsed / duration) * 100, 100) : 0;
@@ -265,50 +264,64 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
 
     process.on('exit', (code, signal) => {
       if (signal === 'SIGTERM') {
-        //console.log("!! ffmpeg exit SIGTERM !!")
-        //console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
+        console.log("!! ffmpeg exit SIGTERM !!");
+        console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
         event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
       } else if (code === 0) {
         ffmpegProcesses.delete(renderId); // Remove the process when done
         event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
       } else {
-        //console.log(`!! ffmpeg unexpected exit, signal = ${signal} `)
-        /*
-        console.log(`process.stderr =`)
-        console.log(process.stderr)
-        console.log(`~~err~~`)
+        console.log(`!! ffmpeg unexpected exit, signal = ${signal} `);
 
-        console.log(`process.stdout = `)
-        console.log(process.stdout)
-        console.log(`~~err~~`)
+        // Extract key FFmpeg error details
+        const relevantError = extractRelevantError(errorBuffer);
 
-        const errorOutput = process.stderr ? process.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
-        */
-        const relevantError = "extractRelevantError(errorOutput);"
-        //console.log("RETURNING ERR CODE ")
         event.reply('ffmpeg-error', { 
           message: `FFmpeg exited with code ${code}`, 
-          lastOutput: relevantError 
+          lastOutput: relevantError,
+          fullErrorLog: errorBuffer.join('\n') // Send full stderr log for debugging
         });
       }
     });
 
   } catch (error) {
     console.error('FFmpeg command failed:', error.message);
-    if (!app.isPackaged) {
-      //logStream.write('error.message: ' + error.message + '\n');
-    }
-    const errorOutput = error.stderr ? error.stderr.toString().split('\n').slice(-10).join('\n') : 'No error details';
+    const errorOutput = error.stderr ? error.stderr.toString().split('\n') : ['No error details'];
     const relevantError = extractRelevantError(errorOutput);
-    event.reply('ffmpeg-error', { message: error.message, lastOutput: relevantError });
+
+    event.reply('ffmpeg-error', { 
+      message: error.message, 
+      lastOutput: relevantError,
+      fullErrorLog: errorOutput.join('\n') // Send full stderr log for debugging
+    });
   }
 });
 
-function extractRelevantError(errorOutput) {
-  const errorLines = errorOutput.split('\n');
-  const relevantLines = errorLines.filter(line => line.includes('Error') || line.includes('Failed') || line.includes('Invalid'));
-  return relevantLines.join('\n');
+// Function to extract the most relevant FFmpeg error messages
+function extractRelevantError(errorLines) {
+  const relevantLines = [];
+  let captureNext = false;
+  let capturedLines = 0;
+
+  for (let i = errorLines.length - 1; i >= 0; i--) {
+    const line = errorLines[i];
+
+    // Start capturing when we detect an error
+    if (line.includes('Error') || line.includes('Failed') || line.includes('Invalid') || line.includes('Could not')) {
+      captureNext = true;
+    }
+
+    // Include a few lines before the error for context
+    if (captureNext && capturedLines < 10) {
+      relevantLines.unshift(line);
+      capturedLines++;
+    }
+  }
+
+  return relevantLines.length ? relevantLines.join('\n') : "Unknown FFmpeg error occurred.";
 }
+
+
 
 ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
   console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);
