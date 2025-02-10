@@ -675,3 +675,9 @@
 .deleteFileButton:hover {
   background-color: #c82333;
 }
+
+.deleteFileButton:disabled {
+  background-color: #6c757d !important; /* Grey color when disabled */
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}

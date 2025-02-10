@@ -90,6 +90,7 @@ function Project() {
             window.api.send('stop-ffmpeg-render', { renderId: row.original.id });
           }}
           title="Stop this render"
+          disabled={row.original.progress === 'error' || row.original.progress === 'Stopped' || row.original.progress === 100}
         >
           ⏹️
         </button>
@@ -111,20 +112,21 @@ function Project() {
       ),
       enableSorting: false,
     },
-    {
-      accessorKey: 'deleteFile',
-      header: 'Delete File',
-      cell: ({ row }) => (
-        <button
-          className={styles.deleteFileButton}
-          onClick={() => handleAction('delete-file', row.original.id)}
-          title="Delete file"
-        >
-          🗑️
-        </button>
-      ),
-      enableSorting: false,
-    },
+{
+  accessorKey: 'deleteFile',
+  header: 'Delete File',
+  cell: ({ row }) => (
+    <button
+      className={styles.deleteFileButton}
+      onClick={() => handleAction('delete-file', row.original.id)}
+      title="Delete file"
+      disabled={typeof row.original.progress === 'number' && row.original.progress < 100 && row.original.progress !== 'error' && row.original.progress !== 'Stopped'}
+    >
+      🗑️
+    </button>
+  ),
+  enableSorting: false,
+},
   ];
 
   const getInitialState = (key, defaultValue) => {
@@ -252,6 +254,58 @@ function Project() {
       window.api.removeAllListeners('output-folder-set');
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('outputFolder', outputFolder);
+    localStorage.setItem('outputFilename', outputFilename);
+    localStorage.setItem('outputFormat', outputFormat);
+    localStorage.setItem('videoWidth', videoWidth);
+    localStorage.setItem('videoHeight', videoHeight);
+    localStorage.setItem('backgroundColor', backgroundColor);
+    localStorage.setItem('usePadding', usePadding);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('paddingColor', paddingColor);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit);
+    localStorage.setItem('useBlurBackground', useBlurBackground);
+  }, [
+    outputFolder,
+    outputFilename,
+    outputFormat,
+    videoWidth,
+    videoHeight,
+    backgroundColor,
+    usePadding,
+    alwaysUniqueFilenames,
+    paddingColor,
+    stretchImageToFit,
+    useBlurBackground
+  ]);
+
+  useEffect(() => {
+    localStorage.setItem('outputFolder', outputFolder);
+    localStorage.setItem('outputFilename', outputFilename);
+    localStorage.setItem('outputFormat', outputFormat);
+    localStorage.setItem('videoWidth', videoWidth);
+    localStorage.setItem('videoHeight', videoHeight);
+    localStorage.setItem('backgroundColor', backgroundColor);
+    localStorage.setItem('usePadding', usePadding);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('paddingColor', paddingColor);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit);
+    localStorage.setItem('useBlurBackground', useBlurBackground);
+  }, [
+    outputFolder,
+    outputFilename,
+    outputFormat,
+    videoWidth,
+    videoHeight,
+    backgroundColor,
+    usePadding,
+    alwaysUniqueFilenames,
+    paddingColor,
+    stretchImageToFit,
+    useBlurBackground
+  ]);
 
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
@@ -867,29 +921,35 @@ function Project() {
   const handleOutputFilenameChange = (e) => {
     const sanitizedFilename = sanitizeFilename(e.target.value);
     setOutputFilename(sanitizedFilename);
+    localStorage.setItem('outputFilename', sanitizedFilename);
   };
 
   const handleVideoWidthChange = (e) => {
     const sanitizedWidth = sanitizeNumericInput(e.target.value, 1, 7680); // 8K max
     setVideoWidth(sanitizedWidth.toString());
+    localStorage.setItem('videoWidth', sanitizedWidth.toString());
   };
 
   const handleVideoHeightChange = (e) => {
     const sanitizedHeight = sanitizeNumericInput(e.target.value, 1, 4320); // 8K max
     setVideoHeight(sanitizedHeight.toString());
+    localStorage.setItem('videoHeight', sanitizedHeight.toString());
   };
 
   const handleBackgroundColorChange = (e) => {
     const sanitizedColor = validateHexColor(e.target.value);
     setBackgroundColor(sanitizedColor);
+    localStorage.setItem('backgroundColor', sanitizedColor);
   };
 
   const handlePaddingColorChange = (e) => {
     setPaddingColor(e.target.value);
+    localStorage.setItem('paddingColor', e.target.value);
   };
 
   const handleStretchImageToFitChange = (e) => {
     setStretchImageToFit(e.target.checked);
+    localStorage.setItem('stretchImageToFit', e.target.checked);
   };
 
   const handleToggleErrorLog = () => {

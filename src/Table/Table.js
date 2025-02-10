@@ -98,11 +98,16 @@ function Row({
   const handleTimeInputChange = (e, field, rowId, isOverAnHour) => {
     const formattedValue = formatTimeInput(e.target.value, isOverAnHour);
     setAudioFiles((prev) =>
-      prev.map((audio) =>
-        audio.id === rowId
-          ? { ...audio, [field]: formattedValue }
-          : audio
-      )
+      prev.map((audio) => {
+        if (audio.id === rowId) {
+          const updatedAudio = { ...audio, [field]: formattedValue };
+          if (field === 'length') {
+            updatedAudio.startTime = isOverAnHour ? '00:00:00' : '00:00';
+          }
+          return updatedAudio;
+        }
+        return audio;
+      })
     );
   };
 
@@ -164,11 +169,13 @@ function Row({
   }, [row.original.filepath, isImageTable]);
 
   const handleColorBoxClick = (color) => {
-    setSelectedColor(color);
+    const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(color);
+    const validColor = isValidHex ? color : "#FFFFFF";
+    setSelectedColor(validColor);
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: color }
+          ? { ...img, paddingColor: validColor, stretchImageToFit: false, useBlurBackground: false }
           : img
       )
     );
@@ -184,41 +191,82 @@ function Row({
       setImageFiles((prev) =>
         prev.map((img) =>
           img.id === row.original.id
-            ? { ...img, useBlurBackground: true, stretchImageToFit: false }
+            ? { ...img, useBlurBackground: true, stretchImageToFit: false, paddingColor: null }
             : img
         )
       );
+      toggleRowExpanded(row.id); // Expand the row by default
     }
   }, [row.original.id, isImageTable]);
 
   const handleStretchImageToFitChange = (e) => {
-    setImageFiles((prev) =>
-      prev.map((img) =>
-        img.id === row.original.id
-          ? { ...img, stretchImageToFit: e.target.checked, useBlurBackground: !e.target.checked, paddingColor: e.target.checked ? null : img.paddingColor }
-          : img
-      )
-    );
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, stretchImageToFit: true, useBlurBackground: false, paddingColor: null }
+            : img
+        )
+      );
+    } else {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, stretchImageToFit: false }
+            : img
+        )
+      );
+    }
   };
 
   const handlePaddingColorChange = (e) => {
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: e.target.value, stretchImageToFit: false, useBlurBackground: false }
+          ? { ...img, paddingColor: e.target.value }
           : img
       )
     );
   };
 
+  const handlePaddingColorCheckboxChange = (e) => {
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, paddingColor: "#FFFFFF", stretchImageToFit: false, useBlurBackground: false }
+            : img
+        )
+      );
+    } else {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, paddingColor: null }
+            : img
+        )
+      );
+    }
+  };
+
   const handleBlurBackgroundChange = (e) => {
-    setImageFiles((prev) =>
-      prev.map((img) =>
-        img.id === row.original.id
-          ? { ...img, useBlurBackground: e.target.checked, stretchImageToFit: !e.target.checked, paddingColor: e.target.checked ? null : img.paddingColor }
-          : img
-      )
-    );
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: true, stretchImageToFit: false, paddingColor: null }
+            : img
+        )
+      );
+    } else {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: false }
+            : img
+        )
+      );
+    }
   };
 
   return (
@@ -303,11 +351,11 @@ function Row({
                   value={row.original.length || ''}
                   onChange={(e) => {
                     const newLength = formatTimeInput(e.target.value, isOverAnHour);
-                    const newEndTime = calculateEndTime(row.original.startTime || (isOverAnHour ? '00:00:00' : '00:00'), newLength, isOverAnHour);
+                    const newEndTime = calculateEndTime(isOverAnHour ? '00:00:00' : '00:00', newLength, isOverAnHour);
                     setAudioFiles((prev) =>
                       prev.map((audio) =>
                         audio.id === row.original.id
-                          ? { ...audio, length: newLength, endTime: newEndTime }
+                          ? { ...audio, length: newLength, endTime: newEndTime, startTime: isOverAnHour ? '00:00:00' : '00:00' }
                           : audio
                       )
                     );
@@ -336,20 +384,24 @@ function Row({
                   type="checkbox"
                   checked={row.original.stretchImageToFit || false}
                   onChange={handleStretchImageToFitChange}
-                  className={row.original.useBlurBackground || row.original.paddingColor ? styles.disabled : ''}
                 />
                 Stretch Image to Fit
               </label>
               <label>
+                <input
+                  type="checkbox"
+                  checked={row.original.paddingColor !== null}
+                  onChange={handlePaddingColorCheckboxChange}
+                />
                 Padding Color:
                 <input
                   id='paddingColorInput'
                   type="text"
-                  value={row.original.paddingColor || "#FFFFFF"}
+                  value={row.original.paddingColor || "none"}
                   onChange={handlePaddingColorChange}
-                  className={`${styles.paddingColorInput} ${row.original.stretchImageToFit || row.original.useBlurBackground ? styles.disabled : ''}`}
+                  className={styles.paddingColorInput}
                   style={{
-                    backgroundColor: row.original.paddingColor || "#FFFFFF"
+                    backgroundColor: row.original.paddingColor === "none" ? "#FFFFFF" : row.original.paddingColor
                   }}
                 />
                 {errors[row.original.id] && (
@@ -361,7 +413,7 @@ function Row({
                   <div
                     key={index}
                     className={`${styles.colorBox} ${selectedColor === color.hex ? styles.selectedColorBox : ''}`}
-                    style={{ background: color.hex }}
+                    style={{ background: /^#([0-9A-Fa-f]{3}){1,2}$/.test(color.hex) ? color.hex : "#FFFFFF" }}
                     onClick={() => handleColorBoxClick(color.hex)}
                   />
                 ))}
@@ -371,7 +423,6 @@ function Row({
                   type="checkbox"
                   checked={row.original.useBlurBackground || false}
                   onChange={handleBlurBackgroundChange}
-                  className={row.original.stretchImageToFit || row.original.paddingColor ? styles.disabled : ''}
                 />
                 Use Blur Background Image
               </label>
