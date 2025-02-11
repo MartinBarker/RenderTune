@@ -98,11 +98,16 @@ function Row({
   const handleTimeInputChange = (e, field, rowId, isOverAnHour) => {
     const formattedValue = formatTimeInput(e.target.value, isOverAnHour);
     setAudioFiles((prev) =>
-      prev.map((audio) =>
-        audio.id === rowId
-          ? { ...audio, [field]: formattedValue }
-          : audio
-      )
+      prev.map((audio) => {
+        if (audio.id === rowId) {
+          const updatedAudio = { ...audio, [field]: formattedValue };
+          if (field === 'length') {
+            updatedAudio.startTime = isOverAnHour ? '00:00:00' : '00:00';
+          }
+          return updatedAudio;
+        }
+        return audio;
+      })
     );
   };
 
@@ -164,11 +169,13 @@ function Row({
   }, [row.original.filepath, isImageTable]);
 
   const handleColorBoxClick = (color) => {
-    setSelectedColor(color);
+    const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(color);
+    const validColor = isValidHex ? color : "#FFFFFF";
+    setSelectedColor(validColor);
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: color }
+          ? { ...img, paddingColor: validColor, stretchImageToFit: false, useBlurBackground: false }
           : img
       )
     );
@@ -179,30 +186,86 @@ function Row({
     return hexPattern.test(color);
   };
 
-  const handlePaddingColorChange = (e) => {
-    let color = e.target.value;
-    if (color === "") {
-      color = "#FFFFFF";
+  useEffect(() => {
+    if (isImageTable) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: true, stretchImageToFit: false, paddingColor: null }
+            : img
+        )
+      );
+      toggleRowExpanded(row.id); // Expand the row by default
     }
-    setSelectedColor(color);
+  }, [row.original.id, isImageTable]);
+
+  const handleStretchImageToFitChange = (e) => {
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, stretchImageToFit: true, useBlurBackground: false, paddingColor: null }
+            : img
+        )
+      );
+    } else {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, stretchImageToFit: false }
+            : img
+        )
+      );
+    }
+  };
+
+  const handlePaddingColorChange = (e) => {
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: color }
+          ? { ...img, paddingColor: e.target.value }
           : img
       )
     );
+  };
 
-    if (!validateHexColor(color)) {
-      setErrors((prev) => ({
-        ...prev,
-        [row.original.id]: 'Invalid hex color code'
-      }));
+  const handlePaddingColorCheckboxChange = (e) => {
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, paddingColor: "#FFFFFF", stretchImageToFit: false, useBlurBackground: false }
+            : img
+        )
+      );
     } else {
-      setErrors((prev) => {
-        const { [row.original.id]: _, ...rest } = prev;
-        return rest;
-      });
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, paddingColor: null }
+            : img
+        )
+      );
+    }
+  };
+
+  const handleBlurBackgroundChange = (e) => {
+    if (e.target.checked) {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: true, stretchImageToFit: false, paddingColor: null }
+            : img
+        )
+      );
+    } else {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === row.original.id
+            ? { ...img, useBlurBackground: false }
+            : img
+        )
+      );
     }
   };
 
@@ -288,11 +351,11 @@ function Row({
                   value={row.original.length || ''}
                   onChange={(e) => {
                     const newLength = formatTimeInput(e.target.value, isOverAnHour);
-                    const newEndTime = calculateEndTime(row.original.startTime || (isOverAnHour ? '00:00:00' : '00:00'), newLength, isOverAnHour);
+                    const newEndTime = calculateEndTime(isOverAnHour ? '00:00:00' : '00:00', newLength, isOverAnHour);
                     setAudioFiles((prev) =>
                       prev.map((audio) =>
                         audio.id === row.original.id
-                          ? { ...audio, length: newLength, endTime: newEndTime }
+                          ? { ...audio, length: newLength, endTime: newEndTime, startTime: isOverAnHour ? '00:00:00' : '00:00' }
                           : audio
                       )
                     );
@@ -319,29 +382,26 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.stretchImageToFit !== undefined ? row.original.stretchImageToFit : true}
-                  onChange={(e) =>
-                    setImageFiles((prev) =>
-                      prev.map((img) =>
-                        img.id === row.original.id
-                          ? { ...img, stretchImageToFit: e.target.checked }
-                          : img
-                      )
-                    )
-                  }
+                  checked={row.original.stretchImageToFit || false}
+                  onChange={handleStretchImageToFitChange}
                 />
                 Stretch Image to Fit
               </label>
               <label>
+                <input
+                  type="checkbox"
+                  checked={row.original.paddingColor !== null}
+                  onChange={handlePaddingColorCheckboxChange}
+                />
                 Padding Color:
                 <input
                   id='paddingColorInput'
                   type="text"
-                  value={row.original.paddingColor || "#FFFFFF"}
+                  value={row.original.paddingColor || "none"}
                   onChange={handlePaddingColorChange}
                   className={styles.paddingColorInput}
                   style={{
-                    backgroundColor: row.original.paddingColor || "#FFFFFF"
+                    backgroundColor: row.original.paddingColor === "none" ? "#FFFFFF" : row.original.paddingColor
                   }}
                 />
                 {errors[row.original.id] && (
@@ -353,7 +413,7 @@ function Row({
                   <div
                     key={index}
                     className={`${styles.colorBox} ${selectedColor === color.hex ? styles.selectedColorBox : ''}`}
-                    style={{ background: color.hex }}
+                    style={{ background: /^#([0-9A-Fa-f]{3}){1,2}$/.test(color.hex) ? color.hex : "#FFFFFF" }}
                     onClick={() => handleColorBoxClick(color.hex)}
                   />
                 ))}
@@ -361,16 +421,8 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.useBlurBackground !== undefined ? row.original.useBlurBackground : false}
-                  onChange={(e) =>
-                    setImageFiles((prev) =>
-                      prev.map((img) =>
-                        img.id === row.original.id
-                          ? { ...img, useBlurBackground: e.target.checked }
-                          : img
-                      )
-                    )
-                  }
+                  checked={row.original.useBlurBackground || false}
+                  onChange={handleBlurBackgroundChange}
                 />
                 Use Blur Background Image
               </label>
@@ -469,94 +521,120 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     });
   };
 
-  const tableColumns = React.useMemo(() => [
-    {
-      id: "select",
-      header: () => {
-        const allRowsSelected = data.length === Object.keys(rowSelection).length;
-        return (
-          <IndeterminateCheckbox
-            checked={allRowsSelected}
-            indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
-            onChange={toggleAllRowsSelected}
-          />
-        );
+  const tableColumns = React.useMemo(() => {
+    const baseColumns = [
+      {
+        id: "select",
+        header: () => {
+          const allRowsSelected = data.length === Object.keys(rowSelection).length;
+          return (
+            <IndeterminateCheckbox
+              checked={allRowsSelected}
+              indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
+              onChange={toggleAllRowsSelected}
+            />
+          );
+        },
+        cell: ({ row }) => (
+          <div className="px-1">
+            <IndeterminateCheckbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler(),
+              }}
+            />
+          </div>
+        ),
       },
-      cell: ({ row }) => (
-        <div className="px-1">
-          <IndeterminateCheckbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler(),
+      {
+        id: "expand",
+        header: "Expand",
+        cell: () => null,
+      },
+      {
+        id: "drag",
+        header: "Drag",
+        cell: () => null,
+      },
+      ...columns.map((column) => ({
+        ...column,
+        header: column.id === 'openFolder' ? column.header : () => (
+          <div
+            className={styles.sortableHeader}
+            onClick={() => {
+              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
+              const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
+              setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
             }}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "expand",
-      header: "Expand",
-      cell: () => null,
-    },
-    {
-      id: "drag",
-      header: "Drag",
-      cell: () => null,
-    },
-    ...columns.map((column) => ({
-      ...column,
-      header: column.id === 'openFolder' ? column.header : () => (
-        <div
-          className={styles.sortableHeader}
-          onClick={() => {
-            const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-            const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
-            setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
-          }}
-        >
-          {column.header || ""}
-          <span className={styles.sortIcon}>
-            {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
-            }
-          </span>
-        </div>
-      ),
-    })),
-    {
-      id: "copy",
-      header: "Copy",
-      cell: ({ row }) => (
-        <button
-          className={styles.copyButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            copyRow(row.original.id);
-          }}
-          title="Copy this row"
-        >
-          📋
-        </button>
-      ),
-    },
-    {
-      id: "remove",
-      header: "Remove",
-      cell: ({ row }) => (
-        <button
-          className={styles.removeButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            removeRow(row.original.id);
-          }}
-          title="Remove this file"
-        >
-          ❌
-        </button>
-      ),
-    },
-  ]);
+          >
+            {column.header || ""}
+            <span className={styles.sortIcon}>
+              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
+              }
+            </span>
+          </div>
+        ),
+      })),
+    ];
+
+    if (!isRenderTable) {
+      baseColumns.push(
+        {
+          id: "copy",
+          header: "Copy",
+          cell: ({ row }) => (
+            <button
+              className={styles.copyButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                copyRow(row.original.id);
+              }}
+              title="Copy this row"
+            >
+              📋
+            </button>
+          ),
+        },
+        {
+          id: "remove",
+          header: "Remove",
+          cell: ({ row }) => (
+            <button
+              className={styles.removeButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeRow(row.original.id);
+              }}
+              title="Remove this file"
+            >
+              ❌
+            </button>
+          ),
+        }
+      );
+    } else {
+      baseColumns.push({
+        id: "remove",
+        header: "Remove",
+        cell: ({ row }) => (
+          <button
+            className={styles.removeButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeRow(row.original.id);
+            }}
+            title="Remove this file"
+          >
+            ❌
+          </button>
+        ),
+      });
+    }
+
+    return baseColumns;
+  }, [columns, data, rowSelection, sorting, isRenderTable]);
 
   const table = useReactTable({
     data,

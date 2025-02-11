@@ -33,9 +33,25 @@ function Project() {
   const [videoHeight, setVideoHeight] = useState('');
   const [useBlurBackground, setUseBlurBackground] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [showFullErrorLog, setShowFullErrorLog] = useState(false);
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+  };
+
+  const handleOpenFolder = (renderId) => {
+    const render = renders.find(r => r.id === renderId);
+    if (render) {
+      console.log('handleOpenFolder called with render:', render);
+      console.log('Complete output folder filepath location:', render.outputFilepath);
+      if (render.outputFilepath) {
+        window.api.send('open-dir', render.outputFilepath);
+      } else {
+        console.error('Output folder path is undefined');
+      }
+    } else {
+      console.error('Render not found for id:', renderId);
+    }
   };
 
   const renderColumns = [
@@ -53,7 +69,11 @@ function Project() {
       accessorKey: 'openFolder',
       header: <span>Open Folder</span>,
       cell: ({ row }) => (
-        <button onClick={() => alert('Placeholder for opening folder')} title="Open folder" className={styles.openFolderButton}>
+        <button
+          onClick={() => handleOpenFolder(row.original.id)}
+          title="Open folder"
+          className={styles.openFolderButton}
+        >
           📂
         </button>
       ),
@@ -70,12 +90,43 @@ function Project() {
             window.api.send('stop-ffmpeg-render', { renderId: row.original.id });
           }}
           title="Stop this render"
+          disabled={row.original.progress === 'error' || row.original.progress === 'Stopped' || row.original.progress === 100}
         >
           ⏹️
         </button>
       ),
       enableSorting: false,
     },
+    {
+      accessorKey: 'openFile',
+      header: 'Open File',
+      cell: ({ row }) => (
+        <button
+          className={styles.openFileButton}
+          onClick={() => handleAction('open-file', row.original.id)}
+          title="Open file"
+          disabled={row.original.progress !== 100}
+        >
+          ▶️
+        </button>
+      ),
+      enableSorting: false,
+    },
+{
+  accessorKey: 'deleteFile',
+  header: 'Delete File',
+  cell: ({ row }) => (
+    <button
+      className={styles.deleteFileButton}
+      onClick={() => handleAction('delete-file', row.original.id)}
+      title="Delete file"
+      disabled={typeof row.original.progress === 'number' && row.original.progress < 100 && row.original.progress !== 'error' && row.original.progress !== 'Stopped'}
+    >
+      🗑️
+    </button>
+  ),
+  enableSorting: false,
+},
   ];
 
   const getInitialState = (key, defaultValue) => {
@@ -132,8 +183,8 @@ function Project() {
     setRenders(updatedRenders);
   };
 
-  const [audioFiles, setAudioFiles] = useState(getInitialState('audioFiles', []));
-  const [imageFiles, setImageFiles] = useState(getInitialState('imageFiles', []));
+  const [audioFiles, setAudioFiles] = useState(() => getInitialState('audioFiles', []));
+  const [imageFiles, setImageFiles] = useState(() => getInitialState('imageFiles', []));
   const [audioRowSelection, setAudioRowSelection] = useState(getInitialState('audioRowSelection', {}));
   const [imageRowSelection, setImageRowSelection] = useState(getInitialState('imageRowSelection', {}));
   const [ffmpegError, setFfmpegError] = useState(null);
@@ -203,6 +254,58 @@ function Project() {
       window.api.removeAllListeners('output-folder-set');
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('outputFolder', outputFolder);
+    localStorage.setItem('outputFilename', outputFilename);
+    localStorage.setItem('outputFormat', outputFormat);
+    localStorage.setItem('videoWidth', videoWidth);
+    localStorage.setItem('videoHeight', videoHeight);
+    localStorage.setItem('backgroundColor', backgroundColor);
+    localStorage.setItem('usePadding', usePadding);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('paddingColor', paddingColor);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit);
+    localStorage.setItem('useBlurBackground', useBlurBackground);
+  }, [
+    outputFolder,
+    outputFilename,
+    outputFormat,
+    videoWidth,
+    videoHeight,
+    backgroundColor,
+    usePadding,
+    alwaysUniqueFilenames,
+    paddingColor,
+    stretchImageToFit,
+    useBlurBackground
+  ]);
+
+  useEffect(() => {
+    localStorage.setItem('outputFolder', outputFolder);
+    localStorage.setItem('outputFilename', outputFilename);
+    localStorage.setItem('outputFormat', outputFormat);
+    localStorage.setItem('videoWidth', videoWidth);
+    localStorage.setItem('videoHeight', videoHeight);
+    localStorage.setItem('backgroundColor', backgroundColor);
+    localStorage.setItem('usePadding', usePadding);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('paddingColor', paddingColor);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit);
+    localStorage.setItem('useBlurBackground', useBlurBackground);
+  }, [
+    outputFolder,
+    outputFilename,
+    outputFormat,
+    videoWidth,
+    videoHeight,
+    backgroundColor,
+    usePadding,
+    alwaysUniqueFilenames,
+    paddingColor,
+    stretchImageToFit,
+    useBlurBackground
+  ]);
 
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
@@ -450,8 +553,6 @@ function Project() {
     );
   }, (prevProps, nextProps) => prevProps.src === nextProps.src);
   
-
-
   const SortableImage = ({ file, setImageFiles }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: file.id });
   
@@ -547,6 +648,19 @@ function Project() {
       case 'delete':
         window.api.send(`ffmpeg-${action}`, { renderId });
         if (action === 'delete') {
+          removeRender(renderId);
+        }
+        break;
+      case 'open-file':
+        const render = renders.find(r => r.id === renderId);
+        if (render && render.progress === 100) {
+          window.api.send('open-file', render.outputFilepath);
+        }
+        break;
+      case 'delete-file':
+        const renderToDelete = renders.find(r => r.id === renderId);
+        if (renderToDelete) {
+          window.api.send('delete-render-file', { outputFilePath: renderToDelete.outputFilepath });
           removeRender(renderId);
         }
         break;
@@ -662,10 +776,10 @@ function Project() {
     window.api.receive('ffmpeg-error', (data) => {
       console.log('FFmpeg Error:', data);
       setFfmpegError({
-        ...data,
-        fullCommand: `ffmpeg ${ffmpegCommand.cmdArgs.join(" ")}`,
-        ffmpegPath: data.ffmpegPath // Include the FFmpeg filepath
+        lastOutput: data.lastOutput,
+        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
       });
+
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
   
@@ -685,8 +799,17 @@ function Project() {
       pid: null,
       progress: 'Starting...', // Set initial progress to "Starting..."
       outputFolder: outputFolder, // Use the correct output folder
+      outputFilepath: outputFilePath, // Save the output file path
       outputFilename: finalOutputFilename, // Use the correct output filename
-      ffmpegCommand: ffmpegCommand.commandString
+      ffmpegCommand: ffmpegCommand.commandString,
+      videoWidth: videoWidth,
+      videoHeight: videoHeight,
+      backgroundColor: backgroundColor,
+      usePadding: usePadding,
+      stretchImageToFit: stretchImageToFit,
+      paddingColor: paddingColor,
+      useBlurBackground: useBlurBackground,
+      alwaysUniqueFilenames: alwaysUniqueFilenames
     });
   
   };
@@ -728,7 +851,7 @@ function Project() {
           const index = prev.findIndex(f => f.filepath === file.filepath);
           if (index >= 0) {
             const updatedImages = [...prev];
-            updatedImages[index] = { ...updatedImages[index], ...file };
+            updatedImages[index] = { ...updatedImages[index], ...file, useBlurBackground: true, stretchImageToFit: false };
             return updatedImages;
           } else {
             return [...prev, {
@@ -736,6 +859,8 @@ function Project() {
               filename: file.filename, // Use `filename`
               filepath: file.filepath,
               dimensions: file.dimensions || 'Unknown',
+              useBlurBackground: true,
+              stretchImageToFit: false
             }];
           }
         });
@@ -796,33 +921,44 @@ function Project() {
   const handleOutputFilenameChange = (e) => {
     const sanitizedFilename = sanitizeFilename(e.target.value);
     setOutputFilename(sanitizedFilename);
+    localStorage.setItem('outputFilename', sanitizedFilename);
   };
 
   const handleVideoWidthChange = (e) => {
     const sanitizedWidth = sanitizeNumericInput(e.target.value, 1, 7680); // 8K max
     setVideoWidth(sanitizedWidth.toString());
+    localStorage.setItem('videoWidth', sanitizedWidth.toString());
   };
 
   const handleVideoHeightChange = (e) => {
     const sanitizedHeight = sanitizeNumericInput(e.target.value, 1, 4320); // 8K max
     setVideoHeight(sanitizedHeight.toString());
+    localStorage.setItem('videoHeight', sanitizedHeight.toString());
   };
 
   const handleBackgroundColorChange = (e) => {
     const sanitizedColor = validateHexColor(e.target.value);
     setBackgroundColor(sanitizedColor);
+    localStorage.setItem('backgroundColor', sanitizedColor);
   };
 
   const handlePaddingColorChange = (e) => {
     setPaddingColor(e.target.value);
+    localStorage.setItem('paddingColor', e.target.value);
   };
 
   const handleStretchImageToFitChange = (e) => {
     setStretchImageToFit(e.target.checked);
+    localStorage.setItem('stretchImageToFit', e.target.checked);
+  };
+
+  const handleToggleErrorLog = () => {
+    setShowFullErrorLog((prev) => !prev);
   };
 
   const handleCloseError = () => {
     setFfmpegError(null);
+    setShowFullErrorLog(false);
   };
 
   const resetToDefault = () => {
@@ -1075,8 +1211,12 @@ function Project() {
         <div className={styles.errorContainer}>
           <button className={styles.closeButton} onClick={handleCloseError}>x</button>
           <h3>FFmpeg Error:</h3>
-          <pre className={styles.errorPre}>{ffmpegError.lastOutput}</pre>
-          <pre className={styles.errorPre}>{ffmpegError.fullCommand}</pre>
+          <pre className={styles.errorPre}>
+            {showFullErrorLog ? ffmpegError.fullErrorLog : ffmpegError.lastOutput}
+          </pre>
+          <button onClick={handleToggleErrorLog} className={styles.toggleErrorButton}>
+            {showFullErrorLog ? 'Show error message only' : 'Show full error message'}
+          </button>
         </div>
       )}
 

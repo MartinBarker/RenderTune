@@ -12,11 +12,14 @@ contextBridge.exposeInMainWorld('api', {
             'get-audio-metadata',  
             'open-file-dialog',
             'open-folder-dialog',
+            'open-dir',
+            'open-file',
             'get-path-separator',
             'set-output-folder',
             'get-color-palette',
             'stop-ffmpeg-render',
-            'delete-render-file'
+            'delete-render-file',
+            'delete-file'
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
