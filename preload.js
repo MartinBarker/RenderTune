@@ -1,15 +1,20 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webFrame, webUtils } = require('electron');
+
+contextBridge.exposeInMainWorld('electron', {
+    sendFiles: (files) => ipcRenderer.send('files-dropped', files),
+    getPathForFile: (file) => webUtils.getPathForFile(file)
+});
 
 contextBridge.exposeInMainWorld('api', {
     send: (channel, data) => {
         const validSendChannels = [
-            'app_version', 
-            'minimize-window', 
-            'maximize-window', 
-            'unmaximize-window', 
+            'app_version',
+            'minimize-window',
+            'maximize-window',
+            'unmaximize-window',
             'close-window',
             'run-ffmpeg-command',
-            'get-audio-metadata',  
+            'get-audio-metadata',
             'open-file-dialog',
             'open-folder-dialog',
             'open-dir',
@@ -28,9 +33,9 @@ contextBridge.exposeInMainWorld('api', {
     receive: (channel, func) => {
         const validReceiveChannels = [
             'app_version',
-            'ffmpeg-output', 
+            'ffmpeg-output',
             'ffmpeg-error',
-            'audio-metadata-response', 
+            'audio-metadata-response',
             'selected-file-paths',
             'selected-folder',
             'path-separator-response',

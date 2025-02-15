@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styles from './FileUploader.module.css';
 
+const { webUtils } = window.api; // Import webUtils from the exposed API
+
 const FileUploader = ({ onFilesMetadata }) => {
   const [highlight, setHighlight] = useState(false);
 
@@ -14,24 +16,24 @@ const FileUploader = ({ onFilesMetadata }) => {
     if (highlight) setHighlight(false);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     setHighlight(false);
     const files = event.dataTransfer.files;
-    processFiles(files);
+    await processFiles(files);
   };
 
   const openNativeFileDialog = () => {
     window.api.send('open-file-dialog');
   };
 
-  const processFiles = (files) => {
-    const filesArray = Array.from(files).map((file) => ({
+  const processFiles = async (files) => {
+    const filesArray = await Promise.all(Array.from(files).map(async (file) => ({
       filename: file.name,
-      filepath: file.path || null, // If available, depends on environment
+      filepath: await webUtils.getPathForFile(file), // Use webUtils.getPathForFile
       filetype: file.type,
       size: file.size,
-    }));
+    })));
 
     // Optionally, handle specific file types (e.g., audio metadata)
     filesArray.forEach((file) => {
