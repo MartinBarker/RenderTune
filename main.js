@@ -88,10 +88,7 @@ app.whenReady().then(() => {
 
   ipcMain.on('get-color-palette', async (event, imagePath) => {
     try {
-      console.log('Received request to get color palette for:', imagePath);
-
       const thumbnailPath = thumbnailMap[imagePath] || imagePath;
-      console.log('Fetching color info using thumbnail path:', thumbnailPath);
       const swatches = await Vibrant.from(thumbnailPath).getPalette();
       let colors = {};
 
@@ -102,11 +99,8 @@ app.whenReady().then(() => {
           colors[key] = { hex: hexColor, rgb: rgbColor };
         }
       }
-
-      console.log('Extracted color palette:', colors.Vibrant.hex);
       event.reply(`color-palette-response-${imagePath}`, colors);
     } catch (error) {
-      console.error('Error extracting color palette:', error);
       event.reply(`color-palette-response-${imagePath}`, {});
     }
   });
@@ -217,6 +211,40 @@ function sanitizeFFmpegArgs(args) {
   */
 }
 
+// Function to check file path and get metadata
+async function checkFilePath(filePath) {
+  const normalizedPath = path.normalize(filePath);
+  const ext = path.extname(normalizedPath).toLowerCase().substring(1);
+  let fileType = 'other';
+  let dimensions = null;
+  let thumbnailPath = null;
+
+  if (audioExtensions.includes(ext)) {
+    fileType = 'audio';
+  } else if (imageExtensions.includes(ext)) {
+    fileType = 'image';
+    try {
+      const metadata = sizeOf(normalizedPath);
+      dimensions = `${metadata.width}x${metadata.height}`;
+      const image = nativeImage.createFromPath(normalizedPath).resize({ width: 100, height: 100 });
+      thumbnailPath = path.join(thumbnailCacheDir, path.basename(normalizedPath));
+      fs.writeFileSync(thumbnailPath, image.toPNG());
+      thumbnailMap[normalizedPath] = thumbnailPath;
+      saveThumbnailMap();
+    } catch (error) {
+      console.error('Error reading image dimensions:', error);
+    }
+  }
+
+  return {
+    filename: path.basename(normalizedPath),
+    filepath: normalizedPath,
+    filetype: fileType,
+    dimensions,
+    thumbnailPath,
+  };
+}
+
 // IPC event to run an FFmpeg command
 ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
   try {
@@ -321,8 +349,6 @@ function extractRelevantError(errorLines) {
   return relevantLines.length ? relevantLines.join('\n') : "Unknown FFmpeg error occurred.";
 }
 
-
-
 ipcMain.on('stop-ffmpeg-render', (event, { renderId }) => {
   console.log(`Received request to stop FFmpeg render with ID: ${renderId}`);
   const process = ffmpegProcesses.get(renderId);
@@ -384,7 +410,6 @@ function getFfmpegPath() {
   return ffmpegPath;
 }
 
-
 ipcMain.on('get-audio-metadata', async (event, filePath) => {
   try {
     console.log('Getting metadata for file:', filePath);
@@ -423,6 +448,7 @@ ipcMain.on('open-folder-dialog', async (event) => {
 ipcMain.on('set-output-folder', (event, folderPath) => {
   event.reply('output-folder-set', folderPath);
 });
+
 ipcMain.on('set-output-folder', (event, folderPath) => {
   event.reply('output-folder-set', folderPath);
 });
@@ -436,38 +462,7 @@ ipcMain.on('open-file-dialog', async (event) => {
 
     if (!result.canceled && result.filePaths.length > 0) {
       const fileInfoArray = await Promise.all(
-        result.filePaths.map(async (filePath) => {
-          const normalizedPath = path.normalize(filePath);
-          const ext = path.extname(normalizedPath).toLowerCase().substring(1);
-          let fileType = 'other';
-          let dimensions = null;
-          let thumbnailPath = null;
-
-          if (audioExtensions.includes(ext)) {
-            fileType = 'audio';
-          } else if (imageExtensions.includes(ext)) {
-            fileType = 'image';
-            try {
-              const metadata = sizeOf(normalizedPath);
-              dimensions = `${metadata.width}x${metadata.height}`;
-              const image = nativeImage.createFromPath(normalizedPath).resize({ width: 100, height: 100 });
-              thumbnailPath = path.join(thumbnailCacheDir, path.basename(normalizedPath));
-              fs.writeFileSync(thumbnailPath, image.toPNG());
-              thumbnailMap[normalizedPath] = thumbnailPath;
-              saveThumbnailMap();
-            } catch (error) {
-              console.error('Error reading image dimensions:', error);
-            }
-          }
-
-          return {
-            filename: path.basename(normalizedPath),
-            filepath: normalizedPath,
-            filetype: fileType,
-            dimensions,
-            thumbnailPath,
-          };
-        })
+        result.filePaths.map(async (filePath) => checkFilePath(filePath))
       );
 
       event.sender.send('selected-file-paths', fileInfoArray);
@@ -476,7 +471,6 @@ ipcMain.on('open-file-dialog', async (event) => {
     console.error('Error opening file dialog:', error);
   }
 });
-
 
 ipcMain.on('get-path-separator', (event) => {
   const separator = path.sep; // Get OS-specific path separator
@@ -554,5 +548,16 @@ ipcMain.on('delete-file', async (event, filePath) => {
   } catch (error) {
     console.error(`Error deleting file: ${filePath}`, error);
     event.reply('delete-file-response', { success: false, error: error.message });
+  }
+});
+
+ipcMain.on('check-filepath', async (event, filePath) => {
+  console.log('main.js: check-filepath: ', filePath);
+  try {
+    const fileInfo = await checkFilePath(filePath);
+    event.reply('check-filepath-response', fileInfo);
+  } catch (error) {
+    console.error('Error checking file path:', error);
+    event.reply('check-filepath-response', { error: error.message });
   }
 });

@@ -816,7 +816,8 @@ function Project() {
   
 
   const handleFilesMetadata = (filesMetadata) => {
-
+    console.log('project.js: handleFilesMetadata() = ', filesMetadata)
+    
     if (!Array.isArray(filesMetadata)) {
       console.error('filesMetadata is not an array:', filesMetadata);
       return;
