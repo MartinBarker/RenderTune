@@ -772,7 +772,8 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           <select
             value={table.getState().pagination.pageSize}
             onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
+              const value = e.target.value;
+              table.setPageSize(value === 'all' ? data.length : Number(value));
             }}
           >
             {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -780,6 +781,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                 Show {pageSize}
               </option>
             ))}
+            <option value="all">All</option>
           </select>
         </div>
       </DndContext>
