@@ -143,11 +143,11 @@ function Row({
       if (savedPalette) {
         setColorPalette(JSON.parse(savedPalette));
       } else {
-        console.log('Requesting color palette for:', row.original.filepath);
+        //console.log('Requesting color palette for:', row.original.filepath);
         window.api.send('get-color-palette', row.original.filepath);
         const responseChannel = `color-palette-response-${row.original.filepath}`;
         window.api.receive(responseChannel, (colors) => {
-          console.log('Received color palette:', colors);
+          //console.log('Received color palette:', colors);
           setColorPalette((prevPalette) => {
             const newPalette = {
               Vibrant: colors.Vibrant || prevPalette.Vibrant,

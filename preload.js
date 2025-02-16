@@ -25,7 +25,8 @@ contextBridge.exposeInMainWorld('api', {
             'stop-ffmpeg-render',
             'delete-render-file',
             'delete-file',
-            'check-filepath'
+            'check-filepath',
+            'sort-files'
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -43,7 +44,9 @@ contextBridge.exposeInMainWorld('api', {
             'ffmpeg-progress',
             'output-folder-set',
             'ffmpeg-stop-response',
-            'check-filepath-response'
+            'check-filepath-response',
+            'sort-files-initial-response',
+            'sort-files-enriched-response'
         ];
         if (validReceiveChannels.includes(channel) || channel.startsWith('color-palette-response-')) {
             ipcRenderer.on(channel, (event, ...args) => func(...args));

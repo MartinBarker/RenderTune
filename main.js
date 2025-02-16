@@ -12,6 +12,7 @@ import sizeOf from 'image-size';
 import os from 'node:os';
 import { Vibrant } from 'node-vibrant/node';
 
+
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -559,5 +560,37 @@ ipcMain.on('check-filepath', async (event, filePath) => {
   } catch (error) {
     console.error('Error checking file path:', error);
     event.reply('check-filepath-response', { error: error.message });
+  }
+});
+
+// Takes a list of string filePaths and returns a list of fileInfo objects
+ipcMain.on('sort-files', async (event, filePaths) => {
+  try {
+    console.log('sort-files:', filePaths);
+
+    // Sort files into audio/image arrays
+    const filesInfoArray = await Promise.all(
+      filePaths.map(async (filePath) => checkFilePath(filePath))
+    );
+    
+    console.log('filesInfoArray = ', filesInfoArray)
+    // Send initial file info array
+    event.reply('sort-files-initial-response', filesInfoArray);
+    console.log('continue')
+
+    // Enrich metadata for audio files
+    for (const fileInfo of filesInfoArray) {
+      if (fileInfo.filetype === 'audio') {
+        const metadata = await musicMetadata.parseFile(fileInfo.filepath);
+        fileInfo.duration = metadata.format.duration;
+      }
+    }
+
+    // Send enriched file info array
+    event.reply('sort-files-enriched-response', filesInfoArray);
+
+  } catch (error) {
+    console.log('err = ', error)
+    event.reply('sort-files-response', { error: error.message });
   }
 });
