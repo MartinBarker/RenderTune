@@ -494,8 +494,8 @@ function Project() {
   };
 
   const audioColumns = [
-    { accessorKey: 'filename', header: 'File Name' }, // Use `filename`
-    { accessorKey: 'duration', header: 'Duration' },
+    { accessorKey: 'filename', header: 'File Name' },
+    { accessorKey: 'duration', header: 'Duration', cell: ({ row }) => formatDuration(row.original.duration) },
   ];
 
   const imageColumns = [
@@ -779,7 +779,7 @@ function Project() {
         lastOutput: data.lastOutput,
         fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
       });
-
+  
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
   

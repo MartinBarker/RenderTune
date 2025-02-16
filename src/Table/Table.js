@@ -57,6 +57,19 @@ function DragHandle({ row, rowIndex }) {
   );
 }
 
+function formatDuration(duration) {
+  if (!duration) return '00:00';
+  const seconds = parseInt(duration, 10);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  } else {
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+}
+
 function Row({
   row,
   rowIndex,
@@ -325,7 +338,13 @@ function Row({
               {columnHeader !== "Expand" &&
                 columnHeader !== "Drag" &&
                 columnHeader !== "Remove" &&
+                columnHeader !== "Duration" &&
                 flexRender(cell.column.columnDef.cell, cell.getContext())}
+
+              {/* Render Duration cell */}
+              {columnHeader === "Duration" && (
+                <span>{formatDuration(cell.getValue())}</span>
+              )}
             </td>
           );
         })}
@@ -514,7 +533,8 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       if (index >= 0) {
         const newRow = { ...prev[index], id: generateUniqueId() };
         const updated = [...prev];
-        updated.splice(index + 1, 0, newRow);
+        updated.splice(index + 1, 0, newRow); // Insert the new row after the copied row
+        localStorage.setItem("audioFiles", JSON.stringify(updated)); // Save to localStorage
         return updated;
       }
       return prev;
@@ -670,18 +690,33 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     }
   };
 
+  const parseDuration = (duration) => {
+    if (typeof duration !== 'string') {
+      return 0;
+    }
+    const parts = duration.split(':').map(Number);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    } else {
+      return 0;
+    }
+  };
+
   const totalSelectedDuration = React.useMemo(() => {
     if (!isImageTable && !isRenderTable) {
-      return Object.keys(rowSelection).reduce((total, rowId) => {
+      const totalSeconds = Object.keys(rowSelection).reduce((total, rowId) => {
         const selectedRow = data.find((row) => row.id === rowId);
         if (selectedRow) {
-          const duration = selectedRow.duration || '0';
-          return total + parseFloat(duration);
+          const duration = selectedRow.length || selectedRow.duration || '0';
+          return total + parseDuration(duration);
         }
         return total;
       }, 0);
+      return formatDuration(totalSeconds);
     }
-    return 0;
+    return '00:00';
   }, [rowSelection, data, isImageTable, isRenderTable]);
 
   return (
@@ -790,11 +825,13 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           {Object.keys(rowSelection).length} of {data.length} rows selected
         </span>
       </div>
+      {/*
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
-          <span>Total selected duration: {totalSelectedDuration.toFixed(2)} seconds</span>
+          <span>Total selected duration: {totalSelectedDuration}</span>
         </div>
       )}
+      */}
     </div>
   );
 }
