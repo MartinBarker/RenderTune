@@ -24,12 +24,17 @@ export function createFFmpegCommand(configs) {
         console.log(`There are ${imageInputs.length} images, each will be displayed for ${imgDuration} seconds.`);
 
         audioInputs.forEach((audio) => {
+            console.log('audio = ', audio);
+
             const startTime = audio.startTime || '00:00';
             const endTime = audio.endTime || audio.duration;
             const startTimeInSeconds = startTime.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
             const endTimeInSeconds = typeof endTime === 'string' ? endTime.split(':').reduce((acc, time) => (60 * acc) + +time, 0) : endTime;
             
-            if (startTimeInSeconds !== 0 || endTimeInSeconds !== audio.duration) {
+            console.log('startTimeInSeconds = ', startTimeInSeconds);
+            console.log('endTimeInSeconds = ', endTimeInSeconds);
+
+            if (audio.startTime !== "" && audio.endTime !== "") {
                 cmdArgs.push('-ss', startTimeInSeconds.toString());
                 cmdArgs.push('-to', endTimeInSeconds.toString());
             }

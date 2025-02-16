@@ -125,11 +125,16 @@ function Row({
   };
 
   const calculateEndTime = (startTime, length, isOverAnHour) => {
+    if (!length) return ''; // Return empty string if length is not defined
+
     const [startHours, startMinutes, startSeconds] = isOverAnHour ? startTime.split(':').map(Number) : [0, ...startTime.split(':').map(Number)];
     const [lengthHours, lengthMinutes, lengthSeconds] = isOverAnHour ? length.split(':').map(Number) : [0, ...length.split(':').map(Number)];
     const totalStartSeconds = startHours * 3600 + startMinutes * 60 + startSeconds;
     const totalLengthSeconds = lengthHours * 3600 + lengthMinutes * 60 + lengthSeconds;
     const totalEndSeconds = totalStartSeconds + totalLengthSeconds;
+
+    if (isNaN(totalEndSeconds)) return ''; // Return empty string if calculation results in NaN
+
     const endHours = Math.floor(totalEndSeconds / 3600);
     const endMinutes = Math.floor((totalEndSeconds % 3600) / 60);
     const endSeconds = totalEndSeconds % 60;
