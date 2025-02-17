@@ -1,6 +1,6 @@
 {
   "name": "RenderTune",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "My Electron app",
   "type": "module",
   "main": "main.js",
