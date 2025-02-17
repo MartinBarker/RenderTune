@@ -1,0 +1,104 @@
+.homeContainer {
+  text-align: left;
+}
+
+.supportersSection {
+  margin-top: 20px;
+}
+
+.supportersSection * {
+  padding: 2px;
+  margin: 2px;
+}
+
+.supportersSection ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.supportersSection li {
+  margin: 5px 0;
+}
+
+.donationLinks a {
+  color: #FFD700; /* Gold color for better visibility */
+  text-decoration: none;
+  margin: 0 5px; /* Add equal space before and after each link */
+}
+
+.donationLinks a:hover {
+  color: #FFA500; /* Orange color on hover */
+}
+
+.githubLink {
+  color: #FFD700; /* Gold color for better visibility */
+  text-decoration: none;
+}
+
+.githubLink:hover {
+  color: #FFA500; /* Orange color on hover */
+}
+
+.supportersNames {
+  font-weight: normal;
+  font-size: 1em;
+  color: #00CED1; /* Different color to stand out (Dark Turquoise) */
+}
+
+.changelogSection {
+}
+
+.changelogSection h2 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+.changelogSection ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.changelogSection li {
+  margin-bottom: 5px;
+}
+
+.changelogSection a {
+  color: #FFD700; /* Gold color for better visibility */
+  text-decoration: none;
+}
+
+.changelogSection a:hover {
+  color: #FFA500; /* Orange color on hover */
+}
+
+.changelogSection * {
+  padding: 2px;
+  margin: 2px;
+}
+
+.subtitle {
+  font-size: 1.2em;
+  color: #FFF; /* Ensure subtitle is the same white color */
+  margin-bottom: 10px; /* Adjust margin to be closer */
+  font-weight: normal; /* Make the text not bold */
+  margin-top: 0px; /* Add margin-top rule */
+}
+
+.sectionDivider {
+  border: 0;
+  height: .01rem;
+  background: #FFF;
+  margin: 10px 0;
+}
+
+.supportersSection h2,
+.changelogSection h2,
+.homeContainer h1 {
+  color: #FFF; /* Ensure section titles are the same white color */
+  text-decoration: underline; /* Add underline to section titles */
+}
+
+.homeContainer h2 {
+  color: #FFF; /* Ensure subtitle is the same white color */
+  text-decoration: none; /* Remove underline from subtitle */
+}

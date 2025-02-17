@@ -46,54 +46,6 @@ const FileUploader = ({ onFilesMetadata }) => {
       console.log("sort-files-enriched-response:", filesInfo);
       onFilesMetadata(filesInfo);
     });
-    
-
-/* //attempt2: good but bricks system 
-    // Convert dropped files to list of filepaths & set initial display
-    const filePaths = await Promise.all(droppedFiles.map(async (file) => await window.electron.getPathForFile(file)));
-    console.log('filePaths:', filePaths);
-
-    // Call sort-files to seperate audio/image files
-    window.api.send('sort-files', filePaths);
-    const sortedFiles = await new Promise((resolve) => {
-      window.api.receive('sort-files-response', (filesInfo) => {
-        resolve(filesInfo);
-      });
-    });
-    console.log('sortedFiles = ', sortedFiles)
-    onFilesMetadata(sortedFiles);
-
-    // Get enriched metadata for each audio file
-*/
-
-    /*
-    // Get filepath for each dropped file
-    const filesArray = await Promise.all(droppedFiles.map(async (file) => {
-      return new Promise(async (resolve) => {
-        
-        const filePath = await window.electron.getPathForFile(file);
-        console.log('filePath = ', filePath)
-
-        window.api.send('check-filepath', filePath);
-        window.api.receive('check-filepath-response', (fileInfo) => {
-          console.log('check-filepath-response = ', fileInfo)
-          resolve(fileInfo);
-        });
-      });
-    }));
-    console.log('filesArray = ', filesArray)
-    //onFilesMetadata(filesArray);
-
-    // Get enriched filedata for each file
-    const enrichedFilesInfo = filesArray.map(file => {
-      if (file.filetype === 'audio') {
-        window.api.send('get-audio-metadata', file.filepath);
-      }
-      return file;
-    });
-    //console.log('Enriched Files Info:', enrichedFilesInfo);
-    onFilesMetadata(enrichedFilesInfo);
-    */
   };
 
   const openNativeFileDialog = () => {
@@ -135,7 +87,7 @@ const FileUploader = ({ onFilesMetadata }) => {
       onClick={openNativeFileDialog}
     >
       <div className={styles.fileUploaderBox}>
-        Click here to select or Drag and Drop files
+        Drag and drop or select files to get started
       </div>
     </div>
   );

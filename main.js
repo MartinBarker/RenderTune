@@ -594,3 +594,13 @@ ipcMain.on('sort-files', async (event, filePaths) => {
     event.reply('sort-files-response', { error: error.message });
   }
 });
+
+ipcMain.on('open-url', async (event, url) => {
+  console.log('Received request to open URL:', url);
+  try {
+    await shell.openExternal(url);
+    console.log('Successfully opened URL:', url);
+  } catch (error) {
+    console.error('Error opening URL:', url, error);
+  }
+});

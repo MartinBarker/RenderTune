@@ -26,7 +26,8 @@ contextBridge.exposeInMainWorld('api', {
             'delete-render-file',
             'delete-file',
             'check-filepath',
-            'sort-files'
+            'sort-files',
+            'open-url' 
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);

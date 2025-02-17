@@ -188,7 +188,7 @@ body{
   flex: 1;
   margin-left: 55px; /* Matches sidebar width */
   margin-top: 44px; /* Matches title bar height */
-  padding: 20px;
+  padding: 5px 20px 20px 20px;
   overflow-y: auto;
   color: #FFF;
 }
