@@ -188,10 +188,11 @@ function createWindow() {
 }
 
 function setupAutoUpdater() {
-
   // Check for update
   mainWindow.once('ready-to-show', () => {
     autoUpdater.checkForUpdatesAndNotify();
+    // Uncomment the line below to simulate an update being ready
+    mainWindow.webContents.send('update_available');
   });
 
   // notify the user that an update is available

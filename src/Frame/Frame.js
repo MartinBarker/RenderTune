@@ -18,8 +18,18 @@ const Sidebar = ({ children }) => {
     window.api.send('app_version');
     window.api.receive('app_version', handleAppVersion);
 
+    window.api.receive('update_available', () => {
+      showUpdateNotification('A new update is available. Downloading now...');
+    });
+
+    window.api.receive('update_downloaded', () => {
+      showUpdateNotification('Update Downloaded. It will be installed on restart. Restart now?', true);
+    });
+
     return () => {
       window.api.removeAllListeners('app_version');
+      window.api.removeAllListeners('update_available');
+      window.api.removeAllListeners('update_downloaded');
     };
   }, []);
 
@@ -39,6 +49,30 @@ const Sidebar = ({ children }) => {
       setWindowStatus('init');
     },
     close: () => window.api.send('close-window'),
+  };
+
+  const showUpdateNotification = (message, showRestartButton = false) => {
+    const notification = document.getElementById('update-notification');
+    const messageElement = document.getElementById('update-message');
+    const restartButton = document.getElementById('restart-button');
+
+    messageElement.innerText = message;
+    notification.classList.remove('hidden');
+
+    if (showRestartButton) {
+      restartButton.classList.remove('hidden');
+    } else {
+      restartButton.classList.add('hidden');
+    }
+  };
+
+  const closeNotification = () => {
+    const notification = document.getElementById('update-notification');
+    notification.classList.add('hidden');
+  };
+
+  const restartApp = () => {
+    window.api.send('restart_app');
   };
 
   return (
@@ -199,6 +233,14 @@ const Sidebar = ({ children }) => {
       </div>
       <div className={styles.contentWrapper}>
         {children}
+        {/* Notification div for update messages */}
+        <div id="update-notification" className={`${styles.updateNotification} hidden`}>
+          <p id="update-message" style={{ color: 'black' }}>Update notification placeholder text</p>
+          <div className={styles.notificationButtons}>
+            <button onClick={closeNotification}>Close</button>
+            <button id="restart-button" onClick={restartApp} className="hidden">Restart</button>
+          </div>
+        </div>
       </div>
     </div>
   );
