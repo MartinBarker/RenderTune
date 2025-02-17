@@ -58,12 +58,23 @@ const Sidebar = ({ children }) => {
 
         {/* Sidebar Content */}
         <div className={styles.sidenavContent}>
-          {/* New Project Icon */}
+          {/* Home Icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/' ? styles.active : ''}`}
             onClick={() => navigate('/')}
+            title="Home"
+          >
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+
+          {/* New Project Icon */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/project' ? styles.active : ''}`}
+            onClick={() => navigate('/project')}
             title="New Project"
           >
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
@@ -116,6 +127,17 @@ const Sidebar = ({ children }) => {
             <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
           </svg>
 
+          {/* Home Icon 
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className={`${styles.icon} ${styles.sidebarIcon} ${location.pathname === '/' ? styles.active : ''}`}
+            onClick={() => navigate('/')}
+            title="Home"
+          >
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+          */}
 
           {/* Bug Icon 
           <svg

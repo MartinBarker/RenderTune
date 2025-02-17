@@ -1,15 +1,20 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webFrame, webUtils } = require('electron');
+
+contextBridge.exposeInMainWorld('electron', {
+    sendFiles: (files) => ipcRenderer.send('files-dropped', files),
+    getPathForFile: (file) => webUtils.getPathForFile(file)
+});
 
 contextBridge.exposeInMainWorld('api', {
     send: (channel, data) => {
         const validSendChannels = [
-            'app_version', 
-            'minimize-window', 
-            'maximize-window', 
-            'unmaximize-window', 
+            'app_version',
+            'minimize-window',
+            'maximize-window',
+            'unmaximize-window',
             'close-window',
             'run-ffmpeg-command',
-            'get-audio-metadata',  
+            'get-audio-metadata',
             'open-file-dialog',
             'open-folder-dialog',
             'open-dir',
@@ -19,7 +24,10 @@ contextBridge.exposeInMainWorld('api', {
             'get-color-palette',
             'stop-ffmpeg-render',
             'delete-render-file',
-            'delete-file'
+            'delete-file',
+            'check-filepath',
+            'sort-files',
+            'open-url' 
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -28,15 +36,18 @@ contextBridge.exposeInMainWorld('api', {
     receive: (channel, func) => {
         const validReceiveChannels = [
             'app_version',
-            'ffmpeg-output', 
+            'ffmpeg-output',
             'ffmpeg-error',
-            'audio-metadata-response', 
+            'audio-metadata-response',
             'selected-file-paths',
             'selected-folder',
             'path-separator-response',
             'ffmpeg-progress',
             'output-folder-set',
-            'ffmpeg-stop-response'
+            'ffmpeg-stop-response',
+            'check-filepath-response',
+            'sort-files-initial-response',
+            'sort-files-enriched-response'
         ];
         if (validReceiveChannels.includes(channel) || channel.startsWith('color-palette-response-')) {
             ipcRenderer.on(channel, (event, ...args) => func(...args));

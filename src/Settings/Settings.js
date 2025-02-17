@@ -1,7 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './Settings.module.css';
 
+const { webUtils } = window.api; // Import webUtils from the exposed API
+
 function Settings() {
+  const [droppedFiles, setDroppedFiles] = useState([]);
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    const droppedFiles = Array.from(event.dataTransfer.files);
+    for (const file of droppedFiles) {
+      const filePath = await window.electron.getPathForFile(file);
+      console.log(`File dropped: ${file.name} - ${filePath}`);
+    }
+    const filesArray = []
+    /*
+    await Promise.all(Array.from(files).map(async (file) => ({
+      filename: file.name,
+      filepath: 'apple', // Use webUtils.getPathForFile
+      filetype: file.type,
+      size: file.size,
+    })));
+    */
+    //setDroppedFiles(filesArray);
+  };
+
   return (
     <div>
       <h1>Information</h1>
@@ -37,6 +64,25 @@ function Settings() {
           <li>Jane Smith</li>
           <li>Michael Johnson</li>
           <li>Emily Davis</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>File Drag and Drop</h2>
+        <div
+          id="holder"
+          className={styles.fileDropBox}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          Drag your file here
+        </div>
+        <ul>
+          {droppedFiles.map((file, index) => (
+            <li key={index}>
+              {file.filename} - {file.filepath}
+            </li>
+          ))}
         </ul>
       </section>
     </div>

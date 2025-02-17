@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styles from './FileUploader.module.css';
 
+const { webUtils } = window.api;
+
 const FileUploader = ({ onFilesMetadata }) => {
   const [highlight, setHighlight] = useState(false);
 
@@ -14,39 +16,40 @@ const FileUploader = ({ onFilesMetadata }) => {
     if (highlight) setHighlight(false);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
+
+    // Get dropped files
     event.preventDefault();
     setHighlight(false);
-    const files = event.dataTransfer.files;
-    processFiles(files);
+    const droppedFiles = Array.from(event.dataTransfer.files);
+    console.log('dropped files :', droppedFiles);
+
+    // Get filepath for each dropped file
+    const filePaths = [];
+    droppedFiles.forEach(async (file) => {
+      const filePath = window.electron.getPathForFile(file);
+      filePaths.push(filePath);
+    });
+    console.log('filePaths:', filePaths);
+
+    // Send dropped files to the main process for sorting / metadata enrichment
+    window.api.send('sort-files', filePaths);
+
+    // Receive initial response
+    window.api.receive('sort-files-initial-response', (filesInfo) => {
+      console.log("sort-files-initial-response:", filesInfo);
+      onFilesMetadata(filesInfo);
+    });
+
+    // Receive enriched metadata response
+    window.api.receive('sort-files-enriched-response', (filesInfo) => {
+      console.log("sort-files-enriched-response:", filesInfo);
+      onFilesMetadata(filesInfo);
+    });
   };
 
   const openNativeFileDialog = () => {
     window.api.send('open-file-dialog');
-  };
-
-  const processFiles = (files) => {
-    const filesArray = Array.from(files).map((file) => ({
-      filename: file.name,
-      filepath: file.path || null, // If available, depends on environment
-      filetype: file.type,
-      size: file.size,
-    }));
-
-    // Optionally, handle specific file types (e.g., audio metadata)
-    filesArray.forEach((file) => {
-      if (file.filetype.startsWith('audio/')) {
-        window.api.send('get-audio-metadata', file.filepath);
-      }
-    });
-
-    if (filesArray.length > 0) {
-      const firstFileFolder = filesArray[0].filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
-      window.api.send('set-output-folder', firstFileFolder);
-    }
-
-    // Pass the files metadata to the parent component
-    onFilesMetadata(filesArray);
   };
 
   useEffect(() => {
@@ -61,7 +64,6 @@ const FileUploader = ({ onFilesMetadata }) => {
     });
 
     window.api.receive('audio-metadata-response', (metadata) => {
-      //console.log('FileUploader.js filepath:', metadata.filepath); 
       onFilesMetadata([{
         filetype: 'audio',
         filepath: metadata.filepath,
@@ -85,7 +87,7 @@ const FileUploader = ({ onFilesMetadata }) => {
       onClick={openNativeFileDialog}
     >
       <div className={styles.fileUploaderBox}>
-        Click here to select files
+        Drag and drop or select files to get started
       </div>
     </div>
   );

@@ -6,3 +6,15 @@
 .lightBlueLink:hover {
   text-decoration: underline;
 }
+
+.fileDropBox {
+  border: 2px dashed #ADD8E6;
+  padding: 20px;
+  text-align: center;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.fileDropBox:hover {
+  background-color: #f0f8ff;
+}
