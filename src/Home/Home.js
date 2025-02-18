@@ -65,7 +65,7 @@ function Home() {
   };
 
   const supporters = [
-    "Merko",
+    "merko",
     "Danny Marks (Redface Radio)",
     "Richard Munro"
   ];

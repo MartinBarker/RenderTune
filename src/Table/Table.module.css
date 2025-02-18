@@ -157,14 +157,15 @@
 /* Pagination */
 .pagination {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin: 10px 0;
+  margin: 5px 0;
+  gap: 10px;
 }
 
 .pagination button {
-  padding: 5px 10px;
-  font-size: 14px;
+  padding: 3px 6px;
+  font-size: 12px;
   color: #fff;
   background-color: #007bff;
   border: none;
@@ -183,20 +184,20 @@
 }
 
 .pageInput {
-  width: 50px;
+  width: 40px;
   margin-left: 5px;
-  padding: 5px;
+  padding: 3px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-size: 12px;
 }
 
 /* Search Bar */
 .search {
-  padding: 8px 12px;
-  font-size: 14px;
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 15px;
+  padding: 6px 10px;
+  font-size: 12px;
+  width: 200px;
+  margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
@@ -211,12 +212,13 @@
 
 /* Footer */
 .footer {
-  padding: 10px;
-  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 12px;
   color: white;
-  /* Change text color to white */
   text-align: left;
-  /* Align text to the left */
 }
 
 /* Expand Icon Styles */
