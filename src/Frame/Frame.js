@@ -6,6 +6,7 @@ const Sidebar = ({ children }) => {
   const [appVersion, setAppVersion] = useState('');
   const [windowStatus, setWindowStatus] = useState('init');
   const [darkMode, setDarkMode] = useState(false);
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false); // Add state to control visibility
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,11 +20,14 @@ const Sidebar = ({ children }) => {
     window.api.receive('app_version', handleAppVersion);
 
     window.api.receive('update_available', () => {
-      showUpdateNotification('A new update is available. Downloading now...');
+      console.log('update_available received ')
+      setShowUpdateNotification(true); // Show notification when update is available
+      displayUpdateNotification('A new update is available. Downloading now...');
     });
 
     window.api.receive('update_downloaded', () => {
-      showUpdateNotification('Update Downloaded. It will be installed on restart. Restart now?', true);
+      setShowUpdateNotification(true); // Show notification when update is downloaded
+      displayUpdateNotification('Update Downloaded. It will be installed on restart. Restart now?', true);
     });
 
     return () => {
@@ -51,7 +55,7 @@ const Sidebar = ({ children }) => {
     close: () => window.api.send('close-window'),
   };
 
-  const showUpdateNotification = (message, showRestartButton = false) => {
+  const displayUpdateNotification = (message, showRestartButton = false) => {
     const notification = document.getElementById('update-notification');
     const messageElement = document.getElementById('update-message');
     const restartButton = document.getElementById('restart-button');
@@ -66,7 +70,14 @@ const Sidebar = ({ children }) => {
     }
   };
 
-  const closeNotification = () => {
+  const toggleNotificationVisibility = () => {
+    const notification = document.getElementById('update-notification');
+    notification.classList.toggle('hidden');
+  };
+
+  const closeNotification = (event) => {
+    console.log("Closing notification"); // This will log to the console when the function is triggered
+    event.stopPropagation();
     const notification = document.getElementById('update-notification');
     notification.classList.add('hidden');
   };
@@ -184,7 +195,7 @@ const Sidebar = ({ children }) => {
             width="40px"
           >
             <g transform="translate(-95.748 -577)">
-              <path d="M110.965,592.309a2.38,2.38,0,0,1,.489-1.434,9.29,9.29,0,0,1,1.443-1.482,10.139,10.139,0,0,0,1.321-1.372,1.985,1.985,0,0,0,.368-1.2,1.956,1.956,0,0,0-1.983-2,2.073,2.073,0,0,0-1.419.543,3.575,3.575,0,0,0-.954 1.582l-2.152-.939a5.029,5.029,0,0,1,1.724-2.656,4.626,4.626,0,0,1,2.9-.927,4.968,4.968,0,0,1,2.287.531,4.168,4.168,0,0,1,1.651,1.495,3.974,3.974,0,0,1,.612,2.175,3.688,3.688,0,0,1-.538 1.965,8.8,8.8,0,0,1-1.639,1.865,13.862,13.862,0,0,0-1.358,1.322,1.536,1.536,0,0,0-.379 1,2.85,2.85,0,0,0,.1.667h-2.2A2.737,2.737,0,0,1,110.965,592.309Zm1.467,6.968a1.851,1.851,0,0,1-1.357-.543,1.831,1.831,0,0,1-.551-1.359,1.875,1.875,0,0,1,.551-1.372,1.835,1.835,0,0,1,1.357-.556,1.87,1.87,0,0,1,1.909,1.928,1.834,1.834,0,0,1-.55 1.359A1.857,1.857,0,0,1,112.432,599.277Z"/>
+              <path d="M110.965,592.309a2.38,2.38,0,0,1,.489-1.434,9.29,9.29,0,0,1,1.443-1.482,10.139,10.139,0,0,0,1.321-1.372,1.985,1.985,0,0,0,.368-1.2,1.956,1.956,0,0,0-1.983-2,2.073,2.073,0,0,0-1.419.543,3.575,3.575,0,0,0-.954 1.582l-2.152-.939a5.029,5.029,0,0,1,1.724-2.656,4.626,4.626,0,0,1,2.9-.927,4.968,4.968,0,0,1,2.287.531,4.168,4.168,0,0,1,1.651 1.495,3.974,3.974,0,0,1,.612 2.175,3.688,3.688,0,0,1-.538 1.965,8.8,8.8,0,0,1-1.639 1.865,13.862,13.862,0,0,0-1.358 1.322,1.536,1.536,0,0,0-.379 1,2.85,2.85,0,0,0,.1.667h-2.2A2.737,2.737,0,0,1,110.965,592.309Zm1.467,6.968a1.851,1.851,0,0,1-1.357-.543,1.831,1.831,0,0,1-.551-1.359,1.875,1.875,0,0,1,.551-1.372,1.835,1.835,0,0,1,1.357-.556,1.87,1.87,0,0,1,1.909,1.928,1.834,1.834,0,0,1-.55 1.359A1.857,1.857,0,0,1,112.432,599.277Z"/>
               <path d="M97.222,610.717a1.475,1.475,0,0,1-.626-.14,1.459,1.459,0,0,1-.848-1.333V580.572A3.576,3.576,0,0,1,99.32,577h26.69a3.576,3.576,0,0,1,3.572,3.572v20.416a3.576,3.576,0,0,1-3.572,3.571H106.038a2.555,2.555,0,0,0-1.637.594l-6.24,5.22A1.467,1.467,0,0,1,97.222,610.717ZM99.32,579a1.574,1.574,0,0,0-1.572,1.572V608.11l5.37-4.491a4.561,4.561,0,0,1,2.92-1.06H126.01a1.573,1.573,0,0,0,1.572-1.571V580.572A1.574,1.574,0,0,0,126.01,579Z"/>
             </g>
           </svg> */}
@@ -234,14 +245,16 @@ const Sidebar = ({ children }) => {
       <div className={styles.contentWrapper}>
         {children}
         {/* Notification div for update messages */}
-        <div id="update-notification" className={`${styles.updateNotification} hidden`}>
-          <button className={styles.closeButton} onClick={closeNotification}>✖</button>
-          <p id="update-message" style={{ color: 'black' }}>Update notification placeholder text</p>
-          <div className={styles.notificationButtons}>
-            <button onClick={closeNotification}>Close</button>
-            <button id="restart-button" onClick={restartApp} className="hidden">Restart</button>
+        {showUpdateNotification && ( // Conditionally render the notification
+          <div id="update-notification" className={styles.updateNotification}>
+            <button className={styles.closeButton} onClick={closeNotification}>✖</button>
+            <p id="update-message" style={{ color: 'black' }}></p>
+            <div className={styles.notificationButtons}>
+              <button onClick={closeNotification}>Close</button>
+              <button id="restart-button" onClick={restartApp} className="hidden">Restart</button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

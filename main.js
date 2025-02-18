@@ -158,6 +158,25 @@ function createWindow() {
       'http://localhost:3000'
   );
 
+// auto update code
+  // Check for update
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+    // Uncomment the line below to simulate an update being ready
+    // mainWindow.webContents.send('update_available');
+  });
+
+  // notify the user that an update is available
+  autoUpdater.on('update-available', () => {
+    console.log('update-available!!')
+    mainWindow.webContents.send('update_available');
+  });
+
+  // notify the user that update has downloaded
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update_downloaded');
+  });
+
   /*
    const startUrl = process.env.ELECTRON_START_URL || url.format({
      pathname: path.join(__dirname, '../build/index.html'),
@@ -188,22 +207,7 @@ function createWindow() {
 }
 
 function setupAutoUpdater() {
-  // Check for update
-  mainWindow.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
-    // Uncomment the line below to simulate an update being ready
-    mainWindow.webContents.send('update_available');
-  });
 
-  // notify the user that an update is available
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update_available');
-  });
-
-  // notify the user that update has downloaded
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update_downloaded');
-  });
 }
 
 // Function to sanitize FFmpeg command arguments
