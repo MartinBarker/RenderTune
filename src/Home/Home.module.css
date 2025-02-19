@@ -1,5 +1,9 @@
 .homeContainer {
   text-align: left;
+  position: relative;
+  overflow: visible;
+  max-width: 100%; /* Ensure the container does not exceed the viewport width */
+  padding: 0 10px; /* Add padding to prevent tooltip from touching the edges */
 }
 
 .supportersSection {
@@ -21,28 +25,28 @@
 }
 
 .donationLinks a {
-  color: #FFD700; /* Gold color for better visibility */
+  color: #00CED1; /* Dark Turquoise color for better visibility */
   text-decoration: none;
   margin: 0 5px; /* Add equal space before and after each link */
 }
 
 .donationLinks a:hover {
-  color: #FFA500; /* Orange color on hover */
+  color: #1E90FF; /* Blue color on hover */
 }
 
 .githubLink {
-  color: #FFD700; /* Gold color for better visibility */
+  color: #00CED1; /* Dark Turquoise color for better visibility */
   text-decoration: none;
 }
 
 .githubLink:hover {
-  color: #FFA500; /* Orange color on hover */
+  color: #1E90FF; /* Blue color on hover */
 }
 
 .supportersNames {
   font-weight: normal;
   font-size: 1em;
-  color: #00CED1; /* Different color to stand out (Dark Turquoise) */
+  color: #FFD700; /* Different color to stand out (Dark Turquoise) */
 }
 
 .changelogSection {
@@ -63,12 +67,12 @@
 }
 
 .changelogSection a {
-  color: #FFD700; /* Gold color for better visibility */
+  color: #00CED1; /* Dark Turquoise color for better visibility */
   text-decoration: none;
 }
 
 .changelogSection a:hover {
-  color: #FFA500; /* Orange color on hover */
+  color: #1E90FF; /* Blue color on hover */
 }
 
 .changelogSection * {
@@ -101,4 +105,57 @@
 .homeContainer h2 {
   color: #FFF; /* Ensure subtitle is the same white color */
   text-decoration: none; /* Remove underline from subtitle */
+}
+
+.feedbackSection {
+  margin-top: 20px;
+}
+
+.feedbackSection h2 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  color: #FFF; /* Ensure section titles are the same white color */
+  text-decoration: underline; /* Add underline to section titles */
+}
+
+.feedbackSection ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.feedbackSection li {
+  margin-bottom: 5px;
+}
+
+.feedbackSection a {
+  color: #00CED1; /* Dark Turquoise color for better visibility */
+  text-decoration: none;
+}
+
+.feedbackSection a:hover {
+  color: #1E90FF; /* Blue color on hover */
+}
+
+a[title] {
+  position: relative;
+}
+
+a[title]:hover::after {
+  content: attr(title);
+  position: fixed; /* Changed from absolute to fixed */
+  white-space: normal; /* Allow wrapping */
+  max-width: 150px; /* Adjustable based on your design preference */
+  overflow-y: auto; /* Enable vertical scrolling */
+  max-height: 80px; /* Set maximum height before scrolling */
+  padding: 5px;
+  border-radius: 3px;
+  background-color: #333;
+  color: #fff;
+  font-size: 0.8em;
+  z-index: 9999; /* Ensure it's above all other content */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+a[title]:hover::before {
+  display: none; /* Temporarily remove arrow, adjust if needed */
 }

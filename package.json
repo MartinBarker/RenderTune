@@ -1,7 +1,7 @@
 {
   "name": "RenderTune",
-  "version": "2.0.2",
-  "description": "My Electron app",
+  "version": "2.0.3",
+  "description": "Combine audio and image files to create video files",
   "type": "module",
   "main": "main.js",
   "author": "martinbarker99@gmail.com",

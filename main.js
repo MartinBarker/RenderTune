@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { app, BrowserWindow, ipcMain, protocol, session, dialog, Menu, shell } from 'electron';
-import { nativeImage } from 'electron'; 
+import { nativeImage } from 'electron';
 import { execa } from 'execa';
 import pkg from 'electron-updater';
 import path from 'path';
@@ -158,6 +158,25 @@ function createWindow() {
       'http://localhost:3000'
   );
 
+// auto update code
+  // Check for update
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+    // Uncomment the line below to simulate an update being ready
+    // mainWindow.webContents.send('update_available');
+  });
+
+  // notify the user that an update is available
+  autoUpdater.on('update-available', () => {
+    console.log('update-available!!')
+    mainWindow.webContents.send('update_available');
+  });
+
+  // notify the user that update has downloaded
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update_downloaded');
+  });
+
   /*
    const startUrl = process.env.ELECTRON_START_URL || url.format({
      pathname: path.join(__dirname, '../build/index.html'),
@@ -188,13 +207,7 @@ function createWindow() {
 }
 
 function setupAutoUpdater() {
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update_available');
-  });
 
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update_downloaded');
-  });
 }
 
 // Function to sanitize FFmpeg command arguments
@@ -305,8 +318,8 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
         // Extract key FFmpeg error details
         const relevantError = extractRelevantError(errorBuffer);
 
-        event.reply('ffmpeg-error', { 
-          message: `FFmpeg exited with code ${code}`, 
+        event.reply('ffmpeg-error', {
+          message: `FFmpeg exited with code ${code}`,
           lastOutput: relevantError,
           fullErrorLog: errorBuffer.join('\n') // Send full stderr log for debugging
         });
@@ -318,8 +331,8 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     const errorOutput = error.stderr ? error.stderr.toString().split('\n') : ['No error details'];
     const relevantError = extractRelevantError(errorOutput);
 
-    event.reply('ffmpeg-error', { 
-      message: error.message, 
+    event.reply('ffmpeg-error', {
+      message: error.message,
       lastOutput: relevantError,
       fullErrorLog: errorOutput.join('\n') // Send full stderr log for debugging
     });
@@ -572,7 +585,7 @@ ipcMain.on('sort-files', async (event, filePaths) => {
     const filesInfoArray = await Promise.all(
       filePaths.map(async (filePath) => checkFilePath(filePath))
     );
-    
+
     console.log('filesInfoArray = ', filesInfoArray)
     // Send initial file info array
     event.reply('sort-files-initial-response', filesInfoArray);
@@ -604,3 +617,4 @@ ipcMain.on('open-url', async (event, url) => {
     console.error('Error opening URL:', url, error);
   }
 });
+

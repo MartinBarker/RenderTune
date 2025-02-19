@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom'; // Import useLocation
 import styles from './Project.module.css';
 import FileUploader from '../FileUploader/FileUploader.js';
 import Table from '../Table/Table.js';
@@ -21,6 +22,9 @@ function formatDuration(duration) {
 }
 
 function Project() {
+  const location = useLocation(); // Use useLocation to access state
+  const filesMetadata = location.state?.filesMetadata || []; // Get filesMetadata from state
+
   const [renders, setRenders] = useState(() => JSON.parse(localStorage.getItem('renders') || '[]'));
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);  // New state for tracking selected image index
@@ -306,6 +310,12 @@ function Project() {
     stretchImageToFit,
     useBlurBackground
   ]);
+
+  useEffect(() => {
+    if (filesMetadata.length > 0) {
+      handleFilesMetadata(filesMetadata); // Call handleFilesMetadata if filesMetadata is passed
+    }
+  }, [filesMetadata]);
 
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
