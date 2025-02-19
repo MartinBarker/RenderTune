@@ -99,7 +99,7 @@ function Home() {
         <h2>Thank You to Our Supporters!</h2>
         <p className={styles.supportersNames}>{shuffledSupporters.join(', ')}</p>
         <p>
-          Become a supporter by making a one-time $5 donation to have your name featured in the app forever!
+          Become a supporter by making a optional $5 donation to support the development of keeping RenderTune 100% free and open-source
         </p>
         <p className={styles.donationLinks}>
           <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> / 
