@@ -48,15 +48,6 @@ function Settings() {
       </section>
 
       <section>
-        <h2>Support RenderTune</h2>
-        <p>If you would like to support RenderTune, you can make a one-time donation of $5. Your name will be added to the application's Thank You page.</p>
-        <ul>
-          <li><a href="https://ko-fi.com/your-kofi-page" target="_blank" rel="noopener noreferrer" className={styles.lightBlueLink}>Ko-fi</a></li>
-          <li><a href="https://patreon.com/your-patreon-page" target="_blank" rel="noopener noreferrer" className={styles.lightBlueLink}>Patreon</a></li>
-        </ul>
-      </section>
-
-      <section>
         <h2>Thank You</h2>
         <p>Special thanks to our supporters:</p>
         <ul>
