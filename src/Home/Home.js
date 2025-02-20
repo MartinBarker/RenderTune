@@ -74,9 +74,9 @@ function Home() {
   const shuffledSupporters = supporters.sort(() => Math.random() - 0.5);
 
   const changelog = [
-    "Added new file uploader feature",
-    "Improved performance",
-    "Fixed bugs in the rendering engine"
+    "Fixed filedrop transition from home page to new project page",
+    "Added auto-update feature",
+    "Changed formatting of Home page text"
   ];
 
   const feedbackLinks = [
@@ -88,28 +88,18 @@ function Home() {
   return (
     <div className={styles.homeContainer}>
       <h1>Welcome to RenderTune!</h1>
-      <h2 className={styles.subtitle}>A free open-source video rendering app</h2>
+      <h2 className={styles.subtitle}>
+        A free open-source video rendering app created by<a href="#" className={styles.creatorLink} data-tooltip="Visit Martin Barker's website" onClick={(event) => handleLinkClick('https://www.martinbarker.me', event)} onMouseOver={createTooltip}>Martin Barker</a>
+      </h2>
       <div>
         <p>
-          View all code and contribute on <a href="#" className={styles.githubLink} data-tooltip="Open RenderTune GitHub page" onClick={(event) => handleLinkClick('https://github.com/MartinBarker/RenderTune', event)} onMouseOver={createTooltip}>GitHub</a>
+          View all code and contribute on <a href="#" className={styles.githubLink} data-tooltip="Open RenderTune GitHub page" onClick={(event) => handleLinkClick('https://github.com/MartinBarker/RenderTune', event)} onMouseOver={createTooltip}>GitHub</a>, or visit <a href="#" className={styles.infoLink} data-tooltip="Open RenderTune website" onClick={(event) => handleLinkClick('https://rendertune.com', event)} onMouseOver={createTooltip}>rendertune.com</a> for additional info
         </p>
       </div>
       <FileUploader onFilesMetadata={handleFilesMetadata} />
-      <div className={styles.supportersSection}>
-        <h2>Thank You to Our Supporters!</h2>
-        <p className={styles.supportersNames}>{shuffledSupporters.join(', ')}</p>
-        <p>
-          Become a supporter by making a optional $5 donation to support the development of keeping RenderTune 100% free and open-source
-        </p>
-        <p className={styles.donationLinks}>
-          <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> / 
-          <a href="#" data-tooltip="Open Patreon page" onClick={(event) => handleLinkClick('https://www.patreon.com/c/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Patreon</a> / 
-          <a href="#" data-tooltip="Open GitHub Sponsors page" onClick={(event) => handleLinkClick('https://github.com/sponsors/MartinBarker', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
-        </p>
-      </div>
-      <hr className={styles.sectionDivider} /> 
+      <br></br>
       <div className={styles.changelogSection}>
-        <h2>Changelog!</h2>
+        <h2>Changelog</h2>
         <p>Current Version: <a href="#" data-tooltip="View release notes on GitHub" onClick={(event) => handleLinkClick(`https://github.com/MartinBarker/RenderTune/releases/tag/v${appVersion}`, event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">{appVersion}</a></p>
         <ul>
           {changelog.map((item, index) => (
@@ -117,12 +107,24 @@ function Home() {
           ))}
         </ul>
       </div>
+      <hr className={styles.sectionDivider} /> 
+      <div className={styles.supportersSection}>
+        <h2>Thank You to Our Supporters!</h2>
+        <p className={styles.supportersNames}>{shuffledSupporters.join(', ')}</p>
+        <p className={styles.donationLinks}>
+          <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> / 
+          <a href="#" data-tooltip="Open Patreon page" onClick={(event) => handleLinkClick('https://www.patreon.com/c/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Patreon</a> / 
+          <a href="#" data-tooltip="Open GitHub Sponsors page" onClick={(event) => handleLinkClick('https://github.com/sponsors/MartinBarker', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+        </p>
+      </div>
       <div className={styles.feedbackSection}>
         <h2>Feedback</h2>
         <ul>
           {feedbackLinks.map((link, index) => (
             <li key={index}>
-              <a href="#" data-tooltip={link.tooltip} onClick={(event) => handleLinkClick(link.url, event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">{link.text}</a>
+<a href="#" data-tooltip={link.tooltip} onClick={(event) => handleLinkClick(link.url, event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer" className={styles.feedbackLink}>
+                {link.text}
+              </a>
             </li>
           ))}
         </ul>
