@@ -6,6 +6,7 @@
   background-color: #f9f9f9;
   color: #333;
   font-family: Arial, sans-serif;
+  font-size: 12px; /* Reduced font size */
 }
 
 .headerRow {
@@ -14,11 +15,11 @@
 }
 
 .headerCell {
-  padding: 12px 8px;
+  padding: 8px 4px; /* Reduced padding */
   text-align: left;
   border-bottom: 1px solid #ccc;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   position: relative;
   /* For sorting icon alignment */
   user-select: none;
@@ -35,10 +36,10 @@
 }
 
 .cell {
-  padding: 10px 8px;
+  padding: 6px 4px; /* Reduced padding */
   text-align: left;
   border-bottom: 1px solid #ddd;
-  font-size: 13px;
+  font-size: 12px; /* Reduced font size */
   white-space: nowrap;
   /* Prevent wrapping */
   overflow: hidden;
@@ -49,7 +50,7 @@
 
 .dragHandle {
   cursor: grab;
-  font-size: 16px;
+  font-size: 14px; /* Reduced font size */
   color: #555;
   background: none;
   border: none;
@@ -61,14 +62,12 @@
 }
 
 .sortIcon {
-  margin-left: 8px;
-  font-size: 12px;
-  width: 16px;
-  /* Fixed width */
-  height: 16px;
-  /* Fixed height */
+  margin-left: 4px; /* Reduced margin */
+  font-size: 10px; /* Reduced font size */
+  width: 12px; /* Reduced width */
+  height: 12px; /* Reduced height */
   text-align: center;
-  line-height: 16px;
+  line-height: 12px;
   color: #ccc;
   /* Neutral unsorted state */
   display: inline-block;
@@ -91,21 +90,19 @@
 
 .expandedContent {
   display: flex;
-  gap: 2rem;
-  padding: 15px 10px;
+  gap: 1rem; /* Reduced gap */
+  padding: 10px 8px; /* Reduced padding */
   align-items: center;
   border-top: 1px solid #ddd;
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   overflow-wrap: break-word;
   /* Ensure long text wraps properly */
   word-break: break-word;
   /* Ensure long text breaks properly */
   white-space: pre-wrap;
   /* Preserve whitespace and wrap text */
-  max-height: 200px; /* Limit the height */
+  max-height: 150px; /* Reduced max height */
   overflow-y: auto; /* Add vertical scroll if content exceeds max-height */
-  padding-top: 20px; /* Add padding to the top */
-  padding-bottom: 20px; /* Add padding to the bottom */
 }
 
 .expandedContent pre {
@@ -114,23 +111,23 @@
   white-space: pre-wrap; /* Ensure text wraps onto the next line */
   word-wrap: break-word; /* Break long words onto the next line */
   overflow-wrap: break-word; /* Ensure text wraps onto the next line */
-  padding: 10px; /* Add padding inside the pre element */
+  padding: 8px; /* Reduced padding */
 }
 
 .expandedContent label {
   display: flex;
   flex-direction: column;
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   color: #333;
 }
 
 .expandedContent input {
-  padding: 8px 10px;
-  font-size: 14px;
+  padding: 6px 8px; /* Reduced padding */
+  font-size: 12px; /* Reduced font size */
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
-  width: 120px;
+  width: 100px; /* Reduced width */
   transition: border-color 0.2s ease;
 }
 
@@ -140,8 +137,8 @@
 }
 
 .expandedContent button {
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 6px 10px; /* Reduced padding */
+  font-size: 12px; /* Reduced font size */
   border: none;
   border-radius: 4px;
   background-color: #007bff;
@@ -160,12 +157,12 @@
   justify-content: flex-end;
   align-items: center;
   margin: 5px 0;
-  gap: 10px;
+  gap: 5px; /* Reduced gap */
 }
 
 .pagination button {
-  padding: 3px 6px;
-  font-size: 12px;
+  padding: 2px 4px; /* Reduced padding */
+  font-size: 10px; /* Reduced font size */
   color: #fff;
   background-color: #007bff;
   border: none;
@@ -184,19 +181,19 @@
 }
 
 .pageInput {
-  width: 40px;
+  width: 30px; /* Reduced width */
   margin-left: 5px;
-  padding: 3px;
+  padding: 2px; /* Reduced padding */
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 10px; /* Reduced font size */
 }
 
 /* Search Bar */
 .search {
-  padding: 6px 10px;
-  font-size: 12px;
-  width: 200px;
+  padding: 4px 8px; /* Reduced padding */
+  font-size: 10px; /* Reduced font size */
+  width: 150px; /* Reduced width */
   margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -216,7 +213,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 5px 0;
-  font-size: 12px;
+  font-size: 10px; /* Reduced font size */
   color: white;
   text-align: left;
 }
@@ -224,7 +221,7 @@
 /* Expand Icon Styles */
 .expandIcon {
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px; /* Reduced font size */
   cursor: pointer;
   transform: rotate(0deg);
   transition: transform 0.3s ease;
@@ -242,11 +239,11 @@
 .dragHandleWrapper {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px; /* Reduced gap */
 }
 
 .rowNumber {
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   color: #555;
 }
 
@@ -254,13 +251,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 5px;
+  gap: 3px; /* Reduced gap */
   cursor: pointer;
   user-select: none;
 }
 
 .sortIcon {
-  font-size: 12px;
+  font-size: 10px; /* Reduced font size */
   color: #999;
 }
 
@@ -269,9 +266,9 @@
 }
 
 .clearButton {
-  margin: 10px 0;
-  padding: 8px 12px;
-  font-size: 14px;
+  margin: 5px 0; /* Reduced margin */
+  padding: 6px 10px; /* Reduced padding */
+  font-size: 12px; /* Reduced font size */
   color: #fff;
   background-color: #dc3545;
   border: none;
@@ -285,9 +282,9 @@
 }
 
 .copyButton {
-  margin: 10px 0;
-  padding: 8px 12px;
-  font-size: 14px;
+  margin: 5px 0; /* Reduced margin */
+  padding: 6px 10px; /* Reduced padding */
+  font-size: 12px; /* Reduced font size */
   color: #fff;
   background-color: #28a745;
   border: none;
@@ -301,9 +298,9 @@
 }
 
 .stopButton {
-  margin: 10px 0;
-  padding: 8px 12px;
-  font-size: 14px;
+  margin: 5px 0; /* Reduced margin */
+  padding: 6px 10px; /* Reduced padding */
+  font-size: 12px; /* Reduced font size */
   color: #fff;
   background-color: #dc3545;
   border: none;
@@ -317,8 +314,8 @@
 }
 
 .thumbnailWrapper {
-  width: 150px;
-  height: 150px;
+  width: 100px; /* Reduced width */
+  height: 100px; /* Reduced height */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -345,9 +342,9 @@
 }
 
 .colorBox {
-  width: 20px;
-  height: 20px;
-  margin: 5px;
+  width: 15px; /* Reduced width */
+  height: 15px; /* Reduced height */
+  margin: 3px; /* Reduced margin */
   border: 1px solid rgba(0, 0, 0, 0.2);
   display: inline-block;
   vertical-align: middle;
@@ -356,7 +353,7 @@
 }
 
 .colorBox:hover {
-  transform: scale(1.2);
+  transform: scale(1.1); /* Reduced scale */
 }
 
 .selectedColorBox {
@@ -366,9 +363,9 @@
 .paddingColorInput {
   color: #000;
   border: 1px solid #d66;
-  width: 200px;
-  padding: 20px;
-  font-size: 20px;
+  width: 150px; /* Reduced width */
+  padding: 15px; /* Reduced padding */
+  font-size: 16px; /* Reduced font size */
   text-shadow: 0px 0px 4px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff;
   background-color: none; /* Default to none */
 }

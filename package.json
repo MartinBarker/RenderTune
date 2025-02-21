@@ -1,6 +1,6 @@
 {
   "name": "RenderTune",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Combine audio and image files to create video files",
   "type": "module",
   "main": "main.js",

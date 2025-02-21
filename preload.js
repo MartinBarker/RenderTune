@@ -28,7 +28,8 @@ contextBridge.exposeInMainWorld('api', {
             'check-filepath',
             'sort-files',
             'open-url',
-            'restart_app'
+            'restart_app',
+            'get-file-extensions'
         ];
         if (validSendChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -51,7 +52,8 @@ contextBridge.exposeInMainWorld('api', {
             'sort-files-enriched-response',
             'update_available',
             'update_downloaded',
-            'delete-file-response'
+            'delete-file-response',
+            'file-extensions-response'
         ];
         if (validReceiveChannels.includes(channel) || channel.startsWith('color-palette-response-')) {
             ipcRenderer.on(channel, (event, ...args) => func(...args));
