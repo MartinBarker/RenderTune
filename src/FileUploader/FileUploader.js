@@ -5,6 +5,20 @@ const { webUtils } = window.api;
 
 const FileUploader = ({ onFilesMetadata }) => {
   const [highlight, setHighlight] = useState(false);
+  const [extensions, setExtensions] = useState(null);
+  const [showFormats, setShowFormats] = useState(false);
+
+  useEffect(() => {
+    // Request file extensions when component mounts
+    window.api.send('get-file-extensions');
+    window.api.receive('file-extensions-response', (data) => {
+      setExtensions(data);
+    });
+
+    return () => {
+      window.api.removeAllListeners('file-extensions-response');
+    };
+  }, []);
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -87,7 +101,26 @@ const FileUploader = ({ onFilesMetadata }) => {
       onClick={openNativeFileDialog}
     >
       <div className={styles.fileUploaderBox}>
-        Drag and drop or select files to get started
+        <div>Drag and drop or select files to get started</div>
+        <div 
+          className={styles.formatInfo}
+          onMouseEnter={() => setShowFormats(true)}
+          onMouseLeave={() => setShowFormats(false)}
+        >
+          Hover to view accepted input file formats
+          {showFormats && extensions && (
+            <div className={styles.formatsPopup}>
+              <div>
+                <strong>Audio formats:</strong>
+                <div>{extensions.audioExtensions.join(', ')}</div>
+              </div>
+              <div>
+                <strong>Image formats:</strong>
+                <div>{extensions.imageExtensions.join(', ')}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

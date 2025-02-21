@@ -89,7 +89,7 @@ function Home() {
     <div className={styles.homeContainer}>
       <h1>Welcome to RenderTune!</h1>
       <h2 className={styles.subtitle}>
-        A free open-source video rendering app created by<a href="#" className={styles.creatorLink} data-tooltip="Visit Martin Barker's website" onClick={(event) => handleLinkClick('https://www.martinbarker.me', event)} onMouseOver={createTooltip}>Martin Barker</a>
+        A free open-source program to create video fiels by combining audio + image files, created by<a href="#" className={styles.creatorLink} data-tooltip="Visit Martin Barker's website" onClick={(event) => handleLinkClick('https://www.martinbarker.me', event)} onMouseOver={createTooltip}>Martin Barker</a>
       </h2>
       <div>
         <p>
@@ -107,22 +107,26 @@ function Home() {
           ))}
         </ul>
       </div>
-      <hr className={styles.sectionDivider} /> 
+      <hr className={styles.sectionDivider} />
       <div className={styles.supportersSection}>
         <h2>Thank You to Our Supporters!</h2>
         <p className={styles.supportersNames}>{shuffledSupporters.join(', ')}</p>
+        
+        {/* 
         <p className={styles.donationLinks}>
-          <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> / 
-          <a href="#" data-tooltip="Open Patreon page" onClick={(event) => handleLinkClick('https://www.patreon.com/c/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Patreon</a> / 
+          <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> /
+          <a href="#" data-tooltip="Open Patreon page" onClick={(event) => handleLinkClick('https://www.patreon.com/c/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Patreon</a> /
           <a href="#" data-tooltip="Open GitHub Sponsors page" onClick={(event) => handleLinkClick('https://github.com/sponsors/MartinBarker', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
         </p>
+        */}
+        
       </div>
       <div className={styles.feedbackSection}>
         <h2>Feedback</h2>
         <ul>
           {feedbackLinks.map((link, index) => (
             <li key={index}>
-<a href="#" data-tooltip={link.tooltip} onClick={(event) => handleLinkClick(link.url, event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer" className={styles.feedbackLink}>
+              <a href="#" data-tooltip={link.tooltip} onClick={(event) => handleLinkClick(link.url, event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer" className={styles.feedbackLink}>
                 {link.text}
               </a>
             </li>
