@@ -726,42 +726,46 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
 
   return (
     <div>
-      <table className={styles.table}>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className={styles.headerRow}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className={styles.headerCell}>
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={data.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+          <table className={styles.table}>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className={styles.headerRow}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className={styles.headerCell}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row, rowIndex) => (
-            <Row
-              key={row.original.id}
-              row={row}
-              rowIndex={rowIndex}
-              toggleRowSelected={toggleRowSelected}
-              toggleRowExpanded={toggleRowExpanded}
-              isExpanded={!!expandedRows[row.id]}
-              removeRow={removeRow}
-              isImageTable={isImageTable}
-              isRenderTable={isRenderTable}
-              setImageFiles={setImageFiles}
-              setAudioFiles={setAudioFiles}
-              ffmpegCommand={ffmpegCommand}
-              setErrors={setErrors}
-              errors={errors}
-            />
-          ))}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row, rowIndex) => (
+                <Row
+                  key={row.original.id}
+                  row={row}
+                  rowIndex={rowIndex}
+                  toggleRowSelected={toggleRowSelected}
+                  toggleRowExpanded={toggleRowExpanded}
+                  isExpanded={!!expandedRows[row.id]}
+                  removeRow={removeRow}
+                  isImageTable={isImageTable}
+                  isRenderTable={isRenderTable}
+                  setImageFiles={setImageFiles}
+                  setAudioFiles={setAudioFiles}
+                  ffmpegCommand={ffmpegCommand}
+                  setErrors={setErrors}
+                  errors={errors}
+                />
+              ))}
+            </tbody>
+          </table>
+        </SortableContext>
+      </DndContext>
       <div className={styles.footer}>
         <input
           type="text"
