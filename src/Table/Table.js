@@ -726,50 +726,58 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
 
   return (
     <div>
-      <table className={styles.table}>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className={styles.headerRow}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className={styles.headerCell}>
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
+      <input
+        type="text"
+        value={globalFilter}
+        onChange={(e) => setGlobalFilter(e.target.value)}
+        placeholder="Search..."
+        className={styles.search}
+      />
+      <button onClick={clearTable} className={styles.clearButton}>
+        Clear Table
+      </button>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={data.map((row) => row.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <table className={styles.table}>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className={styles.headerRow}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className={styles.headerCell}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row, rowIndex) => (
-            <Row
-              key={row.original.id}
-              row={row}
-              rowIndex={rowIndex}
-              toggleRowSelected={toggleRowSelected}
-              toggleRowExpanded={toggleRowExpanded}
-              isExpanded={!!expandedRows[row.id]}
-              removeRow={removeRow}
-              isImageTable={isImageTable}
-              isRenderTable={isRenderTable}
-              setImageFiles={setImageFiles}
-              setAudioFiles={setAudioFiles}
-              ffmpegCommand={ffmpegCommand}
-              setErrors={setErrors}
-              errors={errors}
-            />
-          ))}
-        </tbody>
-      </table>
-      <div className={styles.footer}>
-        <input
-          type="text"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Search..."
-          className={styles.search}
-        />
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row, rowIndex) => (
+                <Row
+                  key={row.original.id}
+                  row={row}
+                  rowIndex={rowIndex}
+                  toggleRowSelected={toggleRowSelected}
+                  toggleRowExpanded={toggleRowExpanded}
+                  isExpanded={!!expandedRows[row.id]}
+                  removeRow={removeRow}
+                  isImageTable={isImageTable}
+                  isRenderTable={isRenderTable}
+                  setImageFiles={setImageFiles}
+                  setAudioFiles={setAudioFiles}
+                  ffmpegCommand={ffmpegCommand}
+                  setErrors={setErrors}
+                  errors={errors}
+                />
+              ))}
+            </tbody>
+          </table>
+        </SortableContext>
         <div className={styles.pagination}>
           <button
             onClick={() => table.previousPage()}
@@ -816,7 +824,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             <option value="all">All</option>
           </select>
         </div>
-      </div>
+      </DndContext>
       <div className={styles.footer}>
         <span>
           {Object.keys(rowSelection).length} of {data.length} rows selected
