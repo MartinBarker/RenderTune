@@ -46,54 +46,22 @@ If you want to download RenderTune without using the above stores, you can downl
 - Supported audio formats: mp3, flac, wav, m4a, oog, wma, aiff. Supported image formats: png, jpeg, jpg, webp.
 - Outputted video format: mp4. 
 
-## How to run RenderTune locally:
-- Clone this repo and cd into the folder.
-- Run `npm i` and `npm i -g electron` if you haven't already installed electron globally.
-- If you are on windows I recommend using command prompt, as that can launch electron apps fine, while Windows Linux Subsystem has troubles launching electron apps.
-- If you are on a mac using the mac terminal, download brew and `ffmpeg-mac/` by following the instructions below.
-- Download and setup `ffmpeg-mac/` folder (instructions below).
-- Run `electron .` to start the program.
 
-## How to install ffmpeg locally for mac (`ffmpeg-mac/`)
-- If you are on mac; run `sh buildffmpeg.sh` to create the `ffmpeg-mac/` folder and statically build a version of ffmpeg that can be sandboxed and distributed to the mac apple store (mas).
-- Verify your local `ffmpeg-mac/` folder has no dynamic libraries by running this command: 
-`otool -L ffmpeg-mac/ffmpeg | grep /usr/local`
-- If any files show up after running this command, delete or move those files, redownload the ffmpeg-mac/ folder, then run the 'otool' command again to verify there are no dynamic libraries in your local ffmpeg-mac/ folder. 
+## How to setup and run RenderTune locally:
 
-## Releasing a new version:
-- Change version number in package.json (this is the bare minimum to change).
-- Make sure you have local vars set for GH_TOKEN, APPLEID, and APPLEIDPASS.
-- Mac: 
-    - Download and setup `ffmpeg-mac/` folder.
-    - Mac Apple Store: Change package.json mac build targets to only contain `"mas"`, verify the paths in `signmasscript.sh` are correct, then build & sign by running the command `npm run build-mas`. Upload the outputted RenderTune.pkg file to App Store Connect using Transporter, then create a new Mac Apple Store submission for review.
-    - Mac .dmg Installer (auto-updates): Change package.json build targets to contain `"dmg", "zip"`, remove the RenderTune.pkg file we crated for MAS in the above step if it exists since we don't want to package that inside our build. Build & publish by running the command `npm run build-mac-publish`.
-- Windows:
-    - To sign a .appx build for the Windows Store you need to have a Windows SDK downloaded: https://www.electronjs.org/docs/tutorial/windows-store-guide.
-    - Windows Installer (auto-updates), Windows Portable, and Windows Store .appx: On Windows, make sure env vars are set by running `echo %GH_TOKEN%` in command prompt terminal, build nsis-web/portable/appx targets with the command `npm run build-win-publish`. To sign the Windows Store Build, make sure you are on a computer with the powershell electron-windows-store requirements, and then run the following powershell command to generate a signed .appx file that you can upload to the Microsoft Store review system:
-```
-electron-windows-store --input-directory C:\Users\marti\Documents\projects\RenderTune\dist\win-unpacked --output-directory C:\Users\marti\Documents\projects\Appx --package-version 0.5.0.0 --package-name RenderTune --package-display-name 'RenderTune' --publisher-display-name 'martinbarker' --identity-name 1845martinbarker.digify -a C:\Users\marti\Documents\projects\RenderTune\Resources\
-```
-- Linux: 
-    - Login to snap store from terminal: `$ snapcraft login`. Build & publish linux builds for snap and AppImage: `$ npm run build-linux-publish`. This will output a .snap file in the dist/ folder that you can upload using the command: `$ snapcraft upload --release=stable dist/rendertune_0.3.23_amd64.snap` (make sure your .snap filename is correct).
-- Once all of the following steps have been followed, there should be a new RenderTune version drafted on GitHub with files uploaded for Mac, Windows, and Linux.
+Clone the repo and change directory to be inside of it:
 
-## Roadmap:
-This list is of future updates / improvements I plan to make for RenderTune (If you can think of any features you would like, contact me and I will include them in the roadmap)
-- UI Improvements: Better render status options, more efficent code.
-- Add API to electron app so you can trigger renders using POST route.
-- New Feature: Append/Prepend video file to video we are rendering (Add MP4 intro/outro, add MP3 intro/outro)
-- New Feautre: Record, split, export and tag audio files.
-- New Feature: Upload files to YouTube / tag
+`git clone https://github.com/MartinBarker/RenderTune.git`
 
+`cd RenderTune`
 
-__________________________________________________________
+Install NVM (node package manager) and set it to download and use Node v20.9.0:
 
-# new-readme-rendertune-v20-react-rewrite
-
-## How to setup and run locally:
 `nvm install 20.9.0`
 
 `nvm use 20.9.0`
+
+Download necessary packages and run:
 
 `npm i -g yarn cross-env wait-on concurrently`
 
@@ -101,29 +69,37 @@ __________________________________________________________
 
 `npm start`
 
-## How to test build locally
+Run one of these commands to build/install ffmpeg locally:
+
+* `npm run download-ffmpeg-darwin-arm64`
+
+* `npm run download-ffmpeg-darwin-x64`
+
+* `npm run download-ffmpeg-linux-x64`
+
+* `npm run download-ffmpeg-win32-x64`
+- For windows you will need to install 7zip and set a PATH env var for "C:\Program Files\7-Zip" so that `7z` works from the command line.
+
+## How to build locally:
+
 `npm i -g electron-builder`
+
 `electron-builder --windows`
 
-### How to trigger a release build:
-Tag a new version: `git tag v1.0.8`
-Push the tag to GitHub: `git push origin v1.0.8`
+## How to release a new version of RenderTune:
 
-# Common Errors:
+1. Change version number in package.json
 
-## [win10 command prompt] `npm run build`:
-- Error: `app-builder.exe process failed ERR_ELECTRON_BUILDER_CANNOT_EXECUTE Exit code: 1` / `downloaded url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=1.695s ⨯ exit status 2`
-- Fix: Run terminal / command prompt as admin.
+2. Tag a new version: `git tag v1.0.8`
 
-```
-# Windows Debugging
-rmdir /s /q dist
-rmdir /s /q node_modules
-npm cache clean --force
-yarn install
-```
+3. Push the tag to GitHub: `git push origin v1.0.8`
 
-### How to setup Mac Apple Store signing:
+4. Edit release so that `.appx` and `.pkg` include text 'DO-NOT-DOWNLOAD'
+
+5. Download .appx and submit it to the Microsoft store
+
+
+## How to setup Mac Apple Store signing:
 
 - Need to set the following GitHub actions secret values:
 ```
@@ -175,6 +151,7 @@ SNAPCRAFT_TOKEN
 
     - Run command to get contents 
         - base64 < mac_app_store_connect.provisionprofile | pbcopy 
+        - Make sure this file is the same on that is located in the root of the repo and used by package.json / electron-builder
 
     - Paste clipboard contents into PROVISIONING_PROFILE_BASE64 
 - MAC_CERTS_PASSWORD
@@ -190,4 +167,4 @@ Add the following GH Actions secrets:
 - MAC_CERTS to the output of this command: `base64 -i Certificates.p12 -o - | pbcopy`
 
 - SNAPCRAFT_TOKEN
-    - tbd
+    [here](https://github.com/samuelmeuli/action-snapcraft)
