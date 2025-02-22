@@ -23,34 +23,3 @@
 .fileUploaderBox button:hover {
     cursor: pointer;
 }
-
-.formatInfo {
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: #666;
-    cursor: help;
-    position: relative;
-}
-
-.formatsPopup {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    border: 1px solid #ccc;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    width: max-content;
-    max-width: 300px;
-    z-index: 1000;
-}
-
-.formatsPopup > div {
-    margin-bottom: 10px;
-}
-
-.formatsPopup > div:last-child {
-    margin-bottom: 0;
-}
