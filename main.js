@@ -25,7 +25,7 @@ app.disableHardwareAcceleration();
 
 // Define audio and image file extensions
 const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'aiff', 'wma', 'amr', 'opus', 'alac', 'pcm', 'mid', 'midi', 'aif', 'caf'];
-const imageExtensions = ['aiff', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heif', 'heic', 'ico', 'svg', 'raw', 'cr2', 'nef', 'orf', 'arw', 'raf', 'dng', 'pef', 'sr2'];
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heif', 'heic', 'ico', 'svg', 'raw', 'cr2', 'nef', 'orf', 'arw', 'raf', 'dng', 'pef', 'sr2'];
 
 const thumbnailCacheDir = path.join(os.tmpdir(), 'RenderTune-thumbnails');
 if (!fs.existsSync(thumbnailCacheDir)) {
@@ -212,28 +212,17 @@ function setupAutoUpdater() {
 
 // Function to sanitize FFmpeg command arguments
 function sanitizeFFmpegArgs(args) {
-  return args.map(arg => {
+  return args;
+  /*
+  const sanitizedArgs = args.map(arg => {
     if (typeof arg === 'string') {
       // Remove any potentially harmful characters
       return arg.replace(/[<>`"'&;]/g, '');
     }
     return arg;
   });
-}
-
-// Function to validate FFmpeg path
-function validateFFmpegPath(ffmpegPath) {
-  const validPathPattern = /^[a-zA-Z0-9_\-\/\\:.]+$/;
-  return validPathPattern.test(ffmpegPath);
-}
-
-// Function to perform security checks on FFmpeg command and path
-function performSecurityChecks(ffmpegPath, cmdArgs) {
-  if (!validateFFmpegPath(ffmpegPath)) {
-    throw new Error('Invalid FFmpeg path detected.');
-  }
-  const sanitizedArgs = sanitizeFFmpegArgs(cmdArgs);
   return sanitizedArgs;
+  */
 }
 
 // Function to check file path and get metadata
@@ -273,13 +262,13 @@ async function checkFilePath(filePath) {
 // IPC event to run an FFmpeg command
 ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
   try {
-    const ffmpegPath = getFfmpegPath();
-    const cmdArgsList = performSecurityChecks(ffmpegPath, ffmpegArgs.cmdArgs);
-    const duration = parseInt(ffmpegArgs.outputDuration, 10);
-    const renderId = ffmpegArgs.renderId;
+    var cmdArgsList = sanitizeFFmpegArgs(ffmpegArgs.cmdArgs);
+    var duration = parseInt(ffmpegArgs.outputDuration, 10);
+    var renderId = ffmpegArgs.renderId;
     console.log('Received FFmpeg command:', cmdArgsList);
     console.log('Duration:', duration);
 
+    const ffmpegPath = getFfmpegPath();
     console.log('Using FFmpeg path:', ffmpegPath);
 
     const process = execa(ffmpegPath, cmdArgsList);
@@ -627,13 +616,5 @@ ipcMain.on('open-url', async (event, url) => {
   } catch (error) {
     console.error('Error opening URL:', url, error);
   }
-});
-
-// Add this handler after other ipcMain handlers
-ipcMain.on('get-file-extensions', (event) => {
-  event.reply('file-extensions-response', {
-    audioExtensions,
-    imageExtensions
-  });
 });
 
