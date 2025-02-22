@@ -111,11 +111,13 @@ function Home() {
       <div className={styles.supportersSection}>
         <h2>Thank You to Our Supporters!</h2>
         <p className={styles.supportersNames}>{shuffledSupporters.join(', ')}</p>
+        {/* 
         <p className={styles.donationLinks}>
           <a href="#" data-tooltip="Open Ko-fi page" onClick={(event) => handleLinkClick('https://ko-fi.com/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Ko-fi</a> / 
           <a href="#" data-tooltip="Open Patreon page" onClick={(event) => handleLinkClick('https://www.patreon.com/c/martinradio', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">Patreon</a> / 
           <a href="#" data-tooltip="Open GitHub Sponsors page" onClick={(event) => handleLinkClick('https://github.com/sponsors/MartinBarker', event)} onMouseOver={createTooltip} target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
         </p>
+        */}
       </div>
       <div className={styles.feedbackSection}>
         <h2>Feedback</h2>
