@@ -563,7 +563,7 @@ function Project() {
     );
   }, (prevProps, nextProps) => prevProps.src === nextProps.src);
   
-  const SortableImage = ({ file, setImageFiles }) => {
+  const SortableImage = ({ file }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: file.id });
   
     const style = {
@@ -571,66 +571,9 @@ function Project() {
       transition,
     };
   
-    const handleStretchImageToFitChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, stretchImageToFit: e.target.checked }
-            : img
-        )
-      );
-    };
-  
-    const handlePaddingColorChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, paddingColor: e.target.value }
-            : img
-        )
-      );
-    };
-
-    const handleBlurBackgroundChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, useBlurBackground: e.target.checked }
-            : img
-        )
-      );
-    };
-  
     return (
       <div ref={setNodeRef} style={style} className={styles.imageItem} {...attributes} {...listeners}>
         <Thumbnail src={file.filepath} />
-        <div className={styles.expandedContent}>
-          <label>
-            <input
-              type="checkbox"
-              checked={file.stretchImageToFit || false}
-              onChange={handleStretchImageToFitChange}
-            />
-            Stretch Image to Fit
-          </label>
-          <label>
-            Padding Color:
-            <input
-              type="text"
-              value={file.paddingColor || "#FFFFFF"}
-              onChange={handlePaddingColorChange}
-              disabled={file.stretchImageToFit} // Disable when stretchImageToFit is checked
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={file.useBlurBackground || false}
-              onChange={handleBlurBackgroundChange}
-            />
-            Use Blur Background
-          </label>
-        </div>
       </div>
     );
   };
@@ -1026,12 +969,7 @@ function Project() {
 
       <div className={styles.renderOptionsSection}>
         <h2 className={styles.renderOptionsTitle}>Render Options</h2>
-        <button
-          className={styles.resetButton}
-          onClick={resetToDefault}
-        >
-          Reset to Default
-        </button>
+
         <div className={styles.renderOptionsGrid}>
 
           <div className={styles.renderOptionGroup}>
@@ -1185,7 +1123,7 @@ function Project() {
         </div>
 
 
-          {/* Image Timeline */}
+          {/* Image Timeline
           <div className={styles.renderOptionGroup}>
 
             <div id="imageTimelineBox">
@@ -1205,7 +1143,7 @@ function Project() {
               </DndContext>
             </div>
           </div>
-
+ */}
         <button
           className={styles.renderButton}
           onClick={handleRender}
