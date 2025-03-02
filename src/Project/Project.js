@@ -992,17 +992,14 @@ function Project() {
     <div className={styles.projectContainer}>
       <div className={styles.header}>
         <h1 className={styles.projectTitle}>New Project</h1>
-        <button className={styles.refreshButton} onClick={clearComponent}>
-          Clear
-        </button>
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
+        <button className={styles.clearButton} onClick={clearComponent}>
+          Clear Project
         </button>
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
 
-      <h2>Audio Files</h2>
+      <h2 className={styles.tableTitle}>Audio Files</h2>
       <Table
         data={audioFiles}
         rowSelection={audioRowSelection}
@@ -1014,7 +1011,7 @@ function Project() {
         setGlobalFilter={setGlobalFilter}
       />
 
-      <h2>Image Files</h2>
+      <h2 className={styles.tableTitle}>Image Files</h2>
       <Table
         data={imageFiles}
         rowSelection={imageRowSelection}

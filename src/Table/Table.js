@@ -726,58 +726,14 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
 
   return (
     <div>
-      <input
-        type="text"
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        placeholder="Search..."
-        className={styles.search}
-      />
-      <button onClick={clearTable} className={styles.clearButton}>
-        Clear Table
-      </button>
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext
-          items={data.map((row) => row.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <table className={styles.table}>
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id} className={styles.headerRow}>
-                  {headerGroup.headers.map((header) => (
-                    <th key={header.id} className={styles.headerCell}>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row, rowIndex) => (
-                <Row
-                  key={row.original.id}
-                  row={row}
-                  rowIndex={rowIndex}
-                  toggleRowSelected={toggleRowSelected}
-                  toggleRowExpanded={toggleRowExpanded}
-                  isExpanded={!!expandedRows[row.id]}
-                  removeRow={removeRow}
-                  isImageTable={isImageTable}
-                  isRenderTable={isRenderTable}
-                  setImageFiles={setImageFiles}
-                  setAudioFiles={setAudioFiles}
-                  ffmpegCommand={ffmpegCommand}
-                  setErrors={setErrors}
-                  errors={errors}
-                />
-              ))}
-            </tbody>
-          </table>
-        </SortableContext>
+      <div className={styles.tableControls}>
+        <input
+          type="text"
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Search..."
+          className={styles.search}
+        />
         <div className={styles.pagination}>
           <button
             onClick={() => table.previousPage()}
@@ -824,6 +780,52 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             <option value="all">All</option>
           </select>
         </div>
+        <button onClick={clearTable} className={`${styles.clearButton} ${styles.smallButton}`}>
+          Clear Table
+        </button>
+      </div>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={data.map((row) => row.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <table className={styles.table}>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className={styles.headerRow}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className={styles.headerCell}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row, rowIndex) => (
+                <Row
+                  key={row.original.id}
+                  row={row}
+                  rowIndex={rowIndex}
+                  toggleRowSelected={toggleRowSelected}
+                  toggleRowExpanded={toggleRowExpanded}
+                  isExpanded={!!expandedRows[row.id]}
+                  removeRow={removeRow}
+                  isImageTable={isImageTable}
+                  isRenderTable={isRenderTable}
+                  setImageFiles={setImageFiles}
+                  setAudioFiles={setAudioFiles}
+                  ffmpegCommand={ffmpegCommand}
+                  setErrors={setErrors}
+                  errors={errors}
+                />
+              ))}
+            </tbody>
+          </table>
+        </SortableContext>
       </DndContext>
       <div className={styles.footer}>
         <span>
