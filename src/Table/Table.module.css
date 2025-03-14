@@ -91,47 +91,52 @@
 
 .expandedContent {
   display: flex;
-  gap: 2rem;
-  padding: 15px 10px;
+  gap: 1rem;
+  padding: 10px;
   align-items: center;
   border-top: 1px solid #ddd;
   font-size: 14px;
   overflow-wrap: break-word;
-  /* Ensure long text wraps properly */
   word-break: break-word;
-  /* Ensure long text breaks properly */
   white-space: pre-wrap;
-  /* Preserve whitespace and wrap text */
-  max-height: 200px; /* Limit the height */
-  overflow-y: auto; /* Add vertical scroll if content exceeds max-height */
-  padding-top: 20px; /* Add padding to the top */
-  padding-bottom: 20px; /* Add padding to the bottom */
+  max-height: 200px;
+  overflow-y: auto;
+  justify-content: flex-start; /* Align items to the left */
 }
 
 .expandedContent pre {
   max-width: 100%;
-  overflow-x: auto; /* Add horizontal scroll if content exceeds width */
-  white-space: pre-wrap; /* Ensure text wraps onto the next line */
-  word-wrap: break-word; /* Break long words onto the next line */
-  overflow-wrap: break-word; /* Ensure text wraps onto the next line */
-  padding: 10px; /* Add padding inside the pre element */
+  overflow-x: auto;
+  /* Add horizontal scroll if content exceeds width */
+  white-space: pre-wrap;
+  /* Ensure text wraps onto the next line */
+  word-wrap: break-word;
+  /* Break long words onto the next line */
+  overflow-wrap: break-word;
+  /* Ensure text wraps onto the next line */
+  padding: 10px;
+  /* Add padding inside the pre element */
 }
 
 .expandedContent label {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Align items left to right */
   font-size: 14px;
   color: #333;
+  align-items: center;
+  margin: 0.5rem;
 }
 
 .expandedContent input {
-  padding: 8px 10px;
+  padding: 6px 8px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
-  width: 120px;
+  width: 100px;
   transition: border-color 0.2s ease;
+  text-align: center;
+  margin-left: 0.5rem; /* Add margin to separate from label */
 }
 
 .expandedContent input:focus {
@@ -140,7 +145,7 @@
 }
 
 .expandedContent button {
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: 14px;
   border: none;
   border-radius: 4px;
@@ -367,7 +372,8 @@
   padding: 20px;
   font-size: 20px;
   text-shadow: 0px 0px 4px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff;
-  background-color: none; /* Default to none */
+  background-color: none;
+  /* Default to none */
 }
 
 .tableControls {
@@ -385,7 +391,7 @@
 }
 
 .smallButton {
-  margin:5px;
+  margin: 5px;
 }
 
 .removeButton {

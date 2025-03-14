@@ -6,6 +6,7 @@
   "main": "main.js",
   "author": "martinbarker99@gmail.com",
   "homepage": "./",
+  "license": "MIT",
   "scripts": {
     "clean": "rimraf build-resources icon-build",
     "help": "node -e \"console.log(Object.keys(require('./package.json').scripts).sort().map(s => 'npm run ' + s).join('\\n'))\"",

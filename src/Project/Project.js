@@ -967,191 +967,175 @@ function Project() {
         setGlobalFilter={setGlobalFilter}
       />
 
-      <div className={styles.renderOptionsSection}>
-        <h2 className={styles.renderOptionsTitle}>Render Options</h2>
-
-        <div className={styles.renderOptionsGrid}>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
-              Output Folder
-            </label>
-            <div className={styles.editableDropdownFolder}>
-              <input
-                type="text"
-                id="outputFolder"
-                value={outputFolder}
-                onChange={handleOutputFolderChange}
-                placeholder="Choose output folder"
-                className={styles.renderOptionInput}
-              />
-              <button
-                onClick={handleChooseFolder}
-                className={styles.folderButton}
-                title="Choose Folder"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className={styles.folderIcon}
-                >
-                  <path d="M10 4H2v16h20V6H12l-2-2zM4 8h16v10H4V8z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="outputFilename" className={styles.renderOptionLabel}>
-              Output Filename
-            </label>
-            <div className={styles.editableDropdown}>
-              <input
-                type="text"
-                id="outputFilename"
-                value={outputFilename}
-                onChange={handleOutputFilenameChange}
-                placeholder="Enter filename (letters, numbers, spaces, - and _ only)"
-                className={styles.renderOptionInput}
-                maxLength={255}
-              />
-              <select
-                id="outputFilenameOptions"
-                value={outputFilename}
-                onChange={(e) => setOutputFilename(e.target.value)}
-                className={styles.renderOptionSelect}
-              >
-                {generateOutputFilenameOptions().map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="outputFormat" className={styles.renderOptionLabel}>
-              Output Format
-            </label>
-            <select
-              id="outputFormat"
-              value={outputFormat}
-              onChange={(e) => setOutputFormat(e.target.value)}
-              className={styles.renderOptionSelect}
-            >
-              <option value="mp4">MP4</option>
-              <option value="mkv">MKV</option>
-            </select>
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="resolution" className={styles.renderOptionLabel}>
-              Resolution
-            </label>
-            <div className={styles.resolutionBox}>
-              <select
-                id="imageSelection"
-                value={selectedImageIndex}
-                onChange={handleImageSelectionChange}
-                className={styles.renderOptionSelect}
-              >
-                {imageFiles.map((image, index) => (
-                  <option key={index} value={index}>
-                    {image.filename}
-                  </option>
-                ))}
-              </select>
-              <select
-                id="resolutionSelection"
-                value={selectedResolution}
-                onChange={handleResolutionChange}
-                className={styles.renderOptionSelect}
-              >
-                {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
-                  <option key={index} value={resolution}>
-                    {resolution}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="videoWidth" className={styles.renderOptionLabel}>
-              Width (px)
-            </label>
-            <input
-              type="text"
-              id="videoWidth"
-              value={videoWidth}
-              onChange={handleVideoWidthChange}
-              className={styles.renderOptionInput}
-              placeholder="Enter width (1-7680)"
-              maxLength={4}
-            />
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label htmlFor="videoHeight" className={styles.renderOptionLabel}>
-              Height (px)
-            </label>
-            <input
-              type="text"
-              id="videoHeight"
-              value={videoHeight}
-              onChange={handleVideoHeightChange}
-              className={styles.renderOptionInput}
-              placeholder="Enter height (1-4320)"
-              maxLength={4}
-            />
-          </div>
-
-          <div className={styles.renderOptionGroup}>
-            <label className={styles.renderOptionCheckboxLabel}>
-              <input
-                type="checkbox"
-                id="alwaysUniqueFilenames"
-                checked={alwaysUniqueFilenames}
-                onChange={(e) => setAlwaysUniqueFilenames(e.target.checked)}
-                className={styles.renderOptionCheckbox}
-              />
-              Always Unique Filenames
-            </label>
-          </div>
-        </div>
-
-
-          {/* Image Timeline
-          <div className={styles.renderOptionGroup}>
-
-            <div id="imageTimelineBox">
-              <h3 className={styles.blackText}>Image Timeline</h3>
-              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
-                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
-                  <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.length === 0 ? (
-                      <p>No images selected</p>
-                    ) : (
-                      selectedImages.map((file) => (
-                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-          </div>
- */}
+<div className={styles.renderOptionsSection}>
+  <h2 className={styles.renderOptionsTitle}>Render Options</h2>
+  <div className={styles.renderOptionsGrid}>
+    {/* Output Folder */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
+        Output Folder
+      </label>
+      <div className={styles.editableDropdownFolder}>
+        <input
+          type="text"
+          id="outputFolder"
+          value={outputFolder}
+          onChange={handleOutputFolderChange}
+          placeholder="Choose output folder"
+          className={styles.renderOptionInput}
+        />
         <button
-          className={styles.renderButton}
-          onClick={handleRender}
-          disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
+          onClick={handleChooseFolder}
+          className={styles.folderButton}
+          title="Choose Folder"
         >
-          Render
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className={styles.folderIcon}
+          >
+            <path d="M10 4H2v16h20V6H12l-2-2zM4 8h16v10H4V8z" />
+          </svg>
         </button>
       </div>
+    </div>
+
+    {/* Output Filename */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="outputFilename" className={styles.renderOptionLabel}>
+        Output Filename
+      </label>
+      <div className={styles.editableDropdown}>
+        <input
+          type="text"
+          id="outputFilename"
+          value={outputFilename}
+          onChange={handleOutputFilenameChange}
+          placeholder="Enter filename (letters, numbers, spaces, - and _ only)"
+          className={styles.renderOptionInput}
+          maxLength={255}
+        />
+        <select
+          id="outputFilenameOptions"
+          value={outputFilename}
+          onChange={(e) => setOutputFilename(e.target.value)}
+          className={styles.renderOptionSelect}
+        >
+          {generateOutputFilenameOptions().map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    {/* Output Format */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="outputFormat" className={styles.renderOptionLabel}>
+        Output Format
+      </label>
+      <select
+        id="outputFormat"
+        value={outputFormat}
+        onChange={(e) => setOutputFormat(e.target.value)}
+        className={styles.renderOptionSelect}
+      >
+        <option value="mp4">MP4</option>
+        <option value="mkv">MKV</option>
+      </select>
+    </div>
+
+    {/* Resolution */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="resolution" className={styles.renderOptionLabel}>
+        Resolution
+      </label>
+      <div className={styles.resolutionBox}>
+        <select
+          id="imageSelection"
+          value={selectedImageIndex}
+          onChange={handleImageSelectionChange}
+          className={styles.renderOptionSelect}
+        >
+          {imageFiles.map((image, index) => (
+            <option key={index} value={index}>
+              {image.filename}
+            </option>
+          ))}
+        </select>
+        <select
+          id="resolutionSelection"
+          value={selectedResolution}
+          onChange={handleResolutionChange}
+          className={styles.renderOptionSelect}
+        >
+          {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
+            <option key={index} value={resolution}>
+              {resolution}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    {/* Video Width */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="videoWidth" className={styles.renderOptionLabel}>
+        Width (px)
+      </label>
+      <input
+        type="text"
+        id="videoWidth"
+        value={videoWidth}
+        onChange={handleVideoWidthChange}
+        className={styles.renderOptionInput}
+        placeholder="Enter width (1-7680)"
+        maxLength={4}
+      />
+    </div>
+
+    {/* Video Height */}
+    <div className={styles.renderOptionGroup}>
+      <label htmlFor="videoHeight" className={styles.renderOptionLabel}>
+        Height (px)
+      </label>
+      <input
+        type="text"
+        id="videoHeight"
+        value={videoHeight}
+        onChange={handleVideoHeightChange}
+        className={styles.renderOptionInput}
+        placeholder="Enter height (1-4320)"
+        maxLength={4}
+      />
+    </div>
+
+    {/* Always Unique Filenames */}
+    <div className={styles.renderOptionGroup}>
+      <label className={styles.renderOptionCheckboxLabel}>
+        <input
+          type="checkbox"
+          id="alwaysUniqueFilenames"
+          checked={alwaysUniqueFilenames}
+          onChange={(e) => setAlwaysUniqueFilenames(e.target.checked)}
+          className={styles.renderOptionCheckbox}
+        />
+        Always Unique Filenames
+      </label>
+    </div>
+  </div>
+
+  {/* Render Button */}
+  <button
+    className={styles.renderButton}
+    onClick={handleRender}
+    disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
+  >
+    Render
+  </button>
+</div>
 
       {ffmpegError && (
         <div className={styles.errorContainer}>
