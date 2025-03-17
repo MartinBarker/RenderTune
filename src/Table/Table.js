@@ -467,7 +467,7 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
+function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter, title }) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -727,62 +727,65 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   return (
     <div>
       <div className={styles.tableControls}>
-        <input
-          type="text"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Search..."
-          className={styles.search}
-        />
-        <div className={styles.pagination}>
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </button>
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </button>
-          <span>
-            | Go to page: 
-            <input
-              type="number"
-              min="1"
-              max={table.getPageCount()}
-              defaultValue={table.getState().pagination.pageIndex + 1}
+        <h2 className={styles.tableTitle}>{title}</h2>
+        <div className={styles.controlsWrapper}>
+          <input
+            type="text"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="Search..."
+            className={styles.search}
+          />
+          <div className={styles.pagination}>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </button>
+            <span>
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </span>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </button>
+            <span>
+              | Go to page: 
+              <input
+                type="number"
+                min="1"
+                max={table.getPageCount()}
+                defaultValue={table.getState().pagination.pageIndex + 1}
+                onChange={(e) => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                  table.setPageIndex(page);
+                }}
+                className={styles.pageInput}
+              />
+            </span>
+            <select
+              value={table.getState().pagination.pageSize}
               onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
+                const value = e.target.value;
+                table.setPageSize(value === 'all' ? data.length : Number(value));
               }}
-              className={styles.pageInput}
-            />
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              const value = e.target.value;
-              table.setPageSize(value === 'all' ? data.length : Number(value));
-            }}
-          >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-            <option value="all">All</option>
-          </select>
+            >
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  Show {pageSize}
+                </option>
+              ))}
+              <option value="all">All</option>
+            </select>
+          </div>
+          <button onClick={clearTable} className={`${styles.clearButton} ${styles.smallButton}`}>
+            Clear Table
+          </button>
         </div>
-        <button onClick={clearTable} className={`${styles.clearButton} ${styles.smallButton}`}>
-          Clear Table
-        </button>
       </div>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext

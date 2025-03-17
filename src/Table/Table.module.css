@@ -390,6 +390,19 @@
   margin-left: auto;
 }
 
+.tableTitle {
+  flex: 1;
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+.controlsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .smallButton {
   margin: 5px;
 }

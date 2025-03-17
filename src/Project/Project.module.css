@@ -46,7 +46,9 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end; /* Align items to the right */
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .projectTitle {
@@ -92,7 +94,7 @@
 .renderOptionsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.25rem;
+  gap: 1.25rem;
   width: 100%;
   align-items: start; /* Ensure all items align at the top */
 }
@@ -103,6 +105,13 @@
   gap: 0.25rem;
   min-width: 0; /* Prevents flex items from overflowing */
   width: 100%;
+  align-items: flex-start; /* Align items to the left */
+}
+
+.widthInput,
+.heightInput {
+   /* Set max-width for width and height input boxes */
+   /* Ensure full width within the group */
 }
 
 /* Make inputs more responsive */
@@ -124,6 +133,7 @@
   cursor: default;
   width: 100%;
   box-sizing: border-box;
+  min-width: 100px; /* Set minimum width to 100px */
 }
 
 .folderButton {
@@ -159,6 +169,7 @@
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  margin-top: 0; /* Ensure no extra margin */
 }
 
 .renderOptionInput:focus {
@@ -182,6 +193,7 @@
   box-sizing: border-box;
   margin-top: 0.5rem; /* Add margin to separate from input */
   transition: border-color 0.2s;
+  margin-top: 0; /* Ensure no extra margin */
 }
 
 .renderOptionSelect:focus {
@@ -348,12 +360,12 @@
 
 .rendersSection {
   margin: 2rem 0;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0; /* Remove padding */
+  background: none; /* Remove background */
+  border-radius: 0; /* Remove border radius */
+  box-shadow: none; /* Remove box shadow */
   text-align: left; /* Align text to the left */
-  padding-top: 0.5rem; /* Decrease padding above text */
+  padding-top: 0; /* Remove padding above text */
 }
 
 .renderItem {
@@ -584,6 +596,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 0; /* Ensure no extra margin */
 }
 
 .editableDropdownFolder input:focus {
@@ -688,7 +701,8 @@
 }
 
 .clearButton {
-  padding: 8px 12px;
+  margin: 10px;
+  padding: 10px;
   font-size: 14px;
   color: #fff;
   background-color: #dc3545;
@@ -738,4 +752,11 @@
     width: 100%;
     padding: 1rem;
   }
+}
+
+.fileUploaderWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }

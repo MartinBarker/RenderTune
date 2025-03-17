@@ -933,17 +933,15 @@ function Project() {
 
   return (
     <div className={styles.projectContainer}>
-      <div className={styles.header}>
-        <h1 className={styles.projectTitle}>New Project</h1>
+      <div className={styles.fileUploaderWrapper}>
+        <FileUploader onFilesMetadata={handleFilesMetadata} className={styles.fileUploader} />
         <button className={styles.clearButton} onClick={clearComponent}>
           Clear Project
         </button>
       </div>
 
-      <FileUploader onFilesMetadata={handleFilesMetadata} />
-
-      <h2 className={styles.tableTitle}>Audio Files</h2>
       <Table
+        title="Audio Files"
         data={audioFiles}
         rowSelection={audioRowSelection}
         setRowSelection={setAudioRowSelection}
@@ -954,8 +952,8 @@ function Project() {
         setGlobalFilter={setGlobalFilter}
       />
 
-      <h2 className={styles.tableTitle}>Image Files</h2>
       <Table
+        title="Image Files"
         data={imageFiles}
         rowSelection={imageRowSelection}
         setRowSelection={setImageRowSelection}
@@ -1090,7 +1088,7 @@ function Project() {
         id="videoWidth"
         value={videoWidth}
         onChange={handleVideoWidthChange}
-        className={styles.renderOptionInput}
+        className={`${styles.renderOptionInput} ${styles.widthInput}`}
         placeholder="Enter width (1-7680)"
         maxLength={4}
       />
@@ -1106,7 +1104,7 @@ function Project() {
         id="videoHeight"
         value={videoHeight}
         onChange={handleVideoHeightChange}
-        className={styles.renderOptionInput}
+        className={`${styles.renderOptionInput} ${styles.heightInput}`}
         placeholder="Enter height (1-4320)"
         maxLength={4}
       />
@@ -1133,7 +1131,9 @@ function Project() {
     onClick={handleRender}
     disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
   >
-    Render
+    {audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0
+      ? "Render (please select at least one audio file and one image file)"
+      : "Render"}
   </button>
 </div>
 
@@ -1150,45 +1150,26 @@ function Project() {
         </div>
       )}
 
-      <div className={styles.rendersSection}>
-        <h2>Renders List</h2>
-        <Table
-          data={renders.map(render => {
-            const parts = render.outputFilename.split(pathSeparator);
-            const filename = parts[parts.length - 1];
-            return {
-              progress: render.progress,
-              id: render.id,
-              outputFilename: filename, // Display only the filename with extension
-              ffmpegCommand: render.ffmpegCommand
-            };
-          })}
-          columns={renderColumns}
-          rowSelection={{}} // No row selection needed for this table
-          setRowSelection={() => {}} // Dummy function
-          setData={setRenders} // This table modifies renders
-          isRenderTable={true}
-          ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
-          removeRender={removeRender}
-        />
-        {/*
-        {renders.map(render => (
-          <div key={render.id} className={styles.renderItem}>
-            <div>Render ID: {render.id}</div>
-            <div>PID: {render.pid}</div>
-            <div>Progress: {render.progress}%</div>
-            <div>
-              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
-              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
-              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
-              <button onClick={() => handleAction('start', render.id)}>Start</button>
-              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
-              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-        */}
-      </div>
+      <Table
+        title="Renders"
+        data={renders.map(render => {
+          const parts = render.outputFilename.split(pathSeparator);
+          const filename = parts[parts.length - 1];
+          return {
+            progress: render.progress,
+            id: render.id,
+            outputFilename: filename, // Display only the filename with extension
+            ffmpegCommand: render.ffmpegCommand
+          };
+        })}
+        columns={renderColumns}
+        rowSelection={{}} // No row selection needed for this table
+        setRowSelection={() => {}} // Dummy function
+        setData={setRenders} // This table modifies renders
+        isRenderTable={true}
+        ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
+        removeRender={removeRender}
+      />
     </div>
   );
 }
