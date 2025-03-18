@@ -197,8 +197,8 @@ function Project() {
   const [outputFilename, setOutputFilename] = useState(() => {
     const initialFilename = localStorage.getItem('outputFilename');
     if (initialFilename) return initialFilename;
-    const initialImageFile = JSON.parse(localStorage.getItem('imageFiles') || '[]')[0];
-    return initialImageFile ? initialImageFile.filename.split('.').slice(0, -1).join('.') : 'output-video';
+    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+    return uniqueFolderNames.length > 0 ? uniqueFolderNames[0] : 'output-video'; // Default to first folder name
   });
   const [outputFormat, setOutputFormat] = useState(localStorage.getItem('outputFormat') || 'mp4');
   const [backgroundColor, setBackgroundColor] = useState(localStorage.getItem('backgroundColor') || '#000000');
@@ -286,34 +286,12 @@ function Project() {
   ]);
 
   useEffect(() => {
-    localStorage.setItem('outputFolder', outputFolder);
-    localStorage.setItem('outputFilename', outputFilename);
-    localStorage.setItem('outputFormat', outputFormat);
-    localStorage.setItem('videoWidth', videoWidth);
-    localStorage.setItem('videoHeight', videoHeight);
-    localStorage.setItem('backgroundColor', backgroundColor);
-    localStorage.setItem('usePadding', usePadding);
-    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
-    localStorage.setItem('paddingColor', paddingColor);
-    localStorage.setItem('stretchImageToFit', stretchImageToFit);
-    localStorage.setItem('useBlurBackground', useBlurBackground);
-  }, [
-    outputFolder,
-    outputFilename,
-    outputFormat,
-    videoWidth,
-    videoHeight,
-    backgroundColor,
-    usePadding,
-    alwaysUniqueFilenames,
-    paddingColor,
-    stretchImageToFit,
-    useBlurBackground
-  ]);
-
-  useEffect(() => {
     if (filesMetadata.length > 0) {
       handleFilesMetadata(filesMetadata); // Call handleFilesMetadata if filesMetadata is passed
+      const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+      if (uniqueFolderNames.length > 0) {
+        setOutputFilename(uniqueFolderNames[0]); // Set default to first folder name
+      }
     }
   }, [filesMetadata]);
 
@@ -328,16 +306,21 @@ function Project() {
     for (const image of images) {
       const [width, height] = image.dimensions.split('x').map(Number);
       const resolutions = [
-        ...[640, 1280].map(targetWidth => {
+        ...[320, 480, 640, 1280].map(targetWidth => { // Added 320 and 480
           const [resWidth, resHeight] = calculateResolution(width, height, targetWidth);
           return `${resWidth}x${resHeight}`;
         }),
         `${width}x${height}`,
-        ...[1920, 2560].map(targetWidth => {
+        ...[1920, 2560, 3840, 7680].map(targetWidth => { // Added 3840 and 7680
           const [resWidth, resHeight] = calculateResolution(width, height, targetWidth);
           return `${resWidth}x${resHeight}`;
         })
       ];
+      resolutions.sort((a, b) => {
+        const [aWidth, aHeight] = a.split('x').map(Number);
+        const [bWidth, bHeight] = b.split('x').map(Number);
+        return aWidth - bWidth || aHeight - bHeight;
+      });
       options.push(resolutions);
     }
     return options;
@@ -820,6 +803,12 @@ function Project() {
         });
       }
     });
+
+    // Set default output filename to the first unique folder name after files are processed
+    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+    if (uniqueFolderNames.length > 0) {
+      setOutputFilename(uniqueFolderNames[0]);
+    }
   };
 
   const updateAudioFiles = (newFile) => {

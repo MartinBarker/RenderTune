@@ -395,6 +395,24 @@
   text-align: left;
   margin: 0;
   padding: 0;
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Hide overflow text */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  max-width: 100%; /* Ensure it doesn't exceed the container width */
+  font-size: 1.5rem; /* Initial font size */
+  transition: font-size 0.2s ease; /* Smooth transition for font size */
+}
+
+@media (max-width: 768px) {
+  .tableTitle {
+    font-size: 1rem; /* Reduce font size for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .tableTitle {
+    font-size: 0.75rem; /* Further reduce font size for very small screens */
+  }
 }
 
 .controlsWrapper {
