@@ -277,30 +277,45 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
     const rl = readline.createInterface({ input: process.stderr });
 
     let progress = 0;
-    let errorBuffer = []; // Store all stderr lines
+    let errorBuffer = [];
+    let isCompleted = false;
 
     rl.on('line', (line) => {
       if (!app.isPackaged) {
-        console.log('~~~~~~~ FFmpeg output:\n', line, '\n~~~~~~~\n');
+        console.log(line);
       }
 
-      // Store full FFmpeg stderr logs
       errorBuffer.push(line);
       if (errorBuffer.length > 100) {
-        errorBuffer.shift(); // Keep the last 100 lines to avoid memory overflow
+        errorBuffer.shift();
+      }
+
+      // Check for completion indicators in FFmpeg output
+      if (line.includes('video:') && line.includes('audio:') && line.includes('subtitle:') && line.includes('global headers:')) {
+        isCompleted = true;
+        event.reply('ffmpeg-progress', {
+          renderId: renderId,
+          pid: process.pid,
+          progress: 100
+        });
+        return;
       }
 
       // Extract progress updates
       let match = line.match(/time=([\d:.]+)/);
-      if (match) {
+      if (match && !isCompleted) {
         const elapsed = match[1].split(':').reduce((acc, time) => (60 * acc) + +time, 0);
         progress = duration ? Math.min((elapsed / duration) * 100, 100) : 0;
         progress = Math.round(progress);
-        event.reply('ffmpeg-progress', {
-          renderId: renderId,
-          pid: process.pid,
-          progress
-        });
+        try {
+          event.reply('ffmpeg-progress', {
+            renderId: renderId,
+            pid: process.pid,
+            progress
+          });
+        } catch (err) {
+          console.error('Error sending progress update:', err);
+        }
       }
     });
 
@@ -310,18 +325,24 @@ ipcMain.on('run-ffmpeg-command', async (event, ffmpegArgs) => {
         console.log(`FFmpeg process with ID: ${renderId} was stopped by user`);
         event.reply('ffmpeg-stop-response', { renderId, status: 'Stopped' });
       } else if (code === 0) {
-        ffmpegProcesses.delete(renderId); // Remove the process when done
-        event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
+        ffmpegProcesses.delete(renderId);
+        try {
+          event.reply('ffmpeg-progress', {
+            renderId: renderId,
+            pid: process.pid,
+            progress: 100
+          });
+          event.reply('ffmpeg-output', { stdout: process.stdout, progress: 100 });
+        } catch (err) {
+          console.error('Error sending completion status:', err);
+        }
       } else {
         console.log(`!! ffmpeg unexpected exit, signal = ${signal} `);
-
-        // Extract key FFmpeg error details
         const relevantError = extractRelevantError(errorBuffer);
-
         event.reply('ffmpeg-error', {
           message: `FFmpeg exited with code ${code}`,
           lastOutput: relevantError,
-          fullErrorLog: errorBuffer.join('\n') // Send full stderr log for debugging
+          fullErrorLog: errorBuffer.join('\n')
         });
       }
     });
