@@ -1,11 +1,12 @@
 {
   "name": "RenderTune",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Combine audio and image files to create video files",
   "type": "module",
   "main": "main.js",
   "author": "martinbarker99@gmail.com",
   "homepage": "./",
+  "license": "MIT",
   "scripts": {
     "clean": "rimraf build-resources icon-build",
     "help": "node -e \"console.log(Object.keys(require('./package.json').scripts).sort().map(s => 'npm run ' + s).join('\\n'))\"",
