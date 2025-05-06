@@ -21,6 +21,17 @@ function formatDuration(duration) {
   }
 }
 
+function getUniqueFolderNames(files, pathSeparator) {
+  const folderNames = new Set();
+  files.forEach(file => {
+    const parts = file.filepath.split(pathSeparator);
+    if (parts.length > 1) {
+      folderNames.add(parts[parts.length - 2]);
+    }
+  });
+  return Array.from(folderNames);
+}
+
 function Project() {
   const location = useLocation(); // Use useLocation to access state
   const filesMetadata = location.state?.filesMetadata || []; // Get filesMetadata from state
@@ -38,6 +49,8 @@ function Project() {
   const [useBlurBackground, setUseBlurBackground] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
   const [showFullErrorLog, setShowFullErrorLog] = useState(false);
+  const [sortedAudioOrder, setSortedAudioOrder] = useState([]);
+  const [sortedImageOrder, setSortedImageOrder] = useState([]);
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -143,7 +156,7 @@ function Project() {
     }
   };
 
-  const [pathSeparator, setPathSeparator] = useState(localStorage.getItem('pathSeparator') || '');
+  const [pathSeparator, setPathSeparator] = useState(localStorage.getItem('pathSeparator') || '/');
 
   useEffect(() => {
     const fetchPathSeparator = () => {
@@ -197,7 +210,7 @@ function Project() {
   const [outputFilename, setOutputFilename] = useState(() => {
     const initialFilename = localStorage.getItem('outputFilename');
     if (initialFilename) return initialFilename;
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles], pathSeparator);
     return uniqueFolderNames.length > 0 ? uniqueFolderNames[0] : 'output-video'; // Default to first folder name
   });
   const [outputFormat, setOutputFormat] = useState(localStorage.getItem('outputFormat') || 'mp4');
@@ -288,7 +301,7 @@ function Project() {
   useEffect(() => {
     if (filesMetadata.length > 0) {
       handleFilesMetadata(filesMetadata); // Call handleFilesMetadata if filesMetadata is passed
-      const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+      const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles], pathSeparator);
       if (uniqueFolderNames.length > 0) {
         setOutputFilename(uniqueFolderNames[0]); // Set default to first folder name
       }
@@ -460,20 +473,9 @@ function Project() {
     );
   };
 
-  const getUniqueFolderNames = (files) => {
-    const folderNames = new Set();
-    files.forEach(file => {
-      const parts = file.filepath.split(pathSeparator);
-      if (parts.length > 1) {
-        folderNames.add(parts[parts.length - 2]);
-      }
-    });
-    return Array.from(folderNames);
-  };
-
   const generateOutputFilenameOptions = () => {
     const options = [];
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles], pathSeparator);
     uniqueFolderNames.forEach(folderName => {
       options.push(folderName);
     });
@@ -620,8 +622,8 @@ function Project() {
 
   const handleRender = () => {
     const renderId = generateUniqueId();
-    const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
-    const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
+    const selectedAudio = sortedAudioOrder.filter((file) => audioRowSelection[file.id]);
+    const selectedImages = sortedImageOrder.filter((file) => imageRowSelection[file.id]);
   
     if (selectedAudio.length === 0 || selectedImages.length === 0) {
       alert('Please select at least one audio and one image file.');
@@ -805,7 +807,7 @@ function Project() {
     });
 
     // Set default output filename to the first unique folder name after files are processed
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles], pathSeparator);
     if (uniqueFolderNames.length > 0) {
       setOutputFilename(uniqueFolderNames[0]);
     }
@@ -936,9 +938,9 @@ function Project() {
         setRowSelection={setAudioRowSelection}
         setData={setAudioFiles}
         columns={audioColumns}
-        setAudioFiles={setAudioFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSortedRows={setSortedAudioOrder}
       />
 
       <Table
@@ -949,9 +951,9 @@ function Project() {
         setData={setImageFiles}
         columns={imageColumns}
         isImageTable={true}
-        setImageFiles={setImageFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSortedRows={setSortedImageOrder}
       />
 
 <div className={styles.renderOptionsSection}>

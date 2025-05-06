@@ -85,8 +85,8 @@ function Row({
   setErrors,
   errors
 }) {
-  const { setNodeRef, transform, transition } = useSortable({
-    id: row.original.id,
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: row.id,
   });
 
   const style = {
@@ -288,186 +288,92 @@ function Row({
   };
 
   return (
-    <>
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className={styles.row}
-        onClick={() => toggleRowSelected(row.id)}
-      >
-        {row.getVisibleCells().map((cell) => {
-          const columnHeader = cell.column.columnDef.header;
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={styles.row}
+      {...attributes}
+      {...listeners}
+      onClick={() => toggleRowSelected(row.id)}
+    >
+      {row.getVisibleCells().map((cell) => {
+        const columnHeader = cell.column.columnDef.header;
 
-          return (
-            <td
-              key={`${cell.id}_${columnHeader}`}
-              className={styles.cell}
-              data-tooltip={cell.getValue()}
-            >
-              {/* Render Drag handle */}
-              {columnHeader === "Drag" && (
-                <DragHandle row={row} rowIndex={rowIndex} />
-              )}
+        return (
+          <td
+            key={`${cell.id}_${columnHeader}`}
+            className={styles.cell}
+            data-tooltip={cell.getValue()}
+          >
+            {/* Render Drag handle */}
+            {columnHeader === "Drag" && (
+              <DragHandle row={row} rowIndex={rowIndex} />
+            )}
 
-              {/* Render Expand Icon */}
-              {columnHeader === "Expand" && (
-                <span
-                  className={`${styles.expandIcon} ${
-                    isExpanded ? styles.expanded : ""
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleRowExpanded(row.id);
-                  }}
-                  title="Expand/Collapse Row"
-                >
-                  {isExpanded ? "▽" : "▷"}
-                </span>
-              )}
+            {/* Render Expand Icon */}
+            {columnHeader === "Expand" && (
+              <span
+                className={`${styles.expandIcon} ${
+                  isExpanded ? styles.expanded : ""
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleRowExpanded(row.id);
+                }}
+                title="Expand/Collapse Row"
+              >
+                {isExpanded ? "▽" : "▷"}
+              </span>
+            )}
 
-              {/* Render Remove Button */}
-              {columnHeader === "Remove" && (
-                <button
-                  className={styles.removeButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeRow(row.id);
-                  }}
-                  title="Remove this file"
-                >
-                  ❌
-                </button>
-              )}
+            {/* Render Remove Button */}
+            {columnHeader === "Remove" && (
+              <button
+                className={styles.removeButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeRow(row.id);
+                }}
+                title="Remove this file"
+              >
+                ❌
+              </button>
+            )}
 
-              {/* Render other cells */}
-              {columnHeader !== "Expand" &&
-                columnHeader !== "Drag" &&
-                columnHeader !== "Remove" &&
-                columnHeader !== "Duration" &&
-                flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {/* Render other cells */}
+            {columnHeader !== "Expand" &&
+              columnHeader !== "Drag" &&
+              columnHeader !== "Remove" &&
+              columnHeader !== "Duration" &&
+              flexRender(cell.column.columnDef.cell, cell.getContext())}
 
-              {/* Render Duration cell */}
-              {columnHeader === "Duration" && (
-                <span>{formatDuration(cell.getValue())}</span>
-              )}
-            </td>
-          );
-        })}
-      </tr>
-      {isExpanded && !isImageTable && !isRenderTable && (
-        <tr className={styles.expandedRow}>
-          <td colSpan={row.getVisibleCells().length}>
-            <div className={styles.expandedContent}>
-              <label>
-                Start Time:
-                <input
-                  type="text"
-                  placeholder={isOverAnHour ? "00:00:00" : "00:00"}
-                  value={row.original.startTime || ''}
-                  onChange={(e) => handleTimeInputChange(e, 'startTime', row.original.id, isOverAnHour)}
-                />
-              </label>
-              <label>
-                Length:
-                <input
-                  type="text"
-                  placeholder={isOverAnHour ? "00:00:00" : "00:00"}
-                  value={row.original.length || ''}
-                  onChange={(e) => {
-                    const newLength = formatTimeInput(e.target.value, isOverAnHour);
-                    const newEndTime = calculateEndTime(isOverAnHour ? '00:00:00' : '00:00', newLength, isOverAnHour);
-                    setAudioFiles((prev) =>
-                      prev.map((audio) =>
-                        audio.id === row.original.id
-                          ? { ...audio, length: newLength, endTime: newEndTime, startTime: isOverAnHour ? '00:00:00' : '00:00' }
-                          : audio
-                      )
-                    );
-                  }}
-                />
-              </label>
-              <label>
-                End Time:
-                <input
-                  type="text"
-                  placeholder={isOverAnHour ? "00:00:00" : "00:00"}
-                  value={row.original.endTime || ''}
-                  onChange={(e) => handleTimeInputChange(e, 'endTime', row.original.id, isOverAnHour)}
-                />
-              </label>
-            </div>
+            {/* Render Duration cell */}
+            {columnHeader === "Duration" && (
+              <span>{formatDuration(cell.getValue())}</span>
+            )}
           </td>
-        </tr>
-      )}
-      {isExpanded && isImageTable && (
-        <tr className={styles.expandedRow}>
-          <td colSpan={row.getVisibleCells().length}>
-            <div className={styles.expandedContent}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={row.original.stretchImageToFit || false}
-                  onChange={handleStretchImageToFitChange}
-                />
-                Stretch Image to Fit
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={row.original.paddingColor !== null}
-                  onChange={handlePaddingColorCheckboxChange}
-                />
-                Padding Color:
-                <input
-                  id='paddingColorInput'
-                  type="text"
-                  value={row.original.paddingColor || "none"}
-                  onChange={handlePaddingColorChange}
-                  className={styles.paddingColorInput}
-                  style={{
-                    backgroundColor: row.original.paddingColor === "none" ? "#FFFFFF" : row.original.paddingColor
-                  }}
-                />
-                {errors[row.original.id] && (
-                  <span className={styles.errorText}>{errors[row.original.id]}</span>
-                )}
-              </label>
-              <div>
-                {Object.values(colorPalette).map((color, index) => (
-                  <div
-                    key={index}
-                    className={`${styles.colorBox} ${selectedColor === color.hex ? styles.selectedColorBox : ''}`}
-                    style={{ background: /^#([0-9A-Fa-f]{3}){1,2}$/.test(color.hex) ? color.hex : "#FFFFFF" }}
-                    onClick={() => handleColorBoxClick(color.hex)}
-                  />
-                ))}
-              </div>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={row.original.useBlurBackground || false}
-                  onChange={handleBlurBackgroundChange}
-                />
-                Use Blur Background Image
-              </label>
-            </div>
-          </td>
-        </tr>
-      )}
-      {isExpanded && isRenderTable && (
-        <tr className={styles.expandedRow}>
-          <td colSpan={row.getVisibleCells().length}>
-            <div className={styles.expandedContent}>
-              <pre>{ffmpegCommand}</pre>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
+        );
+      })}
+    </tr>
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter, title }) {
+function Table({
+  data,
+  setData,
+  columns,
+  rowSelection,
+  setRowSelection,
+  isImageTable = false,
+  isRenderTable = false,
+  setImageFiles = () => {},
+  setAudioFiles = () => {},
+  ffmpegCommand,
+  removeRender,
+  globalFilter,
+  setGlobalFilter,
+  title
+}) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -680,6 +586,14 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     },
   });
 
+  // Log row order any time selection changes
+  React.useEffect(() => {
+    const order = table.getRowModel().rows.map((r) =>
+      r.original.filename ?? r.original.outputFilename ?? r.original.id
+    );
+    console.log(`${title} table order after selection change:`, order);
+  }, [rowSelection, table.getRowModel().rows, title]);
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
@@ -690,7 +604,11 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       if (oldIndex !== -1 && newIndex !== -1) {
         const newData = arrayMove([...data], oldIndex, newIndex);
         setData(newData);
-        localStorage.setItem("audioFiles", JSON.stringify(newData));
+        if (isImageTable) {
+          setImageFiles(newData);
+        } else if (!isRenderTable) {
+          setAudioFiles(newData);
+        }
       }
     }
   };
@@ -810,7 +728,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             <tbody>
               {table.getRowModel().rows.map((row, rowIndex) => (
                 <Row
-                  key={row.original.id}
+                  key={row.id}
                   row={row}
                   rowIndex={rowIndex}
                   toggleRowSelected={toggleRowSelected}
@@ -835,7 +753,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           {Object.keys(rowSelection).length} of {data.length} rows selected
         </span>
       </div>
-      {/*
+      {/* 
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
           <span>Total selected duration: {totalSelectedDuration}</span>
