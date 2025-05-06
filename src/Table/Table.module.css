@@ -34,6 +34,14 @@
   background-color: #e8f4ff;
 }
 
+.row.selected {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.row.selected:hover {
+  background-color: rgba(0, 123, 255, 0.2);
+}
+
 .cell {
   padding: 10px 8px;
   text-align: left;
@@ -436,6 +444,10 @@
 
 .removeButton:hover {
   color: #c82333;
+}
+
+.checkbox {
+  cursor: pointer;
 }
 
 
