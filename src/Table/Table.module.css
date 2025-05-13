@@ -375,13 +375,28 @@
 
 .paddingColorInput {
   color: #000;
-  border: 1px solid #d66;
-  width: 200px;
-  padding: 20px;
-  font-size: 20px;
-  text-shadow: 0px 0px 4px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff;
-  background-color: none;
-  /* Default to none */
+  border: 1px solid #ccc;
+  width: 100px; 
+  padding: 5px 8px;
+  font-size: 14px;
+  text-shadow: none;
+  background-color: transparent;
+  border-radius: 4px;
+  outline: none;
+  z-index: 10; /* Ensure it's above other elements */
+  position: relative; /* For z-index to work */
+}
+
+.paddingColorInput:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  background-color: white; /* Make sure background is clean when focused */
+  color: black; /* Ensure text is visible */
+}
+
+.paddingColorInput:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .tableControls {
