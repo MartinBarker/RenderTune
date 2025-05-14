@@ -197,8 +197,8 @@ function Project() {
   const [outputFilename, setOutputFilename] = useState(() => {
     const initialFilename = localStorage.getItem('outputFilename');
     if (initialFilename) return initialFilename;
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
-    return uniqueFolderNames.length > 0 ? uniqueFolderNames[0] : 'output-video'; // Default to first folder name
+    const initialImageFile = JSON.parse(localStorage.getItem('imageFiles') || '[]')[0];
+    return initialImageFile ? initialImageFile.filename.split('.').slice(0, -1).join('.') : 'output-video';
   });
   const [outputFormat, setOutputFormat] = useState(localStorage.getItem('outputFormat') || 'mp4');
   const [backgroundColor, setBackgroundColor] = useState(localStorage.getItem('backgroundColor') || '#000000');
@@ -286,12 +286,34 @@ function Project() {
   ]);
 
   useEffect(() => {
+    localStorage.setItem('outputFolder', outputFolder);
+    localStorage.setItem('outputFilename', outputFilename);
+    localStorage.setItem('outputFormat', outputFormat);
+    localStorage.setItem('videoWidth', videoWidth);
+    localStorage.setItem('videoHeight', videoHeight);
+    localStorage.setItem('backgroundColor', backgroundColor);
+    localStorage.setItem('usePadding', usePadding);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('paddingColor', paddingColor);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit);
+    localStorage.setItem('useBlurBackground', useBlurBackground);
+  }, [
+    outputFolder,
+    outputFilename,
+    outputFormat,
+    videoWidth,
+    videoHeight,
+    backgroundColor,
+    usePadding,
+    alwaysUniqueFilenames,
+    paddingColor,
+    stretchImageToFit,
+    useBlurBackground
+  ]);
+
+  useEffect(() => {
     if (filesMetadata.length > 0) {
       handleFilesMetadata(filesMetadata); // Call handleFilesMetadata if filesMetadata is passed
-      const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
-      if (uniqueFolderNames.length > 0) {
-        setOutputFilename(uniqueFolderNames[0]); // Set default to first folder name
-      }
     }
   }, [filesMetadata]);
 
@@ -306,21 +328,16 @@ function Project() {
     for (const image of images) {
       const [width, height] = image.dimensions.split('x').map(Number);
       const resolutions = [
-        ...[320, 480, 640, 1280].map(targetWidth => { // Added 320 and 480
+        ...[640, 1280].map(targetWidth => {
           const [resWidth, resHeight] = calculateResolution(width, height, targetWidth);
           return `${resWidth}x${resHeight}`;
         }),
         `${width}x${height}`,
-        ...[1920, 2560, 3840, 7680].map(targetWidth => { // Added 3840 and 7680
+        ...[1920, 2560].map(targetWidth => {
           const [resWidth, resHeight] = calculateResolution(width, height, targetWidth);
           return `${resWidth}x${resHeight}`;
         })
       ];
-      resolutions.sort((a, b) => {
-        const [aWidth, aHeight] = a.split('x').map(Number);
-        const [bWidth, bHeight] = b.split('x').map(Number);
-        return aWidth - bWidth || aHeight - bHeight;
-      });
       options.push(resolutions);
     }
     return options;
@@ -546,7 +563,7 @@ function Project() {
     );
   }, (prevProps, nextProps) => prevProps.src === nextProps.src);
   
-  const SortableImage = ({ file }) => {
+  const SortableImage = ({ file, setImageFiles }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: file.id });
   
     const style = {
@@ -554,9 +571,66 @@ function Project() {
       transition,
     };
   
+    const handleStretchImageToFitChange = (e) => {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === file.id
+            ? { ...img, stretchImageToFit: e.target.checked }
+            : img
+        )
+      );
+    };
+  
+    const handlePaddingColorChange = (e) => {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === file.id
+            ? { ...img, paddingColor: e.target.value }
+            : img
+        )
+      );
+    };
+
+    const handleBlurBackgroundChange = (e) => {
+      setImageFiles((prev) =>
+        prev.map((img) =>
+          img.id === file.id
+            ? { ...img, useBlurBackground: e.target.checked }
+            : img
+        )
+      );
+    };
+  
     return (
       <div ref={setNodeRef} style={style} className={styles.imageItem} {...attributes} {...listeners}>
         <Thumbnail src={file.filepath} />
+        <div className={styles.expandedContent}>
+          <label>
+            <input
+              type="checkbox"
+              checked={file.stretchImageToFit || false}
+              onChange={handleStretchImageToFitChange}
+            />
+            Stretch Image to Fit
+          </label>
+          <label>
+            Padding Color:
+            <input
+              type="text"
+              value={file.paddingColor || "#FFFFFF"}
+              onChange={handlePaddingColorChange}
+              disabled={file.stretchImageToFit} // Disable when stretchImageToFit is checked
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={file.useBlurBackground || false}
+              onChange={handleBlurBackgroundChange}
+            />
+            Use Blur Background
+          </label>
+        </div>
       </div>
     );
   };
@@ -803,12 +877,6 @@ function Project() {
         });
       }
     });
-
-    // Set default output filename to the first unique folder name after files are processed
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
-    if (uniqueFolderNames.length > 0) {
-      setOutputFilename(uniqueFolderNames[0]);
-    }
   };
 
   const updateAudioFiles = (newFile) => {
@@ -922,15 +990,20 @@ function Project() {
 
   return (
     <div className={styles.projectContainer}>
-      <div className={styles.fileUploaderWrapper}>
-        <FileUploader onFilesMetadata={handleFilesMetadata} className={styles.fileUploader} />
-        <button className={styles.clearButton} onClick={clearComponent}>
-          Clear Project
+      <div className={styles.header}>
+        <h1 className={styles.projectTitle}>New Project</h1>
+        <button className={styles.refreshButton} onClick={clearComponent}>
+          Clear
+        </button>
+        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
+          Delete Local Storage
         </button>
       </div>
 
+      <FileUploader onFilesMetadata={handleFilesMetadata} />
+
+      <h2>Audio Files</h2>
       <Table
-        title="Audio Files"
         data={audioFiles}
         rowSelection={audioRowSelection}
         setRowSelection={setAudioRowSelection}
@@ -941,8 +1014,8 @@ function Project() {
         setGlobalFilter={setGlobalFilter}
       />
 
+      <h2>Image Files</h2>
       <Table
-        title="Image Files"
         data={imageFiles}
         rowSelection={imageRowSelection}
         setRowSelection={setImageRowSelection}
@@ -954,177 +1027,196 @@ function Project() {
         setGlobalFilter={setGlobalFilter}
       />
 
-<div className={styles.renderOptionsSection}>
-  <h2 className={styles.renderOptionsTitle}>Render Options</h2>
-  <div className={styles.renderOptionsGrid}>
-    {/* Output Folder */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
-        Output Folder
-      </label>
-      <div className={styles.editableDropdownFolder}>
-        <input
-          type="text"
-          id="outputFolder"
-          value={outputFolder}
-          onChange={handleOutputFolderChange}
-          placeholder="Choose output folder"
-          className={styles.renderOptionInput}
-        />
+      <div className={styles.renderOptionsSection}>
+        <h2 className={styles.renderOptionsTitle}>Render Options</h2>
         <button
-          onClick={handleChooseFolder}
-          className={styles.folderButton}
-          title="Choose Folder"
+          className={styles.resetButton}
+          onClick={resetToDefault}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className={styles.folderIcon}
-          >
-            <path d="M10 4H2v16h20V6H12l-2-2zM4 8h16v10H4V8z" />
-          </svg>
+          Reset to Default
+        </button>
+        <div className={styles.renderOptionsGrid}>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
+              Output Folder
+            </label>
+            <div className={styles.editableDropdownFolder}>
+              <input
+                type="text"
+                id="outputFolder"
+                value={outputFolder}
+                onChange={handleOutputFolderChange}
+                placeholder="Choose output folder"
+                className={styles.renderOptionInput}
+              />
+              <button
+                onClick={handleChooseFolder}
+                className={styles.folderButton}
+                title="Choose Folder"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className={styles.folderIcon}
+                >
+                  <path d="M10 4H2v16h20V6H12l-2-2zM4 8h16v10H4V8z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="outputFilename" className={styles.renderOptionLabel}>
+              Output Filename
+            </label>
+            <div className={styles.editableDropdown}>
+              <input
+                type="text"
+                id="outputFilename"
+                value={outputFilename}
+                onChange={handleOutputFilenameChange}
+                placeholder="Enter filename (letters, numbers, spaces, - and _ only)"
+                className={styles.renderOptionInput}
+                maxLength={255}
+              />
+              <select
+                id="outputFilenameOptions"
+                value={outputFilename}
+                onChange={(e) => setOutputFilename(e.target.value)}
+                className={styles.renderOptionSelect}
+              >
+                {generateOutputFilenameOptions().map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="outputFormat" className={styles.renderOptionLabel}>
+              Output Format
+            </label>
+            <select
+              id="outputFormat"
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value)}
+              className={styles.renderOptionSelect}
+            >
+              <option value="mp4">MP4</option>
+              <option value="mkv">MKV</option>
+            </select>
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="resolution" className={styles.renderOptionLabel}>
+              Resolution
+            </label>
+            <div className={styles.resolutionBox}>
+              <select
+                id="imageSelection"
+                value={selectedImageIndex}
+                onChange={handleImageSelectionChange}
+                className={styles.renderOptionSelect}
+              >
+                {imageFiles.map((image, index) => (
+                  <option key={index} value={index}>
+                    {image.filename}
+                  </option>
+                ))}
+              </select>
+              <select
+                id="resolutionSelection"
+                value={selectedResolution}
+                onChange={handleResolutionChange}
+                className={styles.renderOptionSelect}
+              >
+                {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
+                  <option key={index} value={resolution}>
+                    {resolution}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="videoWidth" className={styles.renderOptionLabel}>
+              Width (px)
+            </label>
+            <input
+              type="text"
+              id="videoWidth"
+              value={videoWidth}
+              onChange={handleVideoWidthChange}
+              className={styles.renderOptionInput}
+              placeholder="Enter width (1-7680)"
+              maxLength={4}
+            />
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="videoHeight" className={styles.renderOptionLabel}>
+              Height (px)
+            </label>
+            <input
+              type="text"
+              id="videoHeight"
+              value={videoHeight}
+              onChange={handleVideoHeightChange}
+              className={styles.renderOptionInput}
+              placeholder="Enter height (1-4320)"
+              maxLength={4}
+            />
+          </div>
+
+          <div className={styles.renderOptionGroup}>
+            <label className={styles.renderOptionCheckboxLabel}>
+              <input
+                type="checkbox"
+                id="alwaysUniqueFilenames"
+                checked={alwaysUniqueFilenames}
+                onChange={(e) => setAlwaysUniqueFilenames(e.target.checked)}
+                className={styles.renderOptionCheckbox}
+              />
+              Always Unique Filenames
+            </label>
+          </div>
+        </div>
+
+
+          {/* Image Timeline */}
+          <div className={styles.renderOptionGroup}>
+
+            <div id="imageTimelineBox">
+              <h3 className={styles.blackText}>Image Timeline</h3>
+              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
+                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
+                  <div className={`${styles.imageTimeline}`}>
+                    {selectedImages.length === 0 ? (
+                      <p>No images selected</p>
+                    ) : (
+                      selectedImages.map((file) => (
+                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
+                      ))
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </div>
+
+        <button
+          className={styles.renderButton}
+          onClick={handleRender}
+          disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
+        >
+          Render
         </button>
       </div>
-    </div>
-
-    {/* Output Filename */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="outputFilename" className={styles.renderOptionLabel}>
-        Output Filename
-      </label>
-      <div className={styles.editableDropdown}>
-        <input
-          type="text"
-          id="outputFilename"
-          value={outputFilename}
-          onChange={handleOutputFilenameChange}
-          placeholder="Enter filename (letters, numbers, spaces, - and _ only)"
-          className={styles.renderOptionInput}
-          maxLength={255}
-        />
-        <select
-          id="outputFilenameOptions"
-          value={outputFilename}
-          onChange={(e) => setOutputFilename(e.target.value)}
-          className={styles.renderOptionSelect}
-        >
-          {generateOutputFilenameOptions().map((option, index) => (
-            <option key={index} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-
-    {/* Output Format */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="outputFormat" className={styles.renderOptionLabel}>
-        Output Format
-      </label>
-      <select
-        id="outputFormat"
-        value={outputFormat}
-        onChange={(e) => setOutputFormat(e.target.value)}
-        className={styles.renderOptionSelect}
-      >
-        <option value="mp4">MP4</option>
-        <option value="mkv">MKV</option>
-      </select>
-    </div>
-
-    {/* Resolution */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="resolution" className={styles.renderOptionLabel}>
-        Resolution
-      </label>
-      <div className={styles.resolutionBox}>
-        <select
-          id="imageSelection"
-          value={selectedImageIndex}
-          onChange={handleImageSelectionChange}
-          className={styles.renderOptionSelect}
-        >
-          {imageFiles.map((image, index) => (
-            <option key={index} value={index}>
-              {image.filename}
-            </option>
-          ))}
-        </select>
-        <select
-          id="resolutionSelection"
-          value={selectedResolution}
-          onChange={handleResolutionChange}
-          className={styles.renderOptionSelect}
-        >
-          {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
-            <option key={index} value={resolution}>
-              {resolution}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-
-    {/* Video Width */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="videoWidth" className={styles.renderOptionLabel}>
-        Width (px)
-      </label>
-      <input
-        type="text"
-        id="videoWidth"
-        value={videoWidth}
-        onChange={handleVideoWidthChange}
-        className={`${styles.renderOptionInput} ${styles.widthInput}`}
-        placeholder="Enter width (1-7680)"
-        maxLength={4}
-      />
-    </div>
-
-    {/* Video Height */}
-    <div className={styles.renderOptionGroup}>
-      <label htmlFor="videoHeight" className={styles.renderOptionLabel}>
-        Height (px)
-      </label>
-      <input
-        type="text"
-        id="videoHeight"
-        value={videoHeight}
-        onChange={handleVideoHeightChange}
-        className={`${styles.renderOptionInput} ${styles.heightInput}`}
-        placeholder="Enter height (1-4320)"
-        maxLength={4}
-      />
-    </div>
-
-    {/* Always Unique Filenames */}
-    <div className={styles.renderOptionGroup}>
-      <label className={styles.renderOptionCheckboxLabel}>
-        <input
-          type="checkbox"
-          id="alwaysUniqueFilenames"
-          checked={alwaysUniqueFilenames}
-          onChange={(e) => setAlwaysUniqueFilenames(e.target.checked)}
-          className={styles.renderOptionCheckbox}
-        />
-        Always Unique Filenames
-      </label>
-    </div>
-  </div>
-
-  {/* Render Button */}
-  <button
-    className={styles.renderButton}
-    onClick={handleRender}
-    disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
-  >
-    {audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0
-      ? "Render (please select at least one audio file and one image file)"
-      : "Render"}
-  </button>
-</div>
 
       {ffmpegError && (
         <div className={styles.errorContainer}>
@@ -1139,26 +1231,45 @@ function Project() {
         </div>
       )}
 
-      <Table
-        title="Renders"
-        data={renders.map(render => {
-          const parts = render.outputFilename.split(pathSeparator);
-          const filename = parts[parts.length - 1];
-          return {
-            progress: render.progress,
-            id: render.id,
-            outputFilename: filename, // Display only the filename with extension
-            ffmpegCommand: render.ffmpegCommand
-          };
-        })}
-        columns={renderColumns}
-        rowSelection={{}} // No row selection needed for this table
-        setRowSelection={() => {}} // Dummy function
-        setData={setRenders} // This table modifies renders
-        isRenderTable={true}
-        ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
-        removeRender={removeRender}
-      />
+      <div className={styles.rendersSection}>
+        <h2>Renders List</h2>
+        <Table
+          data={renders.map(render => {
+            const parts = render.outputFilename.split(pathSeparator);
+            const filename = parts[parts.length - 1];
+            return {
+              progress: render.progress,
+              id: render.id,
+              outputFilename: filename, // Display only the filename with extension
+              ffmpegCommand: render.ffmpegCommand
+            };
+          })}
+          columns={renderColumns}
+          rowSelection={{}} // No row selection needed for this table
+          setRowSelection={() => {}} // Dummy function
+          setData={setRenders} // This table modifies renders
+          isRenderTable={true}
+          ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
+          removeRender={removeRender}
+        />
+        {/*
+        {renders.map(render => (
+          <div key={render.id} className={styles.renderItem}>
+            <div>Render ID: {render.id}</div>
+            <div>PID: {render.pid}</div>
+            <div>Progress: {render.progress}%</div>
+            <div>
+              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
+              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
+              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
+              <button onClick={() => handleAction('start', render.id)}>Start</button>
+              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
+              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+        */}
+      </div>
     </div>
   );
 }

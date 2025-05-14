@@ -60,16 +60,13 @@ export function createFFmpegCommand(configs) {
             console.log('output height = ', height);
             const imgIndex = audioInputs.length + index;
 
-            const maxLoopSize = 32767; // Maximum allowed value for the 'loop' filter's size parameter
-            const loopSize = Math.min(Math.round(imgDuration * 2), maxLoopSize);
-
             if (image.useBlurBackground) {
                 
                 // create blurred background and foreground from same image
                 const blurBackground = [
                     `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,boxblur=20:20,crop=${width}:${height}:(iw-${width})/2:(ih-${height})/2,setsar=1[bg${index}];`,
-                    `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,setsar=1,loop=${loopSize}:${loopSize}[fg${index}];`,
-                    `[bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${loopSize}:${loopSize}[v${index}];`
+                    `[${imgIndex}:v]scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease,setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[fg${index}];`,
+                    `[bg${index}][fg${index}]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:shortest=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`
                 ].join('');
                 filterComplexStr += blurBackground;
             
@@ -90,7 +87,7 @@ export function createFFmpegCommand(configs) {
                 // Add solid color background padding
                 const padFilter = image.stretchImageToFit ? '' : `,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=${image.paddingColor || backgroundColor}`;
                 
-                filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${loopSize}:${loopSize}[v${index}];`;
+                filterComplexStr += `[${imgIndex}:v]${scaleFilter}${padFilter},setsar=1,loop=${Math.round(imgDuration * 2)}:${Math.round(imgDuration * 2)}[v${index}];`;
             }
         });
 

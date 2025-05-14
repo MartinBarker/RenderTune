@@ -29,11 +29,6 @@ function Settings() {
     //setDroppedFiles(filesArray);
   };
 
-  const deleteLocalStorage = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
-
   return (
     <div>
       <h1>Information</h1>
@@ -80,13 +75,6 @@ function Settings() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section>
-        <h2>Settings</h2>
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
-        </button>
       </section>
     </div>
   );
