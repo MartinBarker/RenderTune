@@ -1,25 +1,11 @@
-<p align="center"><img src="./buildAssets/header.png" title="RenderTune" width="700"></p> 
+<p align="center"><img src="./buildAssets/header.png" title="Auto-Editor" width="700"></p> 
 
-<h1 align="center">RenderTune</h1>
-<p align="center">A free open-source program for macOS, Windows, and Linux to combine audio and image files into video files that can be uploaded to YouTube.</p>
+<h1>RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.</h1>
+<img src="./buildAssets/RenderTune-screenshot-small.png" style="float:left" alt="screenshot">
 
-<p align="center">
-  <a href="https://apps.apple.com/us/app/rendertune/id1552674375"><img src="./buildAssets/mac-app-store-badge.svg" alt="Mac App Store" height="50"/></a> 
-  <a href="https://www.microsoft.com/store/apps/9n5710msppf1"><img src="./buildAssets/ms-store-badge.svg" alt="MS badge" height="50"/></a> 
-  <a href="https://snapcraft.io/rendertune"><img src="./buildAssets/snap-store-black.svg" alt="Snapcraft" height="50"/></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/MartinBarker/RenderTune/stargazers"><img src="https://img.shields.io/github/stars/MartinBarker/RenderTune?style=social" alt="GitHub stars"></a>
-  <a href="https://github.com/MartinBarker/RenderTune/fork"><img src="https://img.shields.io/github/forks/MartinBarker/RenderTune?style=social" alt="GitHub forks"></a>
-  <a href="https://github.com/MartinBarker/RenderTune/releases/latest"><img src="https://img.shields.io/github/v/release/MartinBarker/RenderTune" alt="Current version"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/MartinBarker/RenderTune/releases/latest/download/RenderTune-mac.dmg">Download for macOS</a> |
-  <a href="https://github.com/MartinBarker/RenderTune/releases/latest/download/RenderTune-Web-Setup.exe">Download for Windows</a> |
-  <a href="https://github.com/MartinBarker/RenderTune/releases/latest/download/RenderTune.AppImage">Download for Linux</a>
-</p>
+# Note: 
+I am currently working on a new version of RenderTune, if you want to clone the previous version of RenderTune, download release v1.1.4 (https://github.com/MartinBarker/RenderTune/releases/tag/v1.1.4) or checkout branch `main_backup_pre_react_rewrite`
+Below is the previous README, the new README is located starting after line 20 ([RenderTune v2.0](#new-readme-rendertune-v20-react-rewrite))
 
 ## Tutorial Video (Click To Watch):
 <a target="_blank" href="https://www.youtube.com/watch?v=LVnacPxquT4"><img target="_blank" src="https://i.imgur.com/Hr2ThFG.png" width="400" height="400" style="float:left" alt="RenderTune Tutorial Video" /></a>

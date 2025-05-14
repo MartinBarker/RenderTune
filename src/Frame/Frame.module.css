@@ -215,7 +215,7 @@ body{
   flex: 1;
   margin-left: 55px; /* Matches sidebar width */
   margin-top: 44px; /* Matches title bar height */
-  padding: 5px 10px 20px 20px;
+  padding: 5px 20px 20px 20px;
   overflow-y: auto;
   color: #FFF;
 }
@@ -224,7 +224,7 @@ body{
   font-size: 1.5rem;
   color: #FFF;
   margin: 0;
-  padding: 5px 0;
+  padding: 10px 0;
 }
 
 .frame {
