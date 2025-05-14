@@ -204,6 +204,8 @@ function Project() {
   const [backgroundColor, setBackgroundColor] = useState(localStorage.getItem('backgroundColor') || '#000000');
   const [usePadding, setUsePadding] = useState(localStorage.getItem('usePadding') === 'true');
 
+  const [audioTableInstance, setAudioTableInstance] = useState(null);
+
   // Save audio files to localStorage whenever they change
   useEffect(() => {
     try {
@@ -694,47 +696,53 @@ function Project() {
 
   const handleRender = () => {
     const renderId = generateUniqueId();
-    const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
+
+    // Fetch selected audio rows in the correct sorted order
+    const selectedAudio = audioTableInstance
+      ?.getRowModel()
+      .rows.filter((row) => audioRowSelection[row.original.id])
+      .map((row) => row.original) || [];
+
     const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-  
+
     if (selectedAudio.length === 0 || selectedImages.length === 0) {
       alert('Please select at least one audio and one image file.');
       return;
     }
-  
+
     console.log('Selected Audio Files:', selectedAudio);
     console.log('Selected Image Files:', selectedImages);
-  
+
     let totalDuration = 0;
-    selectedAudio.forEach(audio => {
+    selectedAudio.forEach((audio) => {
       let lengthInSeconds = parseFloat(audio.duration);
-  
+
       if (audio.startTime && audio.endTime && audio.length) {
         const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
         const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
         const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
-  
+
         const startTimeInSeconds = startMinutes * 60 + startSeconds;
         const endTimeInSeconds = endMinutes * 60 + endSeconds;
         lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
       }
-  
+
       totalDuration += lengthInSeconds;
       console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
     });
-  
+
     console.log('Total Duration:', totalDuration);
-  
+
     let finalOutputFilename = outputFilename;
     if (alwaysUniqueFilenames) {
       const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
       finalOutputFilename = `${outputFilename}_${timestamp}`;
     }
-  
+
     const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
-  
+
     const ffmpegCommand = createFFmpegCommand({
-      audioInputs: selectedAudio.map(audio => {
+      audioInputs: selectedAudio.map((audio) => {
         const inputOptions = [];
         if (audio.startTime) inputOptions.push('-ss', audio.startTime);
         if (audio.endTime) inputOptions.push('-to', audio.endTime);
@@ -742,10 +750,12 @@ function Project() {
         return {
           ...audio,
           inputOptions,
-          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
+          duration: audio.length
+            ? audio.length.split(':').reduce((acc, time) => 60 * acc + +time)
+            : audio.duration, // Ensure duration is defined
         };
       }),
-      imageInputs: selectedImages.map(image => {
+      imageInputs: selectedImages.map((image) => {
         const [width, height] = image.dimensions.split('x').map(Number);
         return {
           ...image,
@@ -753,7 +763,7 @@ function Project() {
           height: height, // Set to the actual image height
           stretchImageToFit: image.stretchImageToFit,
           paddingColor: image.paddingColor || backgroundColor,
-          useBlurBackground: image.useBlurBackground || false
+          useBlurBackground: image.useBlurBackground || false,
         };
       }),
       outputFilepath: outputFilePath,
@@ -764,46 +774,47 @@ function Project() {
       stretchImageToFit: stretchImageToFit,
       repeatLoop: false,
     });
-  
-    console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
+
+    console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(' '));
     console.log('send duration:', ffmpegCommand.outputDuration);
-  
+
     // Clean up old listeners
     window.api.removeAllListeners('ffmpeg-output');
     window.api.removeAllListeners('ffmpeg-error');
     window.api.removeAllListeners('ffmpeg-progress');
     window.api.removeAllListeners('ffmpeg-stop-response');
-  
+
     window.api.send('run-ffmpeg-command', {
       renderId: renderId,
       cmdArgs: ffmpegCommand.cmdArgs,
       outputDuration: ffmpegCommand.outputDuration,
     });
-  
+
     window.api.receive('ffmpeg-output', (data) => {
+      console.log('FFmpeg Output:', data);
     });
-  
+
     window.api.receive('ffmpeg-error', (data) => {
       console.log('FFmpeg Error:', data);
       setFfmpegError({
         lastOutput: data.lastOutput,
-        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
+        fullErrorLog: data.fullErrorLog, // Ensure fullErrorLog is set
       });
-  
+
       updateRender(renderId, { progress: 'error' }); // Set progress to "error"
     });
-  
+
     window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
       updateRender(renderId, { pid, progress });
     });
-  
+
     window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
       updateRender(renderId, { progress: status });
       if (status === 'Stopped') {
         setFfmpegError(null); // Clear any existing error message
       }
     });
-  
+
     addRender({
       id: renderId,
       pid: null,
@@ -819,11 +830,9 @@ function Project() {
       stretchImageToFit: stretchImageToFit,
       paddingColor: paddingColor,
       useBlurBackground: useBlurBackground,
-      alwaysUniqueFilenames: alwaysUniqueFilenames
+      alwaysUniqueFilenames: alwaysUniqueFilenames,
     });
-  
   };
-  
 
   const handleFilesMetadata = (filesMetadata) => {
     console.log('project.js: handleFilesMetadata() = ', filesMetadata)
@@ -840,7 +849,7 @@ function Project() {
         setOutputFolder(fileFolder);
         localStorage.setItem('outputFolder', fileFolder);
       }
-      
+
       if (file.filetype === 'audio') {
         setAudioFiles(prev => {
           const index = prev.findIndex(f => f.filepath === file.filepath);
@@ -916,7 +925,6 @@ function Project() {
     // Remove any non-numeric characters
     const cleanValue = value.toString().replace(/[^0-9]/g, '');
     const numValue = parseInt(cleanValue, 10);
-
     if (isNaN(numValue)) return min;
     if (min !== undefined && numValue < min) return min;
     if (max !== undefined && numValue > max) return max;
@@ -987,7 +995,6 @@ function Project() {
   const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
   const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
 
-
   return (
     <div className={styles.projectContainer}>
       <div className={styles.header}>
@@ -1006,23 +1013,22 @@ function Project() {
       <Table
         data={audioFiles}
         rowSelection={audioRowSelection}
+        columns={audioColumns}
         setRowSelection={setAudioRowSelection}
         setData={setAudioFiles}
-        columns={audioColumns}
-        setAudioFiles={setAudioFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onTableInstanceChange={setAudioTableInstance}
       />
 
       <h2>Image Files</h2>
       <Table
         data={imageFiles}
         rowSelection={imageRowSelection}
-        setRowSelection={setImageRowSelection}
-        setData={setImageFiles}
         columns={imageColumns}
         isImageTable={true}
-        setImageFiles={setImageFiles}
+        setRowSelection={setImageRowSelection}
+        setData={setImageFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
       />
@@ -1189,26 +1195,22 @@ function Project() {
 
 
           {/* Image Timeline */}
-          <div className={styles.renderOptionGroup}>
-
-            <div id="imageTimelineBox">
-              <h3 className={styles.blackText}>Image Timeline</h3>
-              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
-                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
-                  <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.length === 0 ? (
-                      <p>No images selected</p>
-                    ) : (
-                      selectedImages.map((file) => (
-                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
+          <div id="imageTimelineBox">
+            <h3 className={styles.blackText}>Image Timeline</h3>
+            <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
+              <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
+                <div className={`${styles.imageTimeline}`}>
+                  {selectedImages.length === 0 ? (
+                    <p>No images selected</p>
+                  ) : (
+                    selectedImages.map((file) => (
+                      <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
-
         <button
           className={styles.renderButton}
           onClick={handleRender}
@@ -1220,7 +1222,6 @@ function Project() {
 
       {ffmpegError && (
         <div className={styles.errorContainer}>
-          <button className={styles.closeButton} onClick={handleCloseError}>x</button>
           <h3>FFmpeg Error:</h3>
           <pre className={styles.errorPre}>
             {showFullErrorLog ? ffmpegError.fullErrorLog : ffmpegError.lastOutput}
@@ -1228,6 +1229,7 @@ function Project() {
           <button onClick={handleToggleErrorLog} className={styles.toggleErrorButton}>
             {showFullErrorLog ? 'Show error message only' : 'Show full error message'}
           </button>
+          <button className={styles.closeButton} onClick={handleCloseError}>x</button>
         </div>
       )}
 
@@ -1252,23 +1254,6 @@ function Project() {
           ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
           removeRender={removeRender}
         />
-        {/*
-        {renders.map(render => (
-          <div key={render.id} className={styles.renderItem}>
-            <div>Render ID: {render.id}</div>
-            <div>PID: {render.pid}</div>
-            <div>Progress: {render.progress}%</div>
-            <div>
-              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
-              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
-              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
-              <button onClick={() => handleAction('start', render.id)}>Start</button>
-              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
-              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-        */}
       </div>
     </div>
   );

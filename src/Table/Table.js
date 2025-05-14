@@ -156,37 +156,26 @@ function Row({
   });
 
   useEffect(() => {
-    if (isImageTable) {
+    if (isImageTable && setImageFiles) {
       const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
       if (savedPalette) {
         setColorPalette(JSON.parse(savedPalette));
       } else {
-        //console.log('Requesting color palette for:', row.original.filepath);
         window.api.send('get-color-palette', row.original.filepath);
         const responseChannel = `color-palette-response-${row.original.filepath}`;
         window.api.receive(responseChannel, (colors) => {
-          //console.log('Received color palette:', colors);
-          setColorPalette((prevPalette) => {
-            const newPalette = {
-              Vibrant: colors.Vibrant || prevPalette.Vibrant,
-              DarkVibrant: colors.DarkVibrant || prevPalette.DarkVibrant,
-              LightVibrant: colors.LightVibrant || prevPalette.LightVibrant,
-              Muted: colors.Muted || prevPalette.Muted,
-              DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
-              LightMuted: colors.LightMuted || prevPalette.LightMuted
-            };
-            localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
-            return newPalette;
-          });
+          setColorPalette(colors);
         });
         return () => {
           window.api.removeAllListeners(responseChannel);
         };
       }
     }
-  }, [row.original.filepath, isImageTable]);
+  }, [row.original.filepath, isImageTable, setImageFiles]);
 
   const handleColorBoxClick = (color) => {
+    if (!isImageTable || !setImageFiles) return;
+
     const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(color);
     const validColor = isValidHex ? color : "#FFFFFF";
     setSelectedColor(validColor);
@@ -205,7 +194,7 @@ function Row({
   };
 
   useEffect(() => {
-    if (isImageTable) {
+    if (isImageTable && setImageFiles) {
       setImageFiles((prev) =>
         prev.map((img) =>
           img.id === row.original.id
@@ -215,9 +204,11 @@ function Row({
       );
       toggleRowExpanded(row.id); // Expand the row by default
     }
-  }, [row.original.id, isImageTable]);
+  }, [row.original.id, isImageTable, setImageFiles]);
 
   const handleStretchImageToFitChange = (e) => {
+    if (!isImageTable || !setImageFiles) return;
+
     if (e.target.checked) {
       setImageFiles((prev) =>
         prev.map((img) =>
@@ -238,6 +229,8 @@ function Row({
   };
 
   const handlePaddingColorChange = (e) => {
+    if (!isImageTable || !setImageFiles) return;
+
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
@@ -248,6 +241,8 @@ function Row({
   };
 
   const handlePaddingColorCheckboxChange = (e) => {
+    if (!isImageTable || !setImageFiles) return;
+
     if (e.target.checked) {
       setImageFiles((prev) =>
         prev.map((img) =>
@@ -268,6 +263,8 @@ function Row({
   };
 
   const handleBlurBackgroundChange = (e) => {
+    if (!isImageTable || !setImageFiles) return;
+
     if (e.target.checked) {
       setImageFiles((prev) =>
         prev.map((img) =>
@@ -467,7 +464,7 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
+function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter, onTableInstanceChange }) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -680,6 +677,12 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     },
   });
 
+  useEffect(() => {
+    if (onTableInstanceChange) {
+      onTableInstanceChange(table);
+    }
+  }, [table, onTableInstanceChange]);
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
@@ -830,7 +833,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           {Object.keys(rowSelection).length} of {data.length} rows selected
         </span>
       </div>
-      {/*
+      {/* 
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
           <span>Total selected duration: {totalSelectedDuration}</span>
