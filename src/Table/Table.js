@@ -510,23 +510,24 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     } else {
       setData((prev) => {
         const updated = prev.filter((row) => row.id !== rowId);
-        localStorage.setItem("audioFiles", JSON.stringify(updated));
+        // Persistence is handled by useEffect in Project.js, so no localStorage.setItem here
         return updated;
       });
     }
   };
 
   const clearTable = () => {
-    if (isRenderTable) {
-      setData([]);
-    } else {
-      setData([]);
-      if (isImageTable) {
-        setImageFiles([]);
-      } else {
-        setAudioFiles([]);
-      }
+    // Always call setData to clear the current table's data
+    setData([]); 
+  
+    // Conditionally call specific setters if they exist (passed as props)
+    if (isImageTable && typeof setImageFiles === 'function') {
+      setImageFiles([]);
+    } else if (!isImageTable && !isRenderTable && typeof setAudioFiles === 'function') { 
+      // This implies it's the audio table, as isImageTable is false and isRenderTable is false
+      setAudioFiles([]);
     }
+    // For the render table, just setData([]) is enough as it doesn't have a specific additional setter like setImageFiles or setAudioFiles
   };
 
   const copyRow = (rowId) => {
@@ -536,7 +537,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         const newRow = { ...prev[index], id: generateUniqueId() };
         const updated = [...prev];
         updated.splice(index + 1, 0, newRow); // Insert the new row after the copied row
-        localStorage.setItem("audioFiles", JSON.stringify(updated)); // Save to localStorage
+        // Persistence is handled by useEffect in Project.js
         return updated;
       }
       return prev;
@@ -580,26 +581,39 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         header: "Drag",
         cell: () => null,
       },
-      ...columns.map((column) => ({
-        ...column,
-        header: column.id === 'openFolder' ? column.header : () => (
-          <div
-            className={styles.sortableHeader}
-            onClick={() => {
-              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-              const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
-              setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
-            }}
-          >
-            {column.header || ""}
-            <span className={styles.sortIcon}>
-              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
-              }
-            </span>
-          </div>
-        ),
-      })),
-    ];
+      ...columns.map((column) => {
+        // This is an item in the array being spread
+        const columnDefinition = {
+          ...column,
+          header: column.id === 'openFolder'
+            ? column.header
+            : () => { // This is the function assigned to header
+                const currentSort = sorting.find((sort) => sort.id === column.accessorKey);
+                return (
+                  <div
+                    className={styles.sortableHeader}
+                    onClick={() => {
+                      const currentSortOnClick = sorting.find((sort) => sort.id === column.accessorKey);
+                      if (currentSortOnClick) {
+                        if (!currentSortOnClick.desc) { // Currently 'asc', change to 'desc'
+                          setSorting([{ id: column.accessorKey, desc: true }]);
+                        } else { // Currently 'desc', change to 'off' (clear sorting for this column)
+                          setSorting([]); 
+                        }
+                      } else { // Not sorted on this column, change to 'asc'
+                        setSorting([{ id: column.accessorKey, desc: false }]);
+                      }
+                    }}
+                  >
+                    {column.header || ""} {/* Display the original header text */}
+                    {currentSort && (<span className={styles.sortIcon}>{currentSort.desc ? "🔽" : "🔼"}</span>)} {/* Conditionally render sort icon */}
+                  </div>
+                );
+              } // End of header function
+        }; // End of columnDefinition object
+        return columnDefinition;
+      }), // End of .map()
+    ]; // End of baseColumns array initialization
 
     if (!isRenderTable) {
       baseColumns.push(
@@ -658,6 +672,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     return baseColumns;
   }, [columns, data, rowSelection, sorting, isRenderTable]);
 
+
   const table = useReactTable({
     data,
     columns: tableColumns,
@@ -683,17 +698,38 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     }
   }, [table, onTableInstanceChange]);
 
+  const handleDragStart = () => {
+    // Check if sorting is currently active
+    if (sorting.length > 0) {
+      // Get the current visually ordered rows from the table instance.
+      // table.getRowModel().rows reflects the currently sorted, filtered, and paginated data.
+      const visuallyOrderedRows = table.getRowModel().rows.map(row => row.original);
+      
+      // Update the source data (e.g., audioFiles in Project.js) to match this visual order.
+      // This 'setData' is the prop passed from Project.js (e.g., setAudioFiles or setImageFiles).
+      // Note: This relies on the parent component re-rendering and passing the new data prop quickly.
+      setData(visuallyOrderedRows); 
+    }
+    // Now, clear the local sorting state.
+    // When the Table component re-renders, the 'data' prop it receives from its parent
+    // should be the visuallyOrderedRows (if sorting was active and setData has taken effect),
+    // and since 'sorting' (local state) is now empty, React Table will render 'data' as is.
+    setSorting([]);
+  };
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (active && over && active.id !== over.id) {
+      // 'data' here is the prop passed to the Table, which should have been updated
+      // in handleDragStart if sorting was active.
       const oldIndex = data.findIndex((item) => item.id === active.id);
       const newIndex = data.findIndex((item) => item.id === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newData = arrayMove([...data], oldIndex, newIndex);
-        setData(newData);
-        localStorage.setItem("audioFiles", JSON.stringify(newData));
+        setData(newData); // Update the source data with the new manual order.
+        // The 'sorting' state is already empty from handleDragStart.
       }
     }
   };
@@ -739,7 +775,11 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       <button onClick={clearTable} className={styles.clearButton}>
         Clear Table
       </button>
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext 
+        collisionDetection={closestCenter} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext
           items={data.map((row) => row.id)}
           strategy={verticalListSortingStrategy}
