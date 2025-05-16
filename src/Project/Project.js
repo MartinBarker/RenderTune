@@ -999,17 +999,13 @@ function Project() {
     <div className={styles.projectContainer}>
       <div className={styles.header}>
         <h1 className={styles.projectTitle}>New Project</h1>
-        <button className={styles.refreshButton} onClick={clearComponent}>
-          Clear
-        </button>
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
+        <button className={styles.deleteLocalStorageButton} onClick={clearComponent}>
+          Clear Project
         </button>
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
 
-      <h2>Audio Files</h2>
       <Table
         data={audioFiles}
         rowSelection={audioRowSelection}
@@ -1019,9 +1015,9 @@ function Project() {
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         onTableInstanceChange={setAudioTableInstance}
+        searchPlaceholder="Search Audio Files Table..."
       />
 
-      <h2>Image Files</h2>
       <Table
         data={imageFiles}
         rowSelection={imageRowSelection}
@@ -1031,6 +1027,7 @@ function Project() {
         setData={setImageFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        searchPlaceholder="Search Image Files Table..."
       />
 
       <div className={styles.renderOptionsSection}>
@@ -1234,7 +1231,6 @@ function Project() {
       )}
 
       <div className={styles.rendersSection}>
-        <h2>Renders List</h2>
         <Table
           data={renders.map(render => {
             const parts = render.outputFilename.split(pathSeparator);
@@ -1253,6 +1249,7 @@ function Project() {
           isRenderTable={true}
           ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
           removeRender={removeRender}
+          searchPlaceholder="Search Renders Table..."
         />
       </div>
     </div>

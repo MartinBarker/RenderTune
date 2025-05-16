@@ -148,9 +148,16 @@
 /* Pagination */
 .pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   margin: 5px 0;
+  gap: 10px;
+  color: white;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -188,28 +195,17 @@
   padding: 6px 10px;
   font-size: 12px;
   width: 200px;
-  margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
   transition: border-color 0.2s ease;
+  margin-right: 0;
 }
 
 .search:focus {
   outline: none;
   border-color: #1a73e8;
   background-color: #f9fcff;
-}
-
-/* Footer */
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  font-size: 12px;
-  color: white;
-  text-align: left;
 }
 
 /* Expand Icon Styles */
@@ -358,4 +354,23 @@
   font-size: 20px;
   text-shadow: 0px 0px 4px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff, 0px 0px 6px #fff;
   background-color: none; /* Default to none */
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tableTitle {
+  margin: 0;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.tableControls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }

@@ -39,8 +39,8 @@
   margin: 10px auto;
 }
 
-.blackText{
-  color:black;
+.blackText {
+  color: black;
 }
 
 .header {
@@ -448,7 +448,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: none; 
+  transition: none;
 }
 
 .placeholder {
@@ -456,7 +456,6 @@
   height: 100%;
   background-color: #cccccc; /* Grey placeholder */
 }
-
 
 .imageOptions {
   flex-grow: 1;
@@ -498,14 +497,14 @@
 }
 
 .resetButton {
-  padding: 0.5rem 1rem;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #fff;
   background-color: #dc3545;
-  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-top: 0.5rem; /* Adjust margin to align nicely */
-  align-self: flex-start; /* Align button to the left */
+  transition: background-color 0.3s ease;
 }
 
 .resetButton:hover {
@@ -567,6 +566,7 @@
   opacity: 0;
   cursor: pointer;
 }
+
 .editableDropdownFolder {
   position: relative;
   display: flex;
@@ -592,7 +592,6 @@
 }
 
 .deleteLocalStorageButton {
-  margin-left: 10px;
   padding: 8px 12px;
   font-size: 14px;
   color: #fff;
