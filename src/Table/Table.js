@@ -546,6 +546,12 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     });
   };
 
+  const [originalOrder, setOriginalOrder] = useState(data.map(row => row.id));
+
+  useEffect(() => {
+    setOriginalOrder(data.map(row => row.id));
+  }, [data]);
+
   const tableColumns = React.useMemo(() => {
     const baseColumns = [
       {
@@ -590,14 +596,24 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             className={styles.sortableHeader}
             onClick={() => {
               const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-              const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
-              setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
+              let newSorting = [];
+              
+              if (!isSorted) {
+                // First click - ascending
+                newSorting = [{ id: column.accessorKey, desc: false }];
+              } else if (!isSorted.desc) {
+                // Second click - descending
+                newSorting = [{ id: column.accessorKey, desc: true }];
+              }
+              // Third click - no sorting (empty array)
+              
+              setSorting(newSorting);
             }}
           >
             {column.header || ""}
             <span className={styles.sortIcon}>
-              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
-              }
+              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : 
+               sorting.find((sort) => sort.id === column.accessorKey) ? "🔼" : ""}
             </span>
           </div>
         ),
@@ -681,6 +697,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   });
 
   const handleDragEnd = (event) => {
+    setSorting([]);
     const { active, over } = event;
 
     if (active && over && active.id !== over.id) {
@@ -690,6 +707,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       if (oldIndex !== -1 && newIndex !== -1) {
         const newData = arrayMove([...data], oldIndex, newIndex);
         setData(newData);
+        setOriginalOrder(newData.map(row => row.id));
         localStorage.setItem("audioFiles", JSON.stringify(newData));
       }
     }
@@ -723,6 +741,16 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     }
     return '00:00';
   }, [rowSelection, data, isImageTable, isRenderTable]);
+
+  const getSelectedRows = () => {
+    const selectedIds = Object.entries(rowSelection)
+      .filter(([_, selected]) => selected)
+      .map(([id]) => id);
+
+    return originalOrder
+      .filter(id => selectedIds.includes(id))
+      .map(id => data.find(row => row.id === id));
+  };
 
   return (
     <div>
@@ -830,7 +858,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           {Object.keys(rowSelection).length} of {data.length} rows selected
         </span>
       </div>
-      {/*
+      {/* 
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
           <span>Total selected duration: {totalSelectedDuration}</span>
