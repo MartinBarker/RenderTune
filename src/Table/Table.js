@@ -1,5 +1,5 @@
 // Table.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from "react"; // Added useCallback
 import {
   ColumnDef,
   getCoreRowModel,
@@ -75,7 +75,6 @@ function Row({
   rowIndex,
   toggleRowExpanded,
   isExpanded,
-  toggleRowSelected,
   removeRow,
   isImageTable,
   isRenderTable,
@@ -125,15 +124,14 @@ function Row({
   };
 
   const calculateEndTime = (startTime, length, isOverAnHour) => {
-    if (!length) return ''; // Return empty string if length is not defined
-
+    if (!length) return ''; 
     const [startHours, startMinutes, startSeconds] = isOverAnHour ? startTime.split(':').map(Number) : [0, ...startTime.split(':').map(Number)];
     const [lengthHours, lengthMinutes, lengthSeconds] = isOverAnHour ? length.split(':').map(Number) : [0, ...length.split(':').map(Number)];
     const totalStartSeconds = startHours * 3600 + startMinutes * 60 + startSeconds;
     const totalLengthSeconds = lengthHours * 3600 + lengthMinutes * 60 + lengthSeconds;
     const totalEndSeconds = totalStartSeconds + totalLengthSeconds;
 
-    if (isNaN(totalEndSeconds)) return ''; // Return empty string if calculation results in NaN
+    if (isNaN(totalEndSeconds)) return ''; 
 
     const endHours = Math.floor(totalEndSeconds / 3600);
     const endMinutes = Math.floor((totalEndSeconds % 3600) / 60);
@@ -143,7 +141,8 @@ function Row({
       : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
   };
 
-  const isOverAnHour = row.original.duration && row.original.duration >= 3600;
+  const isOverAnHour = row.original.duration && parseFloat(row.original.duration) >= 3600;
+
 
   const [selectedColor, setSelectedColor] = useState(null);
   const [colorPalette, setColorPalette] = useState({
@@ -156,16 +155,18 @@ function Row({
   });
 
   useEffect(() => {
-    if (isImageTable) {
+    if (isImageTable && row.original.filepath) { // Added check for filepath
       const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
       if (savedPalette) {
-        setColorPalette(JSON.parse(savedPalette));
+        try {
+          setColorPalette(JSON.parse(savedPalette));
+        } catch (e) {
+          console.error("Failed to parse color palette from localStorage", e);
+        }
       } else {
-        //console.log('Requesting color palette for:', row.original.filepath);
         window.api.send('get-color-palette', row.original.filepath);
         const responseChannel = `color-palette-response-${row.original.filepath}`;
-        window.api.receive(responseChannel, (colors) => {
-          //console.log('Received color palette:', colors);
+        const listener = (colors) => {
           setColorPalette((prevPalette) => {
             const newPalette = {
               Vibrant: colors.Vibrant || prevPalette.Vibrant,
@@ -178,7 +179,8 @@ function Row({
             localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
             return newPalette;
           });
-        });
+        };
+        window.api.receive(responseChannel, listener);
         return () => {
           window.api.removeAllListeners(responseChannel);
         };
@@ -213,79 +215,54 @@ function Row({
             : img
         )
       );
-      toggleRowExpanded(row.id); // Expand the row by default
+      if (!isExpanded) { // Only toggle if not already expanded
+          toggleRowExpanded(row.id); 
+      }
     }
-  }, [row.original.id, isImageTable]);
+  }, [row.original.id, isImageTable]); //setImageFiles and toggleRowExpanded are stable (or should be)
 
   const handleStretchImageToFitChange = (e) => {
-    if (e.target.checked) {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, stretchImageToFit: true, useBlurBackground: false, paddingColor: null }
-            : img
-        )
-      );
-    } else {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, stretchImageToFit: false }
-            : img
-        )
-      );
-    }
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, stretchImageToFit: e.target.checked, useBlurBackground: !e.target.checked ? img.useBlurBackground : false, paddingColor: !e.target.checked ? img.paddingColor : null }
+          : img
+      )
+    );
   };
 
   const handlePaddingColorChange = (e) => {
     setImageFiles((prev) =>
       prev.map((img) =>
         img.id === row.original.id
-          ? { ...img, paddingColor: e.target.value }
+          ? { ...img, paddingColor: e.target.value, stretchImageToFit: false, useBlurBackground: false }
+          : img
+      )
+    );
+  };
+  
+  const handlePaddingColorCheckboxChange = (e) => {
+    const isChecked = e.target.checked;
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, paddingColor: isChecked ? (img.paddingColor && validateHexColor(img.paddingColor) ? img.paddingColor : "#FFFFFF") : null, stretchImageToFit: false, useBlurBackground: false }
           : img
       )
     );
   };
 
-  const handlePaddingColorCheckboxChange = (e) => {
-    if (e.target.checked) {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, paddingColor: "#FFFFFF", stretchImageToFit: false, useBlurBackground: false }
-            : img
-        )
-      );
-    } else {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, paddingColor: null }
-            : img
-        )
-      );
-    }
+  const handleBlurBackgroundChange = (e) => {
+    const isChecked = e.target.checked;
+    setImageFiles((prev) =>
+      prev.map((img) =>
+        img.id === row.original.id
+          ? { ...img, useBlurBackground: isChecked, stretchImageToFit: false, paddingColor: null }
+          : img
+      )
+    );
   };
 
-  const handleBlurBackgroundChange = (e) => {
-    if (e.target.checked) {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, useBlurBackground: true, stretchImageToFit: false, paddingColor: null }
-            : img
-        )
-      );
-    } else {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === row.original.id
-            ? { ...img, useBlurBackground: false }
-            : img
-        )
-      );
-    }
-  };
 
   return (
     <>
@@ -293,30 +270,33 @@ function Row({
         ref={setNodeRef}
         style={style}
         className={styles.row}
-        onClick={() => toggleRowSelected(row.id)}
+        onClick={() => row.toggleSelected()} // Use table's built-in toggle
       >
         {row.getVisibleCells().map((cell) => {
-          const columnHeader = cell.column.columnDef.header;
+          const columnDef = cell.column.columnDef;
+          // Using accessorKey or id for header check
+          const columnHeader = typeof columnDef.header === 'string' ? columnDef.header : (columnDef.accessorKey || columnDef.id);
+
 
           return (
             <td
-              key={`${cell.id}_${columnHeader}`}
+              key={cell.id} // cell.id is unique
               className={styles.cell}
               data-tooltip={cell.getValue()}
             >
               {/* Render Drag handle */}
-              {columnHeader === "Drag" && (
+              {(columnHeader === "Drag" || columnDef.id === "drag") && (
                 <DragHandle row={row} rowIndex={rowIndex} />
               )}
 
               {/* Render Expand Icon */}
-              {columnHeader === "Expand" && (
+              {(columnHeader === "Expand" || columnDef.id === "expand") && (
                 <span
                   className={`${styles.expandIcon} ${
                     isExpanded ? styles.expanded : ""
                   }`}
                   onClick={(e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Prevent row selection toggle
                     toggleRowExpanded(row.id);
                   }}
                   title="Expand/Collapse Row"
@@ -326,28 +306,46 @@ function Row({
               )}
 
               {/* Render Remove Button */}
-              {columnHeader === "Remove" && (
+              {(columnHeader === "Remove" || columnDef.id === "remove" ) && (
                 <button
                   className={styles.removeButton}
                   onClick={(e) => {
-                    e.stopPropagation();
-                    removeRow(row.id);
+                    e.stopPropagation(); // Prevent row selection toggle
+                    removeRow(row.original.id);
                   }}
                   title="Remove this file"
                 >
                   ❌
                 </button>
               )}
+              
+              {/* Render Copy Button - Specific to non-render tables */}
+              {columnDef.id === "copy" && !isRenderTable && (
+                 <button
+                    className={styles.copyButton}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        // copyRow(row.original.id); // copyRow is defined in Table, not passed to Row
+                        // This button should ideally be rendered by Table's columnDef directly
+                        // For now, this specific button would need copyRow passed or handled by columnDef
+                    }}
+                    title="Copy this row"
+                    >
+                    📋
+                </button>
+              )}
+
 
               {/* Render other cells */}
-              {columnHeader !== "Expand" &&
-                columnHeader !== "Drag" &&
-                columnHeader !== "Remove" &&
-                columnHeader !== "Duration" &&
+              { columnDef.id !== "expand" &&
+                columnDef.id !== "drag" &&
+                columnDef.id !== "remove" &&
+                columnDef.id !== "copy" && // Exclude copy as well if handled by id
+                columnDef.accessorKey !== "duration" && // Handle duration separately
                 flexRender(cell.column.columnDef.cell, cell.getContext())}
 
               {/* Render Duration cell */}
-              {columnHeader === "Duration" && (
+              {columnDef.accessorKey === "duration" && (
                 <span>{formatDuration(cell.getValue())}</span>
               )}
             </td>
@@ -414,30 +412,32 @@ function Row({
               <label>
                 <input
                   type="checkbox"
-                  checked={row.original.paddingColor !== null}
+                  checked={row.original.paddingColor !== null && row.original.paddingColor !== undefined}
                   onChange={handlePaddingColorCheckboxChange}
                 />
                 Padding Color:
                 <input
                   id='paddingColorInput'
                   type="text"
-                  value={row.original.paddingColor || "none"}
+                  value={row.original.paddingColor || "#FFFFFF"} // Default to white if null/undefined
                   onChange={handlePaddingColorChange}
                   className={styles.paddingColorInput}
                   style={{
-                    backgroundColor: row.original.paddingColor === "none" ? "#FFFFFF" : row.original.paddingColor
+                    backgroundColor: validateHexColor(row.original.paddingColor) ? row.original.paddingColor : "#FFFFFF"
                   }}
+                  disabled={!row.original.paddingColor && row.original.paddingColor !== null} // disable if paddingColor is not actively set
                 />
-                {errors[row.original.id] && (
+                {errors && errors[row.original.id] && ( // Added check for errors object
                   <span className={styles.errorText}>{errors[row.original.id]}</span>
                 )}
               </label>
               <div>
-                {Object.values(colorPalette).map((color, index) => (
+                {Object.entries(colorPalette).map(([name, color]) => ( // Use entries for key
+                  color && color.hex && // Ensure color and hex exist
                   <div
-                    key={index}
+                    key={name} // Use palette name for key
                     className={`${styles.colorBox} ${selectedColor === color.hex ? styles.selectedColorBox : ''}`}
-                    style={{ background: /^#([0-9A-Fa-f]{3}){1,2}$/.test(color.hex) ? color.hex : "#FFFFFF" }}
+                    style={{ background: validateHexColor(color.hex) ? color.hex : "#FFFFFF" }}
                     onClick={() => handleColorBoxClick(color.hex)}
                   />
                 ))}
@@ -458,7 +458,7 @@ function Row({
         <tr className={styles.expandedRow}>
           <td colSpan={row.getVisibleCells().length}>
             <div className={styles.expandedContent}>
-              <pre>{ffmpegCommand}</pre>
+              <pre>{row.original.ffmpegCommand || ffmpegCommand}</pre> {/* Prefer row specific command */}
             </div>
           </td>
         </tr>
@@ -467,11 +467,19 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
+const Table = forwardRef(({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }, ref) => {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
-    return savedExpandedRows ? JSON.parse(savedExpandedRows) : {};
+    if (savedExpandedRows) {
+      try {
+        return JSON.parse(savedExpandedRows);
+      } catch(e) {
+        console.error("Failed to parse expandedRows from localStorage", e);
+        return {};
+      }
+    }
+    return {};
   });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [errors, setErrors] = useState({});
@@ -480,14 +488,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   };
 
-  const toggleRowSelected = (rowId) => {
-    setRowSelection((prev) => ({
-      ...prev,
-      [rowId]: !prev[rowId],
-    }));
-  };
-
-  const toggleRowExpanded = (rowId) => {
+  const toggleRowExpanded = useCallback((rowId) => {
     setExpandedRows((prev) => {
       const newExpandedRows = {
         ...prev,
@@ -496,124 +497,87 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
       localStorage.setItem('expandedRows', JSON.stringify(newExpandedRows));
       return newExpandedRows;
     });
-  };
+  }, []);
 
-  const toggleAllRowsSelected = () => {
-    const allRowsSelected = data.length === Object.keys(rowSelection).length;
-    setRowSelection(
-      allRowsSelected
-        ? {}
-        : data.reduce((acc, row) => ({ ...acc, [row.id]: true }), {})
-    );
-  };
-
-  const removeRow = (rowId) => {
+  const removeRow = useCallback((rowId) => {
     if (isRenderTable) {
-      removeRender(rowId);
+      if(removeRender) removeRender(rowId);
     } else {
       setData((prev) => {
         const updated = prev.filter((row) => row.id !== rowId);
-        localStorage.setItem("audioFiles", JSON.stringify(updated));
+        if (isImageTable) {
+          if(setImageFiles) localStorage.setItem("imageFiles", JSON.stringify(updated));
+        } else {
+          if(setAudioFiles) localStorage.setItem("audioFiles", JSON.stringify(updated));
+        }
         return updated;
       });
     }
-  };
+  }, [isRenderTable, removeRender, setData, isImageTable, setImageFiles, setAudioFiles]);
 
-  const clearTable = () => {
-    if (isRenderTable) {
-      setData([]);
-    } else {
-      setData([]);
-      if (isImageTable) {
-        setImageFiles([]);
-      } else {
-        setAudioFiles([]);
-      }
-    }
-  };
-
-  const copyRow = (rowId) => {
+  const copyRow = useCallback((rowId) => {
     setData((prev) => {
       const index = prev.findIndex((row) => row.id === rowId);
       if (index >= 0) {
         const newRow = { ...prev[index], id: generateUniqueId() };
         const updated = [...prev];
-        updated.splice(index + 1, 0, newRow); // Insert the new row after the copied row
-        localStorage.setItem("audioFiles", JSON.stringify(updated)); // Save to localStorage
+        updated.splice(index + 1, 0, newRow); 
+        if (isImageTable) {
+          localStorage.setItem("imageFiles", JSON.stringify(updated));
+        } else {
+          localStorage.setItem("audioFiles", JSON.stringify(updated));
+        }
         return updated;
       }
       return prev;
     });
-  };
-
-  const [originalOrder, setOriginalOrder] = useState(data.map(row => row.id));
-
-  useEffect(() => {
-    setOriginalOrder(data.map(row => row.id));
-  }, [data]);
+  }, [setData, isImageTable]);
 
   const tableColumns = React.useMemo(() => {
     const baseColumns = [
       {
         id: "select",
-        header: () => {
-          const allRowsSelected = data.length === Object.keys(rowSelection).length;
-          return (
-            <IndeterminateCheckbox
-              checked={allRowsSelected}
-              indeterminate={Object.keys(rowSelection).length > 0 && !allRowsSelected}
-              onChange={toggleAllRowsSelected}
-            />
-          );
-        },
+        header: ({ table }) => (
+          <IndeterminateCheckbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+          />
+        ),
         cell: ({ row }) => (
           <div className="px-1">
             <IndeterminateCheckbox
-              {...{
-                checked: row.getIsSelected(),
-                disabled: !row.getCanSelect(),
-                indeterminate: row.getIsSomeSelected(),
-                onChange: row.getToggleSelectedHandler(),
-              }}
+              checked={row.getIsSelected()}
+              disabled={!row.getCanSelect()}
+              indeterminate={row.getIsSomeSelected()}
+              onChange={row.getToggleSelectedHandler()}
             />
           </div>
         ),
       },
       {
         id: "expand",
-        header: "Expand",
-        cell: () => null,
+        header: "Expand", // This content won't be rendered due to cell: () => null
+        cell: () => null, // Cell content is handled in Row component
       },
       {
         id: "drag",
-        header: "Drag",
-        cell: () => null,
+        header: "Drag", // This content won't be rendered
+        cell: () => null, // Cell content is handled in Row component
       },
       ...columns.map((column) => ({
         ...column,
-        header: column.id === 'openFolder' ? column.header : () => (
+        header: column.enableSorting === false || (column.id && ['openFolder', 'stop', 'openFile', 'deleteFile'].includes(column.id)) || (column.accessorKey && ['openFolder', 'stop', 'openFile', 'deleteFile'].includes(column.accessorKey)) 
+        ? column.header 
+        : ({ column: col }) => (
           <div
             className={styles.sortableHeader}
-            onClick={() => {
-              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-              let newSorting = [];
-              
-              if (!isSorted) {
-                // First click - ascending
-                newSorting = [{ id: column.accessorKey, desc: false }];
-              } else if (!isSorted.desc) {
-                // Second click - descending
-                newSorting = [{ id: column.accessorKey, desc: true }];
-              }
-              // Third click - no sorting (empty array)
-              
-              setSorting(newSorting);
-            }}
+            onClick={col.getToggleSortingHandler()}
           >
-            {column.header || ""}
+            {typeof column.header === 'function' ? column.header() : column.header || ""}
             <span className={styles.sortIcon}>
-              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : 
-               sorting.find((sort) => sort.id === column.accessorKey) ? "🔼" : ""}
+              {col.getIsSorted() === 'desc' ? "🔽" : 
+               col.getIsSorted() === 'asc' ? "🔼" : ""}
             </span>
           </div>
         ),
@@ -641,41 +605,12 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         {
           id: "remove",
           header: "Remove",
-          cell: ({ row }) => (
-            <button
-              className={styles.removeButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                removeRow(row.original.id);
-              }}
-              title="Remove this file"
-            >
-              ❌
-            </button>
-          ),
+          cell: () => null,
         }
       );
-    } else {
-      baseColumns.push({
-        id: "remove",
-        header: "Remove",
-        cell: ({ row }) => (
-          <button
-            className={styles.removeButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              removeRow(row.original.id);
-            }}
-            title="Remove this file"
-          >
-            ❌
-          </button>
-        ),
-      });
     }
-
     return baseColumns;
-  }, [columns, data, rowSelection, sorting, isRenderTable]);
+  }, [columns, isRenderTable, removeRow, copyRow]);
 
   const table = useReactTable({
     data,
@@ -691,72 +626,106 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId);
-      return String(value).toLowerCase().includes(String(filterValue).toLowerCase());
+      const value = String(row.getValue(columnId) || '').toLowerCase();
+      return value.includes(String(filterValue).toLowerCase());
     },
+    enableRowSelection: true,
+    autoResetPageIndex: false,
+    autoResetExpanded: false,
   });
 
-  const handleDragEnd = (event) => {
-    setSorting([]);
+  const handleDragEnd = useCallback((event) => {
     const { active, over } = event;
 
     if (active && over && active.id !== over.id) {
-      const oldIndex = data.findIndex((item) => item.id === active.id);
-      const newIndex = data.findIndex((item) => item.id === over.id);
+      setData((currentData) => {
+        // Get the current sorted order
+        const sortedData = table.getSortedRowModel().rows.map((row) => row.original);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newData = arrayMove([...data], oldIndex, newIndex);
-        setData(newData);
-        setOriginalOrder(newData.map(row => row.id));
-        localStorage.setItem("audioFiles", JSON.stringify(newData));
-      }
+        // Find the indices of the dragged and dropped rows in the sorted data
+        const oldIndex = sortedData.findIndex((item) => item.id === active.id);
+        const newIndex = sortedData.findIndex((item) => item.id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // Apply the drag-and-drop change to the sorted data
+          const newData = arrayMove([...sortedData], oldIndex, newIndex);
+
+          // Save the new order as the manual row order
+          if (isImageTable) {
+            localStorage.setItem("imageFiles", JSON.stringify(newData));
+          } else if (!isRenderTable) {
+            localStorage.setItem("audioFiles", JSON.stringify(newData));
+          }
+
+          return newData;
+        }
+
+        return currentData; // Return the original data if indices are invalid
+      });
+
+      // Clear sorting to treat the new order as manual
+      setSorting([]);
     }
-  };
+  }, [setData, table, isImageTable, isRenderTable]);
 
-  const parseDuration = (duration) => {
-    if (typeof duration !== 'string') {
-      return 0;
+  const clearTable = useCallback(() => {
+    setData([]); 
+    if (isRenderTable) {
+      localStorage.setItem('renders', JSON.stringify([]));
+    } else if (isImageTable) {
+      if(setImageFiles) setImageFiles([]); 
+      localStorage.removeItem('imageFiles');
+    } else {
+      if(setAudioFiles) setAudioFiles([]); 
+      localStorage.removeItem('audioFiles');
+    }
+    setRowSelection({}); 
+    setExpandedRows({}); 
+    localStorage.removeItem('expandedRows');
+  }, [setData, isRenderTable, isImageTable, setImageFiles, setAudioFiles, setRowSelection, setExpandedRows]);
+
+  const parseDurationToSeconds = (duration) => {
+    if (typeof duration !== 'string' || !duration.includes(':')) {
+      const num = parseFloat(duration);
+      return !isNaN(num) ? num : 0;
     }
     const parts = duration.split(':').map(Number);
+    if (parts.some(isNaN)) return 0;
+
     if (parts.length === 3) {
       return parts[0] * 3600 + parts[1] * 60 + parts[2];
     } else if (parts.length === 2) {
       return parts[0] * 60 + parts[1];
-    } else {
-      return 0;
     }
+    return 0;
   };
 
   const totalSelectedDuration = React.useMemo(() => {
     if (!isImageTable && !isRenderTable) {
-      const totalSeconds = Object.keys(rowSelection).reduce((total, rowId) => {
-        const selectedRow = data.find((row) => row.id === rowId);
-        if (selectedRow) {
-          const duration = selectedRow.length || selectedRow.duration || '0';
-          return total + parseDuration(duration);
-        }
-        return total;
-      }, 0);
+      let totalSeconds = 0;
+      table.getSelectedRowModel().flatRows.forEach(row => {
+        const durationStr = row.original.length || row.original.duration; 
+        totalSeconds += parseDurationToSeconds(durationStr);
+      });
       return formatDuration(totalSeconds);
     }
     return '00:00';
-  }, [rowSelection, data, isImageTable, isRenderTable]);
+  }, [rowSelection, table, data, isImageTable, isRenderTable]);
 
-  const getSelectedRows = () => {
-    const selectedIds = Object.entries(rowSelection)
-      .filter(([_, selected]) => selected)
-      .map(([id]) => id);
-
-    return originalOrder
-      .filter(id => selectedIds.includes(id))
-      .map(id => data.find(row => row.id === id));
-  };
+  useImperativeHandle(ref, () => ({
+    getOrderedSelectedRows: () => {
+      const processedRows = table.getSortedRowModel().rows;
+      return processedRows
+        .filter(row => row.getIsSelected()) 
+        .map(row => row.original);         
+    }
+  }), [table]); 
 
   return (
     <div>
       <input
         type="text"
-        value={globalFilter}
+        value={globalFilter ?? ''} 
         onChange={(e) => setGlobalFilter(e.target.value)}
         placeholder="Search..."
         className={styles.search}
@@ -774,11 +743,13 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id} className={styles.headerRow}>
                   {headerGroup.headers.map((header) => (
-                    <th key={header.id} className={styles.headerCell}>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    <th key={header.id} className={styles.headerCell} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </th>
                   ))}
                 </tr>
@@ -787,10 +758,9 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             <tbody>
               {table.getRowModel().rows.map((row, rowIndex) => (
                 <Row
-                  key={row.original.id}
+                  key={row.id}
                   row={row}
                   rowIndex={rowIndex}
-                  toggleRowSelected={toggleRowSelected}
                   toggleRowExpanded={toggleRowExpanded}
                   isExpanded={!!expandedRows[row.id]}
                   removeRow={removeRow}
@@ -798,7 +768,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                   isRenderTable={isRenderTable}
                   setImageFiles={setImageFiles}
                   setAudioFiles={setAudioFiles}
-                  ffmpegCommand={ffmpegCommand}
+                  ffmpegCommand={isRenderTable && row.original.ffmpegCommand ? row.original.ffmpegCommand : ""}
                   setErrors={setErrors}
                   errors={errors}
                 />
@@ -815,7 +785,7 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
           </button>
           <span>
             Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+            {table.getPageCount() > 0 ? table.getPageCount() : 1}
           </span>
           <button
             onClick={() => table.nextPage()}
@@ -828,11 +798,11 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             <input
               type="number"
               min="1"
-              max={table.getPageCount()}
+              max={table.getPageCount() > 0 ? table.getPageCount() : 1}
               defaultValue={table.getState().pagination.pageIndex + 1}
               onChange={(e) => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
+                table.setPageIndex(page < 0 ? 0 : page);
               }}
               className={styles.pageInput}
             />
@@ -849,24 +819,24 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
                 Show {pageSize}
               </option>
             ))}
-            <option value="all">All</option>
+            <option value="all">All ({data.length})</option>
           </select>
         </div>
       </DndContext>
       <div className={styles.footer}>
         <span>
-          {Object.keys(rowSelection).length} of {data.length} rows selected
+          {table.getSelectedRowModel().flatRows.length} of {table.getCoreRowModel().rows.length} rows selected
         </span>
       </div>
-      {/* 
+      
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
           <span>Total selected duration: {totalSelectedDuration}</span>
         </div>
       )}
-      */}
+      
     </div>
   );
-}
+});
 
 export default Table;

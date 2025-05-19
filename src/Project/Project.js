@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import React, { useState, useEffect, useMemo, useRef } from 'react'; // Import useRef
+import { useLocation } from 'react-router-dom'; 
 import styles from './Project.module.css';
 import FileUploader from '../FileUploader/FileUploader.js';
 import Table from '../Table/Table.js';
@@ -22,12 +22,12 @@ function formatDuration(duration) {
 }
 
 function Project() {
-  const location = useLocation(); // Use useLocation to access state
-  const filesMetadata = location.state?.filesMetadata || []; // Get filesMetadata from state
+  const location = useLocation(); 
+  const filesMetadata = location.state?.filesMetadata || []; 
 
   const [renders, setRenders] = useState(() => JSON.parse(localStorage.getItem('renders') || '[]'));
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);  // New state for tracking selected image index
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
   const [resolutionOptions, setResolutionOptions] = useState([]);
   const [selectedResolution, setSelectedResolution] = useState('');
   const [alwaysUniqueFilenames, setAlwaysUniqueFilenames] = useState(localStorage.getItem('alwaysUniqueFilenames') === 'true');
@@ -38,6 +38,12 @@ function Project() {
   const [useBlurBackground, setUseBlurBackground] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
   const [showFullErrorLog, setShowFullErrorLog] = useState(false);
+
+  // Refs for Table components
+  const audioTableRef = useRef(null);
+  const imageTableRef = useRef(null);
+  const rendersTableRef = useRef(null);
+
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -150,7 +156,7 @@ function Project() {
       window.api.send('get-path-separator');
       window.api.receive('path-separator-response', (separator) => {
         setPathSeparator(separator);
-        localStorage.setItem('pathSeparator', separator); // Cache the separator
+        localStorage.setItem('pathSeparator', separator); 
       });
     };
 
@@ -162,9 +168,9 @@ function Project() {
       setOutputFolder(folder);
     });
 
-    // Cleanup the listener when the component unmounts
     return () => {
       window.api.removeAllListeners('selected-folder');
+      window.api.removeAllListeners('path-separator-response');
     };
   }, [pathSeparator]);
 
@@ -177,15 +183,14 @@ function Project() {
   };
 
   const updateRender = (id, update) => {
-    
-    //BUG when this runs, all the image thumbnails in my component are re-rendered, fix?
-    setRenders(renders => renders.map(render => render.id === id ? { ...render, ...update } : render));
+    setRenders(prevRenders => prevRenders.map(render => render.id === id ? { ...render, ...update } : render));
   };
-
+  
   const removeRender = (id) => {
     const updatedRenders = renders.filter(render => render.id !== id);
     setRenders(updatedRenders);
   };
+
 
   const [audioFiles, setAudioFiles] = useState(() => getInitialState('audioFiles', []));
   const [imageFiles, setImageFiles] = useState(() => getInitialState('imageFiles', []));
@@ -204,7 +209,6 @@ function Project() {
   const [backgroundColor, setBackgroundColor] = useState(localStorage.getItem('backgroundColor') || '#000000');
   const [usePadding, setUsePadding] = useState(localStorage.getItem('usePadding') === 'true');
 
-  // Save audio files to localStorage whenever they change
   useEffect(() => {
     try {
       localStorage.setItem('audioFiles', JSON.stringify(audioFiles));
@@ -213,7 +217,6 @@ function Project() {
     }
   }, [audioFiles]);
 
-  // Save image files to localStorage whenever they change
   useEffect(() => {
     try {
       localStorage.setItem('imageFiles', JSON.stringify(imageFiles));
@@ -222,7 +225,6 @@ function Project() {
     }
   }, [imageFiles]);
 
-  // Save row selections to localStorage whenever they change
   useEffect(() => {
     try {
       localStorage.setItem('audioRowSelection', JSON.stringify(audioRowSelection));
@@ -243,10 +245,12 @@ function Project() {
   }, [outputFolder, outputFilename, outputFormat, videoWidth, videoHeight, backgroundColor, usePadding]);
 
   useEffect(() => {
-    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
+    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames.toString());
     localStorage.setItem('paddingColor', paddingColor);
-    localStorage.setItem('stretchImageToFit', stretchImageToFit);
-  }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit]);
+    localStorage.setItem('stretchImageToFit', stretchImageToFit.toString());
+    localStorage.setItem('useBlurBackground', useBlurBackground.toString());
+  }, [alwaysUniqueFilenames, paddingColor, stretchImageToFit, useBlurBackground]);
+
 
   useEffect(() => {
     window.api.receive('output-folder-set', (folderPath) => {
@@ -259,63 +263,12 @@ function Project() {
     };
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('outputFolder', outputFolder);
-    localStorage.setItem('outputFilename', outputFilename);
-    localStorage.setItem('outputFormat', outputFormat);
-    localStorage.setItem('videoWidth', videoWidth);
-    localStorage.setItem('videoHeight', videoHeight);
-    localStorage.setItem('backgroundColor', backgroundColor);
-    localStorage.setItem('usePadding', usePadding);
-    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
-    localStorage.setItem('paddingColor', paddingColor);
-    localStorage.setItem('stretchImageToFit', stretchImageToFit);
-    localStorage.setItem('useBlurBackground', useBlurBackground);
-  }, [
-    outputFolder,
-    outputFilename,
-    outputFormat,
-    videoWidth,
-    videoHeight,
-    backgroundColor,
-    usePadding,
-    alwaysUniqueFilenames,
-    paddingColor,
-    stretchImageToFit,
-    useBlurBackground
-  ]);
-
-  useEffect(() => {
-    localStorage.setItem('outputFolder', outputFolder);
-    localStorage.setItem('outputFilename', outputFilename);
-    localStorage.setItem('outputFormat', outputFormat);
-    localStorage.setItem('videoWidth', videoWidth);
-    localStorage.setItem('videoHeight', videoHeight);
-    localStorage.setItem('backgroundColor', backgroundColor);
-    localStorage.setItem('usePadding', usePadding);
-    localStorage.setItem('alwaysUniqueFilenames', alwaysUniqueFilenames);
-    localStorage.setItem('paddingColor', paddingColor);
-    localStorage.setItem('stretchImageToFit', stretchImageToFit);
-    localStorage.setItem('useBlurBackground', useBlurBackground);
-  }, [
-    outputFolder,
-    outputFilename,
-    outputFormat,
-    videoWidth,
-    videoHeight,
-    backgroundColor,
-    usePadding,
-    alwaysUniqueFilenames,
-    paddingColor,
-    stretchImageToFit,
-    useBlurBackground
-  ]);
 
   useEffect(() => {
     if (filesMetadata.length > 0) {
-      handleFilesMetadata(filesMetadata); // Call handleFilesMetadata if filesMetadata is passed
+      handleFilesMetadata(filesMetadata); 
     }
-  }, [filesMetadata]);
+  }, [filesMetadata]); // filesMetadata is the main dependency
 
   const calculateResolution = (width, height, targetWidth) => {
     const aspectRatio = width / height;
@@ -326,7 +279,17 @@ function Project() {
   const getResolutionOptions = async (images) => {
     const options = [];
     for (const image of images) {
+      if (!image.dimensions || typeof image.dimensions !== 'string') { // Add guard clause
+        console.warn('Image dimensions are invalid for image:', image);
+        options.push([]); // Push empty array or default resolutions
+        continue;
+      }
       const [width, height] = image.dimensions.split('x').map(Number);
+      if (isNaN(width) || isNaN(height) || height === 0) { // Add guard clause for division by zero
+         console.warn('Parsed image dimensions are invalid for image:', image);
+         options.push([]);
+         continue;
+      }
       const resolutions = [
         ...[640, 1280].map(targetWidth => {
           const [resWidth, resHeight] = calculateResolution(width, height, targetWidth);
@@ -347,21 +310,30 @@ function Project() {
     if (imageFiles.length > 0) {
       getResolutionOptions(imageFiles).then(options => {
         setResolutionOptions(options);
-        if (selectedResolution === '') {
-          const defaultResolution = options[selectedImageIndex][2]; // Set default to original resolution
-          setSelectedResolution(defaultResolution);
+        // Only set default resolution if no resolution is currently selected
+        // and we have valid options for the current image
+        if (!selectedResolution && options[selectedImageIndex] && options[selectedImageIndex].length > 2) {
+          const defaultResolution = options[selectedImageIndex][2];
           const [width, height] = defaultResolution.split('x');
           setVideoWidth(width);
           setVideoHeight(height);
+          setSelectedResolution(defaultResolution);
         }
       });
     }
-  }, [imageFiles]);
+  }, [imageFiles, selectedImageIndex]); // Remove selectedResolution from dependencies
 
   const handleImageSelectionChange = (e) => {
     const index = Number(e.target.value);
     setSelectedImageIndex(index);
-    // Do not change the resolution options or selected resolution here
+    // Only reset resolution if we have options for the new index
+    if (resolutionOptions[index] && resolutionOptions[index].length > 2) {
+      const defaultResolution = resolutionOptions[index][2];
+      const [width, height] = defaultResolution.split('x');
+      setVideoWidth(width);
+      setVideoHeight(height);
+      setSelectedResolution(defaultResolution);
+    }
   };
 
   const handleResolutionChange = (e) => {
@@ -375,48 +347,12 @@ function Project() {
     setOutputFolder(e.target.value);
   };
 
-  const handleFilesSelect = (audioData, imageData) => {
-    if (audioData.length) {
-      setAudioFiles(prev => {
-        const updatedFiles = prev.map(file => ({ ...file }));
-        audioData.forEach(newFile => {
-          const index = updatedFiles.findIndex(f => f.filename === newFile.filename);
-          if (index >= 0) {
-            updatedFiles[index] = { ...updatedFiles[index], ...newFile };
-          } else {
-            updatedFiles.push({
-              ...newFile,
-              id: generateUniqueId(),
-              duration: 'Loading...',
-            });
-          }
-        });
-        return updatedFiles;
-      });
-    }
-
-    if (imageData.length) {
-      setImageFiles(prev => {
-        const updatedImages = prev.map(img => ({ ...img }));
-        imageData.forEach(newImage => {
-          const index = updatedImages.findIndex(img => img.filename === newImage.filename);
-          if (index >= 0) {
-            updatedImages[index] = { ...updatedImages[index], ...newImage };
-          } else {
-            updatedImages.push({
-              ...newImage,
-              id: generateUniqueId(),
-            });
-          }
-        });
-        return updatedImages;
-      });
-    }
-  };
 
   const clearComponent = () => {
     setAudioFiles([]);
     setImageFiles([]);
+    setAudioRowSelection({});
+    setImageRowSelection({});
     setOutputFilename('output-video');
     setOutputFormat('mp4');
     setVideoWidth('1920');
@@ -424,6 +360,8 @@ function Project() {
     setBackgroundColor('#000000');
     setUsePadding(false);
     setOutputFolder('');
+    setGlobalFilter(""); // Clear global filter
+    // Clear relevant localStorage items
     localStorage.removeItem('audioFiles');
     localStorage.removeItem('imageFiles');
     localStorage.removeItem('audioRowSelection');
@@ -435,10 +373,20 @@ function Project() {
     localStorage.removeItem('backgroundColor');
     localStorage.removeItem('usePadding');
     localStorage.removeItem('outputFolder');
+    // Reset other specific states if needed
+    setAlwaysUniqueFilenames(false);
+    localStorage.removeItem('alwaysUniqueFilenames');
+    setPaddingColor('#FFFFFF');
+    localStorage.removeItem('paddingColor');
+    setStretchImageToFit(false);
+    localStorage.removeItem('stretchImageToFit');
+    setUseBlurBackground(false);
+    localStorage.removeItem('useBlurBackground');
   };
 
   const deleteLocalStorage = () => {
     localStorage.clear();
+    // Reset all state to default values
     setAudioFiles([]);
     setImageFiles([]);
     setRenders([]);
@@ -455,34 +403,23 @@ function Project() {
     setPaddingColor('#FFFFFF');
     setStretchImageToFit(false);
     setUseBlurBackground(false);
+    setPathSeparator(''); // Reset path separator so it's fetched again
+    setGlobalFilter("");
+    setFfmpegError(null);
+    setSelectedImageIndex(0);
+    setResolutionOptions([]);
+    setSelectedResolution('');
   };
 
-  const getSelectedAudioRows = () => {
-    const selectedRows = audioFiles.filter((file) => audioRowSelection[file.id]);
-
-    alert(
-      selectedRows
-        .map((row) => `${row.filename} (${row.duration})`)
-        .join('\n') || 'No audio rows selected'
-    );
-  };
-
-  const getSelectedImageRows = () => {
-    const selectedRows = imageFiles.filter((file) => imageRowSelection[file.id]);
-
-    alert(
-      selectedRows
-        .map((row) => `${row.filename} (${row.dimensions || 'No dimensions'})`)
-        .join('\n') || 'No image rows selected'
-    );
-  };
 
   const getUniqueFolderNames = (files) => {
     const folderNames = new Set();
     files.forEach(file => {
-      const parts = file.filepath.split(pathSeparator);
-      if (parts.length > 1) {
-        folderNames.add(parts[parts.length - 2]);
+      if (file.filepath && pathSeparator) { // Check for pathSeparator
+        const parts = file.filepath.split(pathSeparator);
+        if (parts.length > 1) {
+          folderNames.add(parts[parts.length - 2]);
+        }
       }
     });
     return Array.from(folderNames);
@@ -490,17 +427,23 @@ function Project() {
 
   const generateOutputFilenameOptions = () => {
     const options = [];
-    const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
-    uniqueFolderNames.forEach(folderName => {
-      options.push(folderName);
-    });
+    if (pathSeparator) { // Only generate if pathSeparator is available
+        const uniqueFolderNames = getUniqueFolderNames([...audioFiles, ...imageFiles]);
+        uniqueFolderNames.forEach(folderName => {
+        options.push(folderName);
+        });
+    }
     imageFiles.forEach(image => {
       options.push(image.filename.split('.').slice(0, -1).join('.'));
     });
     audioFiles.forEach(audio => {
       options.push(audio.filename.split('.').slice(0, -1).join('.'));
     });
-    return options;
+    // Add a default option if options array is empty
+    if (options.length === 0) {
+        options.push("output-video");
+    }
+    return Array.from(new Set(options)); // Ensure unique options
   };
 
   const audioColumns = [
@@ -513,19 +456,16 @@ function Project() {
       accessorKey: 'thumbnail',
       header: 'Thumbnail',
       cell: ({ row }) => <Thumbnail src={row.original.filepath} />,
+      enableSorting: false,
     },
-    { accessorKey: 'filename', header: 'File Name' }, // Use `filename`
+    { accessorKey: 'filename', header: 'File Name' }, 
     { accessorKey: 'dimensions', header: 'Dimensions' },
   ];
   
 
   const handleChooseFolder = async () => {
     window.api.send('open-folder-dialog');
-    window.api.receive('selected-folder', (folderPath) => {
-      if (folderPath) {
-        setOutputFolder(folderPath);
-      }
-    });
+    // Listener for 'selected-folder' is in useEffect
   };
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -553,17 +493,26 @@ function Project() {
       <div className={styles.thumbnailWrapper}>
         {!isLoaded && <div className={styles.placeholder}></div>}
         <img
-          src={`thum:///${src}`}
+          src={`thum:///${src}`} // Ensure thum protocol is handled by main process
           alt="Thumbnail"
           className={styles.thumbnail}
           onLoad={() => setIsLoaded(true)}
           style={{ display: isLoaded ? 'block' : 'none' }}
+          onError={(e) => { // Basic error handling for image load
+            console.error("Thumbnail load error:", src);
+            e.target.style.display = 'none'; // Hide broken image icon
+            // Optionally, show placeholder again or a specific error icon
+            const placeholder = e.target.previousSibling;
+            if (placeholder && placeholder.classList.contains(styles.placeholder)) {
+                placeholder.style.display = 'block';
+            }
+          }}
         />
       </div>
     );
   }, (prevProps, nextProps) => prevProps.src === nextProps.src);
   
-  const SortableImage = ({ file, setImageFiles }) => {
+  const SortableImage = ({ file }) => { // Removed setImageFiles from props as it's in scope
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: file.id });
   
     const style = {
@@ -571,107 +520,99 @@ function Project() {
       transition,
     };
   
-    const handleStretchImageToFitChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, stretchImageToFit: e.target.checked }
-            : img
-        )
-      );
-    };
-  
-    const handlePaddingColorChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, paddingColor: e.target.value }
-            : img
-        )
-      );
-    };
+    const handlePropertyChange = (property, value) => {
+        setImageFiles((prev) =>
+          prev.map((img) =>
+            img.id === file.id
+              ? { ...img, [property]: value }
+              : img
+          )
+        );
+      };
 
-    const handleBlurBackgroundChange = (e) => {
-      setImageFiles((prev) =>
-        prev.map((img) =>
-          img.id === file.id
-            ? { ...img, useBlurBackground: e.target.checked }
-            : img
-        )
-      );
+    const handleCheckboxChange = (property, checked) => {
+        setImageFiles((prev) =>
+            prev.map((img) => {
+                if (img.id === file.id) {
+                    const newImg = { ...img, [property]: checked };
+                    if (property === 'stretchImageToFit' && checked) {
+                        newImg.useBlurBackground = false;
+                        newImg.paddingColor = null;
+                    } else if (property === 'useBlurBackground' && checked) {
+                        newImg.stretchImageToFit = false;
+                        newImg.paddingColor = null;
+                    }
+                    return newImg;
+                }
+                return img;
+            })
+        );
     };
   
     return (
       <div ref={setNodeRef} style={style} className={styles.imageItem} {...attributes} {...listeners}>
         <Thumbnail src={file.filepath} />
-        <div className={styles.expandedContent}>
-          <label>
+        <div className={styles.imageOptions}> {/* Changed class from expandedContent */}
+          <label className={styles.renderOptionCheckboxLabel}>
             <input
               type="checkbox"
               checked={file.stretchImageToFit || false}
-              onChange={handleStretchImageToFitChange}
+              onChange={(e) => handleCheckboxChange('stretchImageToFit', e.target.checked)}
+              className={styles.renderOptionCheckbox}
             />
-            Stretch Image to Fit
+            Stretch
           </label>
-          <label>
-            Padding Color:
+          <label className={styles.renderOptionLabel}>
+            Padding:
             <input
-              type="text"
+              type="color" // Changed to color picker for better UX
               value={file.paddingColor || "#FFFFFF"}
-              onChange={handlePaddingColorChange}
-              disabled={file.stretchImageToFit} // Disable when stretchImageToFit is checked
+              onChange={(e) => {
+                handlePropertyChange('paddingColor', e.target.value);
+                // Uncheck other options when color is manually set
+                handleCheckboxChange('stretchImageToFit', false);
+                handleCheckboxChange('useBlurBackground', false);
+              }}
+              disabled={file.stretchImageToFit || file.useBlurBackground}
+              className={styles.renderOptionColor}
             />
           </label>
-          <label>
+          <label className={styles.renderOptionCheckboxLabel}>
             <input
               type="checkbox"
               checked={file.useBlurBackground || false}
-              onChange={handleBlurBackgroundChange}
+              onChange={(e) => handleCheckboxChange('useBlurBackground', e.target.checked)}
+              className={styles.renderOptionCheckbox}
             />
-            Use Blur Background
+            Blur BG
           </label>
         </div>
       </div>
     );
   };
   
-  const copyImage = (imageId) => {
-    const imageToCopy = imageFiles.find((img) => img.id === imageId);
-    if (imageToCopy) {
-      const newImage = { ...imageToCopy, id: generateUniqueId() };
-      setImageFiles((prev) => {
-        const index = prev.findIndex((img) => img.id === imageId);
-        const updated = [...prev];
-        updated.splice(index + 1, 0, newImage);
-        return updated;
-      });
-    }
-  };
-  
-
   const handleAction = (action, renderId) => {
     switch (action) {
-      case 'pause':
+      case 'pause': // Pause/resume might not be directly supported by simple ffmpeg stop/start
       case 'stop':
-      case 'start':
-      case 'restart':
-      case 'delete':
-        window.api.send(`ffmpeg-${action}`, { renderId });
-        if (action === 'delete') {
-          removeRender(renderId);
-        }
+        window.api.send('stop-ffmpeg-render', { renderId }); // Corrected event name
+        break;
+      // 'start' and 'restart' would require re-issuing the command, more complex
+      case 'delete': // This deletes the render entry, not the file.
+        removeRender(renderId); // Assuming removeRender correctly updates state and localStorage
         break;
       case 'open-file':
         const render = renders.find(r => r.id === renderId);
-        if (render && render.progress === 100) {
+        if (render && render.progress === 100 && render.outputFilepath) {
           window.api.send('open-file', render.outputFilepath);
         }
         break;
       case 'delete-file':
         const renderToDelete = renders.find(r => r.id === renderId);
-        if (renderToDelete) {
+        if (renderToDelete && renderToDelete.outputFilepath) {
           window.api.send('delete-render-file', { outputFilePath: renderToDelete.outputFilepath });
-          removeRender(renderId);
+          // Optimistically remove from UI or wait for confirmation
+          removeRender(renderId); 
         }
         break;
       default:
@@ -679,51 +620,39 @@ function Project() {
     }
   };
 
-  const handleSelectRow = (id) => {
-    setImageRowSelection(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-  
-  // Ensure the image data is stable if not changed
-  const stableImageFiles = useMemo(() => imageFiles.map(file => ({
-    ...file,
-    isSelected: !!imageRowSelection[file.id]
-  })), [imageFiles, imageRowSelection]);
 
   const handleRender = () => {
     const renderId = generateUniqueId();
-    const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
-    const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-  
-    if (selectedAudio.length === 0 || selectedImages.length === 0) {
-      alert('Please select at least one audio and one image file.');
+    
+    // Get selected audio and image files using the refs to ensure correct order
+    const selectedAudio = audioTableRef.current?.getOrderedSelectedRows() || [];
+    const selectedImagesFromTable = imageTableRef.current?.getOrderedSelectedRows() || [];
+
+    if (selectedAudio.length === 0 || selectedImagesFromTable.length === 0) {
+      alert('Please select at least one audio and one image file from the tables.');
       return;
     }
   
-    console.log('Selected Audio Files:', selectedAudio);
-    console.log('Selected Image Files:', selectedImages);
+    console.log('Selected Audio Files (ordered for render):', selectedAudio);
+    console.log('Selected Image Files (ordered from table for render):', selectedImagesFromTable);
   
     let totalDuration = 0;
     selectedAudio.forEach(audio => {
-      let lengthInSeconds = parseFloat(audio.duration);
+      let lengthInSeconds = parseFloat(audio.duration); // Default to full duration
   
-      if (audio.startTime && audio.endTime && audio.length) {
-        const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
-        const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
-        const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
-  
-        const startTimeInSeconds = startMinutes * 60 + startSeconds;
-        const endTimeInSeconds = endMinutes * 60 + endSeconds;
-        lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
+      // If startTime, endTime, or length are specified in the audio object (e.g., from expanded row inputs)
+      if (audio.length) { // Prioritize 'length' if set
+        const parts = audio.length.split(':').map(Number);
+        if (parts.length === 2) lengthInSeconds = parts[0] * 60 + parts[1];
+        else if (parts.length === 3) lengthInSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
       }
+      // Note: startTime and endTime from expanded rows would affect individual segment processing in FFmpeg command
   
       totalDuration += lengthInSeconds;
-      console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
+      console.log(`Audio File: ${audio.filename}, Calculated Duration for concat: ${lengthInSeconds}`);
     });
   
-    console.log('Total Duration:', totalDuration);
+    console.log('Total Calculated Duration for FFmpeg output:', totalDuration);
   
     let finalOutputFilename = outputFilename;
     if (alwaysUniqueFilenames) {
@@ -736,39 +665,37 @@ function Project() {
     const ffmpegCommand = createFFmpegCommand({
       audioInputs: selectedAudio.map(audio => {
         const inputOptions = [];
-        if (audio.startTime) inputOptions.push('-ss', audio.startTime);
-        if (audio.endTime) inputOptions.push('-to', audio.endTime);
+        // These options are for if FFmpeg should trim the input *before* concatenation/processing
+        if (audio.startTime && audio.length) inputOptions.push('-ss', audio.startTime); // Start time for this segment
+        if (audio.length) inputOptions.push('-t', audio.length);   // Duration for this segment
         inputOptions.push('-i', audio.filepath);
         return {
           ...audio,
           inputOptions,
-          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
+          // Ensure duration passed to createFFmpegCommand is the one to be used for this segment
+          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time, 0) : parseFloat(audio.duration)
         };
       }),
-      imageInputs: selectedImages.map(image => {
-        const [width, height] = image.dimensions.split('x').map(Number);
+      imageInputs: selectedImagesFromTable.map(image => { // Use images selected from table
+        const [imgWidth, imgHeight] = image.dimensions.split('x').map(Number);
         return {
-          ...image,
-          width: width, // Set to the actual image width
-          height: height, // Set to the actual image height
-          stretchImageToFit: image.stretchImageToFit,
-          paddingColor: image.paddingColor || backgroundColor,
-          useBlurBackground: image.useBlurBackground || false
+          ...image, // This includes stretchImageToFit, paddingColor, useBlurBackground from table row's expanded state
+          width: imgWidth, 
+          height: imgHeight,
         };
       }),
       outputFilepath: outputFilePath,
       width: parseInt(videoWidth),
       height: parseInt(videoHeight),
-      paddingCheckbox: usePadding,
-      backgroundColor: backgroundColor,
-      stretchImageToFit: stretchImageToFit,
-      repeatLoop: false,
+      paddingCheckbox: usePadding, // This seems like a global padding toggle, image-specific padding is in imageInputs
+      backgroundColor: backgroundColor, // Global background, might be overridden by image-specific paddingColor
+      // stretchImageToFit: stretchImageToFit, // This global one might conflict. Image-specific one is preferred.
+      // repeatLoop: false, // Not currently used or set by UI
     });
   
-    console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
-    console.log('send duration:', ffmpegCommand.outputDuration);
+    console.log('FFmpeg Command Args:', ffmpegCommand.cmdArgs.join(" "));
+    console.log('FFmpeg Output Duration:', ffmpegCommand.outputDuration);
   
-    // Clean up old listeners
     window.api.removeAllListeners('ffmpeg-output');
     window.api.removeAllListeners('ffmpeg-error');
     window.api.removeAllListeners('ffmpeg-progress');
@@ -777,191 +704,211 @@ function Project() {
     window.api.send('run-ffmpeg-command', {
       renderId: renderId,
       cmdArgs: ffmpegCommand.cmdArgs,
-      outputDuration: ffmpegCommand.outputDuration,
+      outputDuration: ffmpegCommand.outputDuration, // Pass the calculated total duration
     });
   
     window.api.receive('ffmpeg-output', (data) => {
+        // console.log('FFmpeg Output:', data);
     });
   
     window.api.receive('ffmpeg-error', (data) => {
-      console.log('FFmpeg Error:', data);
+      console.error('FFmpeg Error Received:', data);
       setFfmpegError({
-        lastOutput: data.lastOutput,
-        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
+        lastOutput: data.lastOutput || "Unknown error (no last output).",
+        fullErrorLog: data.fullErrorLog || "Unknown error (no full log)."
       });
-  
-      updateRender(renderId, { progress: 'error' }); // Set progress to "error"
+      updateRender(renderId, { progress: 'error' });
     });
   
-    window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
-      updateRender(renderId, { pid, progress });
+    window.api.receive('ffmpeg-progress', ({ renderId: progRenderId, pid, progress }) => {
+      if (progRenderId === renderId) { // Ensure progress updates are for the correct render
+        updateRender(progRenderId, { pid, progress });
+      }
     });
   
-    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
-      updateRender(renderId, { progress: status });
-      if (status === 'Stopped') {
-        setFfmpegError(null); // Clear any existing error message
+    window.api.receive('ffmpeg-stop-response', ({ renderId: stopRenderId, status }) => {
+      if (stopRenderId === renderId) {
+        updateRender(stopRenderId, { progress: status });
+        if (status === 'Stopped') {
+          setFfmpegError(null); 
+        }
       }
     });
   
     addRender({
       id: renderId,
       pid: null,
-      progress: 'Starting...', // Set initial progress to "Starting..."
-      outputFolder: outputFolder, // Use the correct output folder
-      outputFilepath: outputFilePath, // Save the output file path
-      outputFilename: finalOutputFilename, // Use the correct output filename
-      ffmpegCommand: ffmpegCommand.commandString,
+      progress: 'Starting...',
+      outputFolder: outputFolder, 
+      outputFilepath: outputFilePath, 
+      outputFilename: finalOutputFilename, 
+      ffmpegCommand: ffmpegCommand.cmdArgs.join(" "), // Store the command string for display
       videoWidth: videoWidth,
       videoHeight: videoHeight,
       backgroundColor: backgroundColor,
       usePadding: usePadding,
-      stretchImageToFit: stretchImageToFit,
-      paddingColor: paddingColor,
-      useBlurBackground: useBlurBackground,
+      // These might be redundant if image-specific settings are used primarily
+      // stretchImageToFit: stretchImageToFit, 
+      // paddingColor: paddingColor,
+      // useBlurBackground: useBlurBackground,
       alwaysUniqueFilenames: alwaysUniqueFilenames
     });
-  
   };
   
 
-  const handleFilesMetadata = (filesMetadata) => {
-    console.log('project.js: handleFilesMetadata() = ', filesMetadata)
+  const handleFilesMetadata = (receivedFilesMetadata) => {
+    console.log('project.js: handleFilesMetadata() = ', receivedFilesMetadata)
     
-    if (!Array.isArray(filesMetadata)) {
-      console.error('filesMetadata is not an array:', filesMetadata);
+    if (!Array.isArray(receivedFilesMetadata)) {
+      console.error('receivedFilesMetadata is not an array:', receivedFilesMetadata);
       return;
     }
 
-    filesMetadata.forEach((file, index) => {
-      // Set output folder to the first new input file's folder if it's empty
-      if (index === 0 && file.filepath) {
-        const fileFolder = file.filepath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+    const newAudioFiles = [];
+    const newImageFiles = [];
+
+    receivedFilesMetadata.forEach((file, index) => {
+      if (index === 0 && file.filepath && !outputFolder && pathSeparator) {
+        const fileFolder = file.filepath.substring(0, file.filepath.lastIndexOf(pathSeparator));
         setOutputFolder(fileFolder);
         localStorage.setItem('outputFolder', fileFolder);
       }
       
+      const commonFileProps = {
+        id: generateUniqueId(),
+        filename: file.filename,
+        filepath: file.filepath,
+      };
+
       if (file.filetype === 'audio') {
-        setAudioFiles(prev => {
-          const index = prev.findIndex(f => f.filepath === file.filepath);
-          if (index >= 0) {
-            const updatedFiles = [...prev];
-            updatedFiles[index] = { ...updatedFiles[index], ...file };
-            return updatedFiles;
-          } else {
-            return [...prev, {
-              id: generateUniqueId(),
-              filename: file.filename, // Use `filename`
-              filepath: file.filepath,
-              duration: file.duration || 'Loading...',
-            }];
-          }
+        // For audio files, parse the duration if it exists
+        let duration = 'Loading...';
+        if (file.duration && !isNaN(parseFloat(file.duration))) {
+          duration = parseFloat(file.duration).toString();
+        }
+        
+        newAudioFiles.push({
+          ...commonFileProps,
+          duration,
+          startTime: '', 
+          length: '', 
+          endTime: '',
         });
+
+        // If duration is still loading, request it from the main process
+        if (duration === 'Loading...') {
+          window.api.send('get-audio-duration', { filepath: file.filepath, id: commonFileProps.id });
+        }
       } else if (file.filetype === 'image') {
-        setImageFiles(prev => {
-          const index = prev.findIndex(f => f.filepath === file.filepath);
-          if (index >= 0) {
-            const updatedImages = [...prev];
-            updatedImages[index] = { ...updatedImages[index], ...file, useBlurBackground: true, stretchImageToFit: false };
-            return updatedImages;
-          } else {
-            return [...prev, {
-              id: generateUniqueId(),
-              filename: file.filename, // Use `filename`
-              filepath: file.filepath,
-              dimensions: file.dimensions || 'Unknown',
-              useBlurBackground: true,
-              stretchImageToFit: false
-            }];
-          }
+        newImageFiles.push({
+          ...commonFileProps,
+          dimensions: file.dimensions || 'Unknown',
+          stretchImageToFit: false,
+          paddingColor: null,
+          useBlurBackground: true,
         });
       }
     });
-  };
 
-  const updateAudioFiles = (newFile) => {
-    console.log('updateAudioFiles()')
     setAudioFiles(prev => {
-      const index = prev.findIndex(f => f.filepath === newFile.filepath);
-      if (index >= 0) {
-        const updatedFiles = [...prev];
-        updatedFiles[index] = { ...updatedFiles[index], ...newFile };
-        return updatedFiles;
-      } else {
-        return [...prev, { ...newFile, id: generateUniqueId() }];
-      }
+      const combined = [...prev];
+      newAudioFiles.forEach(newFile => {
+        if (!combined.some(f => f.filepath === newFile.filepath)) {
+          combined.push(newFile);
+        }
+      });
+      return combined;
+    });
+
+    setImageFiles(prev => {
+      const combined = [...prev];
+      newImageFiles.forEach(newFile => {
+        if (!combined.some(f => f.filepath === newFile.filepath)) {
+          combined.push(newFile);
+        }
+      });
+      return combined;
     });
   };
 
-  const updateImageFiles = (newFile) => {
-    setImageFiles(prev => {
-      const index = prev.findIndex(f => f.filepath === newFile.filepath);
-      if (index >= 0) {
-        const updatedImages = [...prev];
-        updatedImages[index] = { ...updatedImages[index], ...newFile };
-        return updatedImages;
-      } else {
-        return [...prev, { ...newFile, id: generateUniqueId() }];
-      }
-    });
-  };
+  useEffect(() => {
+    const handleAudioDuration = (event, { id, duration }) => {
+      setAudioFiles(prev => prev.map(file => {
+        if (file.id === id) {
+          return { ...file, duration: duration.toString() };
+        }
+        return file;
+      }));
+    };
+
+    window.api.receive('audio-duration-response', handleAudioDuration);
+
+    return () => {
+      window.api.removeAllListeners('audio-duration-response');
+    };
+  }, []);
 
   // Input validation helper functions
   const sanitizeFilename = (filename) => {
-    // Allow alphanumeric characters, underscores, hyphens, and spaces
-    return filename.replace(/[^a-zA-Z0-9_-\s]/g, '');
+    return filename.replace(/[^a-zA-Z0-9_-\s.]/g, '').substring(0, 255); // Allow periods for extensions if user types them
   };
 
   const sanitizeNumericInput = (value, min, max) => {
-    // Remove any non-numeric characters
     const cleanValue = value.toString().replace(/[^0-9]/g, '');
+    if (cleanValue === '') return ''; // Allow empty input temporarily
     const numValue = parseInt(cleanValue, 10);
 
-    if (isNaN(numValue)) return min;
-    if (min !== undefined && numValue < min) return min;
-    if (max !== undefined && numValue > max) return max;
-
-    return numValue;
+    if (isNaN(numValue)) return String(min); // Default to min if parse fails
+     // Don't clamp immediately, allow user to type. Validation can happen on blur or submit.
+    // if (min !== undefined && numValue < min) return String(min);
+    // if (max !== undefined && numValue > max) return String(max);
+    return String(numValue);
   };
 
+  const validateNumericInputOnBlur = (value, min, max, setter) => {
+    let numValue = parseInt(value, 10);
+    if (isNaN(numValue) || (min !== undefined && numValue < min)) {
+        numValue = min;
+    } else if (max !== undefined && numValue > max) {
+        numValue = max;
+    }
+    setter(String(numValue));
+    localStorage.setItem(setter.name === 'setVideoWidth' ? 'videoWidth' : 'videoHeight', String(numValue));
+  };
+
+
   const validateHexColor = (color) => {
-    const hexPattern = /^#[0-9A-Fa-f]{6}$/;
-    return hexPattern.test(color) ? color : '#000000';
+    const hexPattern = /^#[0-9A-Fa-f]{6}$/i; // Case insensitive
+    return hexPattern.test(color) ? color : '#000000'; // Default to black if invalid
   };
 
   const handleOutputFilenameChange = (e) => {
     const sanitizedFilename = sanitizeFilename(e.target.value);
     setOutputFilename(sanitizedFilename);
-    localStorage.setItem('outputFilename', sanitizedFilename);
+    // localStorage saving is handled by useEffect
   };
 
   const handleVideoWidthChange = (e) => {
-    const sanitizedWidth = sanitizeNumericInput(e.target.value, 1, 7680); // 8K max
-    setVideoWidth(sanitizedWidth.toString());
-    localStorage.setItem('videoWidth', sanitizedWidth.toString());
+    const sanitizedWidth = sanitizeNumericInput(e.target.value, 1, 7680);
+    setVideoWidth(sanitizedWidth);
   };
-
+  
   const handleVideoHeightChange = (e) => {
-    const sanitizedHeight = sanitizeNumericInput(e.target.value, 1, 4320); // 8K max
-    setVideoHeight(sanitizedHeight.toString());
-    localStorage.setItem('videoHeight', sanitizedHeight.toString());
+    const sanitizedHeight = sanitizeNumericInput(e.target.value, 1, 4320);
+    setVideoHeight(sanitizedHeight);
   };
 
   const handleBackgroundColorChange = (e) => {
-    const sanitizedColor = validateHexColor(e.target.value);
-    setBackgroundColor(sanitizedColor);
-    localStorage.setItem('backgroundColor', sanitizedColor);
+    // No immediate sanitization, color input type handles format mostly
+    setBackgroundColor(e.target.value);
+  };
+  
+  const handleBackgroundColorBlur = (e) => {
+    const validatedColor = validateHexColor(e.target.value);
+    setBackgroundColor(validatedColor);
+    localStorage.setItem('backgroundColor', validatedColor);
   };
 
-  const handlePaddingColorChange = (e) => {
-    setPaddingColor(e.target.value);
-    localStorage.setItem('paddingColor', e.target.value);
-  };
-
-  const handleStretchImageToFitChange = (e) => {
-    setStretchImageToFit(e.target.checked);
-    localStorage.setItem('stretchImageToFit', e.target.checked);
-  };
 
   const handleToggleErrorLog = () => {
     setShowFullErrorLog((prev) => !prev);
@@ -973,30 +920,62 @@ function Project() {
   };
 
   const resetToDefault = () => {
+    // Keep renders, pathSeparator, and globalFilter as they are user/system specific
+    // Reset project-specific settings
     setAudioFiles([]);
     setImageFiles([]);
+    setAudioRowSelection({});
+    setImageRowSelection({});
+    
+    setOutputFolder(localStorage.getItem('outputFolder') || ''); // Keep last used output folder or default
     setOutputFilename('output-video');
     setOutputFormat('mp4');
     setVideoWidth('1920');
     setVideoHeight('1080');
     setBackgroundColor('#000000');
+    setUsePadding(false);
     setAlwaysUniqueFilenames(false);
-    localStorage.clear();
+    setPaddingColor('#FFFFFF'); // Default padding color if used
+    setStretchImageToFit(false);
+    setUseBlurBackground(true); // Default for new images often desired
+    
+    setFfmpegError(null);
+    setSelectedImageIndex(0);
+    setResolutionOptions([]);
+    setSelectedResolution('');
+
+    // Update localStorage for reset items
+    localStorage.setItem('outputFilename', 'output-video');
+    localStorage.setItem('outputFormat', 'mp4');
+    localStorage.setItem('videoWidth', '1920');
+    localStorage.setItem('videoHeight', '1080');
+    localStorage.setItem('backgroundColor', '#000000');
+    localStorage.setItem('usePadding', 'false');
+    localStorage.setItem('alwaysUniqueFilenames', 'false');
+    localStorage.setItem('paddingColor', '#FFFFFF');
+    localStorage.setItem('stretchImageToFit', 'false');
+    localStorage.setItem('useBlurBackground', 'true');
+    localStorage.removeItem('audioFiles');
+    localStorage.removeItem('imageFiles');
+    localStorage.removeItem('audioRowSelection');
+    localStorage.removeItem('imageRowSelection');
   };
 
-  const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-  const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
+  const selectedImagesForTimeline = useMemo(() => 
+    imageFiles.filter((file) => imageRowSelection[file.id]),
+    [imageFiles, imageRowSelection]
+  );
 
 
   return (
     <div className={styles.projectContainer}>
       <div className={styles.header}>
         <h1 className={styles.projectTitle}>New Project</h1>
-        <button className={styles.refreshButton} onClick={clearComponent}>
-          Clear
+        <button className={styles.refreshButton} onClick={clearComponent} title="Clear current project files and selections">
+          Clear Project
         </button>
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
+        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage} title="Clear all application data from local storage">
+          Reset Application
         </button>
       </div>
 
@@ -1004,27 +983,32 @@ function Project() {
 
       <h2>Audio Files</h2>
       <Table
+        ref={audioTableRef}
         data={audioFiles}
         rowSelection={audioRowSelection}
         setRowSelection={setAudioRowSelection}
-        setData={setAudioFiles}
+        setData={setAudioFiles} // For table-level operations like DND, remove
         columns={audioColumns}
-        setAudioFiles={setAudioFiles}
+        setAudioFiles={setAudioFiles} // For row-level operations in Row component
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        isImageTable={false}
+        isRenderTable={false}
       />
 
       <h2>Image Files</h2>
       <Table
+        ref={imageTableRef}
         data={imageFiles}
         rowSelection={imageRowSelection}
         setRowSelection={setImageRowSelection}
-        setData={setImageFiles}
+        setData={setImageFiles} // For table-level operations
         columns={imageColumns}
         isImageTable={true}
-        setImageFiles={setImageFiles}
+        setImageFiles={setImageFiles} // For row-level operations in Row component
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        isRenderTable={false}
       />
 
       <div className={styles.renderOptionsSection}>
@@ -1032,8 +1016,9 @@ function Project() {
         <button
           className={styles.resetButton}
           onClick={resetToDefault}
+          title="Reset render options and file lists to default values"
         >
-          Reset to Default
+          Reset Options & Files
         </button>
         <div className={styles.renderOptionsGrid}>
 
@@ -1041,14 +1026,15 @@ function Project() {
             <label htmlFor="outputFolder" className={styles.renderOptionLabel}>
               Output Folder
             </label>
-            <div className={styles.editableDropdownFolder}>
+            <div className={styles.folderInputWrapper}> {/* Changed from editableDropdownFolder */}
               <input
                 type="text"
                 id="outputFolder"
                 value={outputFolder}
                 onChange={handleOutputFolderChange}
                 placeholder="Choose output folder"
-                className={styles.renderOptionInput}
+                className={styles.folderInput} // Use folderInput style
+                readOnly // Make it read-only, changed by button
               />
               <button
                 onClick={handleChooseFolder}
@@ -1077,16 +1063,19 @@ function Project() {
                 id="outputFilename"
                 value={outputFilename}
                 onChange={handleOutputFilenameChange}
-                placeholder="Enter filename (letters, numbers, spaces, - and _ only)"
+                placeholder="Enter filename"
                 className={styles.renderOptionInput}
                 maxLength={255}
               />
               <select
                 id="outputFilenameOptions"
-                value={outputFilename}
-                onChange={(e) => setOutputFilename(e.target.value)}
+                value={""} // Control with input, select just offers suggestions
+                onChange={(e) => {
+                    if(e.target.value) setOutputFilename(e.target.value);
+                }}
                 className={styles.renderOptionSelect}
               >
+                <option value="" disabled>Suggest from names...</option>
                 {generateOutputFilenameOptions().map((option, index) => (
                   <option key={index} value={option}>
                     {option}
@@ -1108,22 +1097,25 @@ function Project() {
             >
               <option value="mp4">MP4</option>
               <option value="mkv">MKV</option>
+              {/* Add more formats as needed */}
             </select>
           </div>
 
           <div className={styles.renderOptionGroup}>
             <label htmlFor="resolution" className={styles.renderOptionLabel}>
-              Resolution
+              Base Resolution on Image
             </label>
-            <div className={styles.resolutionBox}>
+            <div className={styles.resolutionBox}> {/* Custom class for layout if needed */}
               <select
                 id="imageSelection"
                 value={selectedImageIndex}
                 onChange={handleImageSelectionChange}
                 className={styles.renderOptionSelect}
+                title="Select an image to base resolution options on"
               >
+                <option value="" disabled>Select image for resolution...</option>
                 {imageFiles.map((image, index) => (
-                  <option key={index} value={index}>
+                  <option key={image.id || index} value={index}> {/* Use image.id if available and unique */}
                     {image.filename}
                   </option>
                 ))}
@@ -1133,8 +1125,11 @@ function Project() {
                 value={selectedResolution}
                 onChange={handleResolutionChange}
                 className={styles.renderOptionSelect}
+                disabled={!imageFiles[selectedImageIndex]} // Disable if no image is selected or available
+                title="Select a resolution based on the chosen image"
               >
-                {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
+                <option value="" disabled>Select resolution...</option>
+                {(resolutionOptions[selectedImageIndex] || []).map((resolution, index) => (
                   <option key={index} value={resolution}>
                     {resolution}
                   </option>
@@ -1148,12 +1143,13 @@ function Project() {
               Width (px)
             </label>
             <input
-              type="text"
+              type="text" // Keep as text to allow intermediate non-numeric states
               id="videoWidth"
               value={videoWidth}
               onChange={handleVideoWidthChange}
+              onBlur={(e) => validateNumericInputOnBlur(e.target.value, 1, 7680, setVideoWidth)}
               className={styles.renderOptionInput}
-              placeholder="Enter width (1-7680)"
+              placeholder="e.g., 1920"
               maxLength={4}
             />
           </div>
@@ -1163,15 +1159,29 @@ function Project() {
               Height (px)
             </label>
             <input
-              type="text"
+              type="text" // Keep as text
               id="videoHeight"
               value={videoHeight}
               onChange={handleVideoHeightChange}
+              onBlur={(e) => validateNumericInputOnBlur(e.target.value, 1, 4320, setVideoHeight)}
               className={styles.renderOptionInput}
-              placeholder="Enter height (1-4320)"
+              placeholder="e.g., 1080"
               maxLength={4}
             />
           </div>
+          
+          <div className={styles.renderOptionGroup}>
+            <label htmlFor="backgroundColor" className={styles.renderOptionLabel}>Background Color</label>
+            <input
+                type="color"
+                id="backgroundColor"
+                value={backgroundColor}
+                onChange={handleBackgroundColorChange}
+                onBlur={handleBackgroundColorBlur} // Validate on blur
+                className={styles.renderOptionColor}
+            />
+          </div>
+
 
           <div className={styles.renderOptionGroup}>
             <label className={styles.renderOptionCheckboxLabel}>
@@ -1188,19 +1198,18 @@ function Project() {
         </div>
 
 
-          {/* Image Timeline */}
-          <div className={styles.renderOptionGroup}>
-
-            <div id="imageTimelineBox">
-              <h3 className={styles.blackText}>Image Timeline</h3>
-              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
-                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
-                  <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.length === 0 ? (
-                      <p>No images selected</p>
+          {/* Image Timeline for selected images from the Image Table */}
+          <div className={styles.renderOptionGroup} style={{ gridColumn: "1 / -1" }}> {/* Span full width */}
+            <div id="imageTimelineBox" className={styles.imageTimelineBox}>
+              <h3 className={styles.blackText} style={{ marginLeft: '0.5rem' }}>Image Sequence for Render</h3>
+              <DndContext id="imageTimelineDndContext" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
+                <SortableContext items={selectedImagesForTimeline.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
+                  <div id="imageTimelineContent" className={styles.imageTimeline}> {/* Content container for scrolling */}
+                    {selectedImagesForTimeline.length === 0 ? (
+                      <p style={{ marginLeft: '0.5rem', color: 'black' }}>No images selected in the table above, or selection is empty.</p>
                     ) : (
-                      selectedImages.map((file) => (
-                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
+                      selectedImagesForTimeline.map((file) => (
+                        <SortableImage key={file.id} file={file} />
                       ))
                     )}
                   </div>
@@ -1212,7 +1221,16 @@ function Project() {
         <button
           className={styles.renderButton}
           onClick={handleRender}
-          disabled={audioFiles.filter((file) => audioRowSelection[file.id]).length === 0 || imageFiles.filter((file) => imageRowSelection[file.id]).length === 0}
+          disabled={
+            (audioTableRef.current?.getOrderedSelectedRows() || []).length === 0 || 
+            (imageTableRef.current?.getOrderedSelectedRows() || []).length === 0 ||
+            !outputFolder || !pathSeparator // Also disable if output folder or path separator isn't set
+          }
+          title={
+            !outputFolder ? "Please select an output folder first" : 
+            !pathSeparator ? "Path separator not loaded, please wait or restart" :
+            "Render the video with selected files and options"
+          }
         >
           Render
         </button>
@@ -1220,13 +1238,13 @@ function Project() {
 
       {ffmpegError && (
         <div className={styles.errorContainer}>
-          <button className={styles.closeButton} onClick={handleCloseError}>x</button>
+          <button className={styles.closeButton} onClick={handleCloseError}>×</button>
           <h3>FFmpeg Error:</h3>
           <pre className={styles.errorPre}>
             {showFullErrorLog ? ffmpegError.fullErrorLog : ffmpegError.lastOutput}
           </pre>
           <button onClick={handleToggleErrorLog} className={styles.toggleErrorButton}>
-            {showFullErrorLog ? 'Show error message only' : 'Show full error message'}
+            {showFullErrorLog ? 'Show summary' : 'Show full log'}
           </button>
         </div>
       )}
@@ -1234,45 +1252,32 @@ function Project() {
       <div className={styles.rendersSection}>
         <h2>Renders List</h2>
         <Table
+          ref={rendersTableRef} // Add ref if needed for operations like getOrderedSelectedRows
           data={renders.map(render => {
-            const parts = render.outputFilename.split(pathSeparator);
+            const parts = render.outputFilepath ? render.outputFilepath.split(pathSeparator) : [render.outputFilename];
             const filename = parts[parts.length - 1];
             return {
-              progress: render.progress,
-              id: render.id,
-              outputFilename: filename, // Display only the filename with extension
-              ffmpegCommand: render.ffmpegCommand
+              ...render, // Pass full render object for all details
+              outputFilenameDisplay: filename, // Specific for display
             };
           })}
-          columns={renderColumns}
-          rowSelection={{}} // No row selection needed for this table
-          setRowSelection={() => {}} // Dummy function
-          setData={setRenders} // This table modifies renders
+          columns={renderColumns.map(col => { // Remap to use outputFilenameDisplay if that's the intent
+              if (col.accessorKey === 'outputFilename') {
+                  return { ...col, accessorKey: 'outputFilenameDisplay' };
+              }
+              return col;
+          })}
+          rowSelection={{}} 
+          setRowSelection={() => {}} 
+          setData={setRenders} 
           isRenderTable={true}
-          ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
-          removeRender={removeRender}
+          removeRender={removeRender} // Pass removeRender for the "Remove" button in the Renders table
+          // ffmpegCommand prop was used in Row for expanded content, ensure it uses the correct data
+          // The ffmpegCommand to display should be per-row, so pass it down if needed or access from row.original
         />
-        {/*
-        {renders.map(render => (
-          <div key={render.id} className={styles.renderItem}>
-            <div>Render ID: {render.id}</div>
-            <div>PID: {render.pid}</div>
-            <div>Progress: {render.progress}%</div>
-            <div>
-              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
-              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
-              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
-              <button onClick={() => handleAction('start', render.id)}>Start</button>
-              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
-              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-        */}
       </div>
     </div>
   );
 }
 
 export default Project;
-
