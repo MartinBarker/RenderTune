@@ -3,10 +3,6 @@
 <h1>RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.</h1>
 <img src="./buildAssets/RenderTune-screenshot-small.png" style="float:left" alt="screenshot">
 
-# Note: 
-I am currently working on a new version of RenderTune, if you want to clone the previous version of RenderTune, download release v1.1.4 (https://github.com/MartinBarker/RenderTune/releases/tag/v1.1.4) or checkout branch `main_backup_pre_react_rewrite`
-Below is the previous README, the new README is located starting after line 20 ([RenderTune v2.0](#new-readme-rendertune-v20-react-rewrite))
-
 ## Tutorial Video (Click To Watch):
 <a target="_blank" href="https://www.youtube.com/watch?v=LVnacPxquT4"><img target="_blank" src="https://i.imgur.com/Hr2ThFG.png" width="400" height="400" style="float:left" alt="RenderTune Tutorial Video" /></a>
 
