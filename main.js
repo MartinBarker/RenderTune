@@ -87,29 +87,40 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.on('get-color-palette', async (event, imagePath) => {
-    try {
-      const thumbnailPath = thumbnailMap[imagePath] || imagePath;
-      const swatches = await Vibrant.from(thumbnailPath).getPalette();
-      let colors = {};
+ipcMain.on('get-color-palette', async (event, imagePath) => {
+  try {
+    const thumbnailPath = thumbnailMap[imagePath] || imagePath;
+    const swatches      = await Vibrant.from(thumbnailPath).getPalette();
+    let colors = {};
 
-      for (const [key, value] of Object.entries(swatches)) {
-        if (value) { // Ensure the swatch is not null/undefined
-          const rgbColor = value.rgb;
-          const hexColor = rgbToHex(rgbColor);
-          colors[key] = { hex: hexColor, rgb: rgbColor };
-        }
-      }
-      event.reply(`color-palette-response-${imagePath}`, colors);
-    } catch (error) {
-      event.reply(`color-palette-response-${imagePath}`, {});
+    for (const [key, value] of Object.entries(swatches)) {
+      if (!value) continue;
+
+      // Vibrant.Swatch.rgb gives you floats, so round them first:
+      const rgbColor = value.rgb.map(c => Math.round(c));
+      const hexColor = rgbToHex(rgbColor);
+      colors[key] = { hex: hexColor, rgb: rgbColor };
+
+      //console.log(`Palette color [${key}]: ${hexColor}`);
     }
-  });
 
-  // Helper function to convert RGB array to HEX
-  function rgbToHex(rgb) {
-    return `#${rgb.map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+    event.reply(`color-palette-response-${imagePath}`, colors);
+  } catch (error) {
+    event.reply(`color-palette-response-${imagePath}`, {});
   }
+});
+
+// Helper: now takes an array of three integers [0–255]
+function rgbToHex(rgb) {
+  return `#${rgb
+    .map(v => v
+      .toString(16)           // convert to hex
+      .padStart(2, '0')       // ensure two characters
+    )
+    .join('')
+    .toLowerCase()            // optional: force lowercase
+  }`;
+}
 
 
   createWindow();
