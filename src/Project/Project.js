@@ -43,12 +43,12 @@ function Project() {
   const [selectedImageRows, setSelectedImageRows] = useState([]);
 
   const setSelectedAudioRowsCallback = React.useCallback((rows) => {
-    console.log("!!!!Selected rows in display order (Audio):", rows);
+    //console.log("!!!!Selected rows in display order (Audio):", rows);
     setSelectedAudioRows(rows);
   }, []);
 
   const setSelectedImageRowsCallback = React.useCallback((rows) => {
-    console.log("!!!!Selected rows in display order (Image):", rows);
+    //console.log("!!!!Selected rows in display order (Image):", rows);
     setSelectedImageRows(rows);
   }, []);
 
@@ -1003,7 +1003,7 @@ const handleRender = () => {
   const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
 
     const setSelectedRows = React.useCallback((rows) => {
-    console.log("!!!!Selected rows in display order:", rows);
+    //console.log("!!!!Selected rows in display order:", rows);
   }, []);
 
   return (
@@ -1206,28 +1206,6 @@ const handleRender = () => {
             </label>
           </div>
         </div>
-
-
-          {/* Image Timeline */}
-          <div className={styles.renderOptionGroup}>
-
-            <div id="imageTimelineBox">
-              <h3 className={styles.blackText}>Image Timeline</h3>
-              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
-                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
-                  <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.length === 0 ? (
-                      <p>No images selected</p>
-                    ) : (
-                      selectedImages.map((file) => (
-                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-          </div>
 
         <button
           className={styles.renderButton}

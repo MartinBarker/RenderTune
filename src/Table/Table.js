@@ -159,13 +159,14 @@ function Row({
     if (isImageTable) {
       const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
       if (savedPalette) {
+        console.log(`[Table.js] Loaded color palette from localStorage for ${row.original.filepath}:`, JSON.parse(savedPalette));
         setColorPalette(JSON.parse(savedPalette));
       } else {
-        //console.log('Requesting color palette for:', row.original.filepath);
+        console.log(`[Table.js] No palette in localStorage for ${row.original.filepath}, requesting from main process...`);
         window.api.send('get-color-palette', row.original.filepath);
         const responseChannel = `color-palette-response-${row.original.filepath}`;
         window.api.receive(responseChannel, (colors) => {
-          //console.log('Received color palette:', colors);
+          console.log(`[Table.js] Received color palette from main process for ${row.original.filepath}:`, colors);
           setColorPalette((prevPalette) => {
             const newPalette = {
               Vibrant: colors.Vibrant || prevPalette.Vibrant,
@@ -175,6 +176,7 @@ function Row({
               DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
               LightMuted: colors.LightMuted || prevPalette.LightMuted
             };
+            console.log(`[Table.js] Setting new color palette for ${row.original.filepath}:`, newPalette);
             localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
             return newPalette;
           });
@@ -502,7 +504,7 @@ function Table({
     const selectedFiles = data
       .filter((row) => rowSelection[row.id]) // Filter selected rows
       .sort((a, b) => data.findIndex((row) => row.id === a.id) - data.findIndex((row) => row.id === b.id)); // Ensure order matches table row order
-    console.log("Selected files:", selectedFiles);
+    //console.log("Selected files:", selectedFiles);
   }, [rowSelection, data]); // Trigger whenever rowSelection or data changes
 
   const generateUniqueId = () => {
@@ -751,7 +753,7 @@ function Table({
       .filter((r) => r.getIsSelected())
       .map((r) => r.original);
 
-    console.log("Selected files in display order:", selectedFiles);
+    //console.log("Selected files in display order:", selectedFiles);
     onSelectedRowsChange?.(selectedFiles);
   }, [
     rowSelection,
