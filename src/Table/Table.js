@@ -475,6 +475,20 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [errors, setErrors] = useState({});
+  const [sortStatus, setSortStatus] = useState({ column: null, direction: 'manual' });
+
+  useEffect(() => {
+    if (sortStatus.column) {
+      console.log(`Column "${sortStatus.column}" is sorted ${sortStatus.direction}`);
+    }
+  }, [sortStatus]);
+
+  useEffect(() => {
+    const selectedFiles = data
+      .filter((row) => rowSelection[row.id]) // Filter selected rows
+      .sort((a, b) => data.findIndex((row) => row.id === a.id) - data.findIndex((row) => row.id === b.id)); // Ensure order matches table row order
+    console.log("Selected files:", selectedFiles);
+  }, [rowSelection, data]); // Trigger whenever rowSelection or data changes
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -589,35 +603,52 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         header: "Drag",
         cell: () => null,
       },
-      ...columns.map((column) => ({
-        ...column,
-        header: column.id === 'openFolder' ? column.header : () => (
-          <div
-            className={styles.sortableHeader}
-            onClick={() => {
-              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-              let newSorting = [];
-              
-              if (!isSorted) {
-                // First click - ascending
-                newSorting = [{ id: column.accessorKey, desc: false }];
-              } else if (!isSorted.desc) {
-                // Second click - descending
-                newSorting = [{ id: column.accessorKey, desc: true }];
-              }
-              // Third click - no sorting (empty array)
-              
-              setSorting(newSorting);
-            }}
-          >
-            {column.header || ""}
-            <span className={styles.sortIcon}>
-              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : 
-               sorting.find((sort) => sort.id === column.accessorKey) ? "🔼" : ""}
-            </span>
-          </div>
-        ),
-      })),
+      ...columns.map((column) => {
+        // For File Name column, set sortingFn to 'alphanumeric'
+        if (column.accessorKey === 'filename') {
+          return {
+            ...column,
+            enableSorting: true,
+            sortingFn: 'alphanumeric',
+            header: function Header(ctx) {
+              const col = ctx.column;
+              return (
+                <div
+                  className={styles.sortableHeader}
+                  onClick={col.getToggleSortingHandler()}
+                  style={{ cursor: col.getCanSort() ? 'pointer' : 'default' }}
+                >
+                  {typeof column.header === 'function' ? column.header(ctx) : column.header}
+                  <span className={styles.sortIcon}>
+                    {col.getIsSorted() === 'asc' ? "🔼" :
+                      col.getIsSorted() === 'desc' ? "🔽" : ""}
+                  </span>
+                </div>
+              );
+            }
+          };
+        }
+        // For all other columns, keep as before
+        return {
+          ...column,
+          header: column.id === 'openFolder' ? column.header : (ctx) => {
+            const col = ctx.column;
+            return (
+              <div
+                className={styles.sortableHeader}
+                onClick={col.getToggleSortingHandler()}
+                style={{ cursor: col.getCanSort() ? 'pointer' : 'default' }}
+              >
+                {typeof column.header === 'function' ? column.header(ctx) : column.header}
+                <span className={styles.sortIcon}>
+                  {col.getIsSorted() === 'asc' ? "🔼" :
+                    col.getIsSorted() === 'desc' ? "🔽" : ""}
+                </span>
+              </div>
+            );
+          }
+        };
+      }),
     ];
 
     if (!isRenderTable) {
@@ -743,13 +774,20 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   }, [rowSelection, data, isImageTable, isRenderTable]);
 
   const getSelectedRows = () => {
-    const selectedIds = Object.entries(rowSelection)
-      .filter(([_, selected]) => selected)
-      .map(([id]) => id);
-
-    return originalOrder
-      .filter(id => selectedIds.includes(id))
-      .map(id => data.find(row => row.id === id));
+    // If table instance is not available yet, return empty array
+    if (!tableInstanceRef.current) return [];
+    
+    // Get the current display order from the table instance
+    // This accounts for any active sorting, filtering, and pagination
+    const rowModel = tableInstanceRef.current.getRowModel();
+    const currentDisplayedRows = rowModel.rows;
+    
+    // Filter for only the selected rows while maintaining their current display order
+    const selectedRowsInDisplayOrder = currentDisplayedRows
+      .filter(row => rowSelection[row.id])
+      .map(row => row.original);
+    
+    return selectedRowsInDisplayOrder;
   };
 
   return (
