@@ -467,7 +467,22 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
+function Table({ 
+  data, 
+  setData, 
+  columns, 
+  rowSelection, 
+  setRowSelection, 
+  isImageTable, 
+  isRenderTable, 
+  setImageFiles, 
+  setAudioFiles, 
+  ffmpegCommand, 
+  removeRender, 
+  globalFilter, 
+  setGlobalFilter,
+  onSelectedRowsChange
+}) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -727,22 +742,48 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     },
   });
 
-  const handleDragEnd = (event) => {
-    setSorting([]);
-    const { active, over } = event;
+  useEffect(() => {
+    // pull the rows *after* sort/filter but *before* pagination
+    const rows = table.getPrePaginationRowModel().rows;
 
-    if (active && over && active.id !== over.id) {
-      const oldIndex = data.findIndex((item) => item.id === active.id);
-      const newIndex = data.findIndex((item) => item.id === over.id);
+    // keep only the selected ones, in exactly the order they're rendered
+    const selectedFiles = rows
+      .filter((r) => r.getIsSelected())
+      .map((r) => r.original);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newData = arrayMove([...data], oldIndex, newIndex);
-        setData(newData);
-        setOriginalOrder(newData.map(row => row.id));
-        localStorage.setItem("audioFiles", JSON.stringify(newData));
-      }
-    }
-  };
+    console.log("Selected files in display order:", selectedFiles);
+    onSelectedRowsChange?.(selectedFiles);
+  }, [
+    rowSelection,
+    table.getState().sorting, // re-run when sorting changes
+    table.getState().globalFilter, // re-run when filter changes
+  ]);
+
+const handleDragEnd = (event) => {
+  const { active, over } = event;
+  if (!active || !over || active.id === over.id) return;
+
+  // 1) pull the rows *after* sort/filter but *before* pagination
+  const rows = table.getRowModel().rows;
+
+  // 2) make a plain array of your original row objects
+  const sortedData = rows.map(r => r.original);
+
+  // 3) find indexes *in the sorted array*  
+  const oldIndex = rows.findIndex(r => r.id === active.id);
+  const newIndex = rows.findIndex(r => r.id === over.id);
+
+  // 4) move them
+  const newData = arrayMove(sortedData, oldIndex, newIndex);
+
+  // 5) write it back
+  setData(newData);
+  localStorage.setItem("audioFiles", JSON.stringify(newData));
+
+  // 6) clear the sort so you now render in this "manually‐sorted‐plus‐one‐override" mode
+  setSorting([]);
+};
+
 
   const parseDuration = (duration) => {
     if (typeof duration !== 'string') {

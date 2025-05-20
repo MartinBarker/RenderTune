@@ -39,6 +39,19 @@ function Project() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [showFullErrorLog, setShowFullErrorLog] = useState(false);
 
+  const [selectedAudioRows, setSelectedAudioRows] = useState([]);
+  const [selectedImageRows, setSelectedImageRows] = useState([]);
+
+  const setSelectedAudioRowsCallback = React.useCallback((rows) => {
+    console.log("!!!!Selected rows in display order (Audio):", rows);
+    setSelectedAudioRows(rows);
+  }, []);
+
+  const setSelectedImageRowsCallback = React.useCallback((rows) => {
+    console.log("!!!!Selected rows in display order (Image):", rows);
+    setSelectedImageRows(rows);
+  }, []);
+
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   };
@@ -692,137 +705,139 @@ function Project() {
     isSelected: !!imageRowSelection[file.id]
   })), [imageFiles, imageRowSelection]);
 
-  const handleRender = () => {
-    const renderId = generateUniqueId();
-    const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
-    const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-  
-    if (selectedAudio.length === 0 || selectedImages.length === 0) {
-      alert('Please select at least one audio and one image file.');
-      return;
+const handleRender = () => {
+  const selectedAudio = selectedAudioRows;
+  const selectedImages = selectedImageRows;
+
+  if (selectedAudio.length === 0 || selectedImages.length === 0) {
+    alert('Please select at least one audio and one image file.');
+    return;
+  }
+
+  console.log('Selected Audio Files:', selectedAudio);
+  console.log('Selected Image Files:', selectedImages);
+
+  let totalDuration = 0;
+  selectedAudio.forEach(audio => {
+    let lengthInSeconds = parseFloat(audio.duration);
+
+    if (audio.startTime && audio.endTime && audio.length) {
+      const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
+      const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
+      const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
+
+      const startTimeInSeconds = startMinutes * 60 + startSeconds;
+      const endTimeInSeconds = endMinutes * 60 + endSeconds;
+      lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
     }
-  
-    console.log('Selected Audio Files:', selectedAudio);
-    console.log('Selected Image Files:', selectedImages);
-  
-    let totalDuration = 0;
-    selectedAudio.forEach(audio => {
-      let lengthInSeconds = parseFloat(audio.duration);
-  
-      if (audio.startTime && audio.endTime && audio.length) {
-        const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
-        const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
-        const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
-  
-        const startTimeInSeconds = startMinutes * 60 + startSeconds;
-        const endTimeInSeconds = endMinutes * 60 + endSeconds;
-        lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
-      }
-  
-      totalDuration += lengthInSeconds;
-      console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
+
+    totalDuration += lengthInSeconds;
+    console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
+  });
+
+  console.log('Total Duration:', totalDuration);
+
+  let finalOutputFilename = outputFilename;
+  if (alwaysUniqueFilenames) {
+    const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+    finalOutputFilename = `${outputFilename}_${timestamp}`;
+  }
+
+  const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
+
+  // Generate a unique render ID
+  const renderId = generateUniqueId();
+
+  const ffmpegCommand = createFFmpegCommand({
+    audioInputs: selectedAudio.map(audio => {
+      const inputOptions = [];
+      if (audio.startTime) inputOptions.push('-ss', audio.startTime);
+      if (audio.endTime) inputOptions.push('-to', audio.endTime);
+      inputOptions.push('-i', audio.filepath);
+      return {
+        ...audio,
+        inputOptions,
+        duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
+      };
+    }),
+    imageInputs: selectedImages.map(image => {
+      const [width, height] = image.dimensions.split('x').map(Number);
+      return {
+        ...image,
+        width: width, // Set to the actual image width
+        height: height, // Set to the actual image height
+        stretchImageToFit: image.stretchImageToFit,
+        paddingColor: image.paddingColor || backgroundColor,
+        useBlurBackground: image.useBlurBackground || false
+      };
+    }),
+    outputFilepath: outputFilePath,
+    width: parseInt(videoWidth),
+    height: parseInt(videoHeight),
+    paddingCheckbox: usePadding,
+    backgroundColor: backgroundColor,
+    stretchImageToFit: stretchImageToFit,
+    repeatLoop: false,
+  });
+
+  console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
+  console.log('send duration:', ffmpegCommand.outputDuration);
+
+  // Clean up old listeners
+  window.api.removeAllListeners('ffmpeg-output');
+  window.api.removeAllListeners('ffmpeg-error');
+  window.api.removeAllListeners('ffmpeg-progress');
+  window.api.removeAllListeners('ffmpeg-stop-response');
+
+  window.api.send('run-ffmpeg-command', {
+    renderId: renderId, // Use the generated renderId
+    cmdArgs: ffmpegCommand.cmdArgs,
+    outputDuration: ffmpegCommand.outputDuration,
+  });
+
+  window.api.receive('ffmpeg-output', (data) => {
+    console.log('FFmpeg Output:', data);
+  });
+
+  window.api.receive('ffmpeg-error', (data) => {
+    console.log('FFmpeg Error:', data);
+    setFfmpegError({
+      lastOutput: data.lastOutput,
+      fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
     });
-  
-    console.log('Total Duration:', totalDuration);
-  
-    let finalOutputFilename = outputFilename;
-    if (alwaysUniqueFilenames) {
-      const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
-      finalOutputFilename = `${outputFilename}_${timestamp}`;
+
+    updateRender(renderId, { progress: 'error' }); // Set progress to "error"
+  });
+
+  window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
+    updateRender(renderId, { pid, progress });
+  });
+
+  window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
+    updateRender(renderId, { progress: status });
+    if (status === 'Stopped') {
+      setFfmpegError(null); // Clear any existing error message
     }
-  
-    const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
-  
-    const ffmpegCommand = createFFmpegCommand({
-      audioInputs: selectedAudio.map(audio => {
-        const inputOptions = [];
-        if (audio.startTime) inputOptions.push('-ss', audio.startTime);
-        if (audio.endTime) inputOptions.push('-to', audio.endTime);
-        inputOptions.push('-i', audio.filepath);
-        return {
-          ...audio,
-          inputOptions,
-          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
-        };
-      }),
-      imageInputs: selectedImages.map(image => {
-        const [width, height] = image.dimensions.split('x').map(Number);
-        return {
-          ...image,
-          width: width, // Set to the actual image width
-          height: height, // Set to the actual image height
-          stretchImageToFit: image.stretchImageToFit,
-          paddingColor: image.paddingColor || backgroundColor,
-          useBlurBackground: image.useBlurBackground || false
-        };
-      }),
-      outputFilepath: outputFilePath,
-      width: parseInt(videoWidth),
-      height: parseInt(videoHeight),
-      paddingCheckbox: usePadding,
-      backgroundColor: backgroundColor,
-      stretchImageToFit: stretchImageToFit,
-      repeatLoop: false,
-    });
-  
-    console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
-    console.log('send duration:', ffmpegCommand.outputDuration);
-  
-    // Clean up old listeners
-    window.api.removeAllListeners('ffmpeg-output');
-    window.api.removeAllListeners('ffmpeg-error');
-    window.api.removeAllListeners('ffmpeg-progress');
-    window.api.removeAllListeners('ffmpeg-stop-response');
-  
-    window.api.send('run-ffmpeg-command', {
-      renderId: renderId,
-      cmdArgs: ffmpegCommand.cmdArgs,
-      outputDuration: ffmpegCommand.outputDuration,
-    });
-  
-    window.api.receive('ffmpeg-output', (data) => {
-    });
-  
-    window.api.receive('ffmpeg-error', (data) => {
-      console.log('FFmpeg Error:', data);
-      setFfmpegError({
-        lastOutput: data.lastOutput,
-        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
-      });
-  
-      updateRender(renderId, { progress: 'error' }); // Set progress to "error"
-    });
-  
-    window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
-      updateRender(renderId, { pid, progress });
-    });
-  
-    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
-      updateRender(renderId, { progress: status });
-      if (status === 'Stopped') {
-        setFfmpegError(null); // Clear any existing error message
-      }
-    });
-  
-    addRender({
-      id: renderId,
-      pid: null,
-      progress: 'Starting...', // Set initial progress to "Starting..."
-      outputFolder: outputFolder, // Use the correct output folder
-      outputFilepath: outputFilePath, // Save the output file path
-      outputFilename: finalOutputFilename, // Use the correct output filename
-      ffmpegCommand: ffmpegCommand.commandString,
-      videoWidth: videoWidth,
-      videoHeight: videoHeight,
-      backgroundColor: backgroundColor,
-      usePadding: usePadding,
-      stretchImageToFit: stretchImageToFit,
-      paddingColor: paddingColor,
-      useBlurBackground: useBlurBackground,
-      alwaysUniqueFilenames: alwaysUniqueFilenames
-    });
-  
-  };
+  });
+
+  addRender({
+    id: renderId,
+    pid: null,
+    progress: 'Starting...', // Set initial progress to "Starting..."
+    outputFolder: outputFolder, // Use the correct output folder
+    outputFilepath: outputFilePath, // Save the output file path
+    outputFilename: finalOutputFilename, // Use the correct output filename
+    ffmpegCommand: ffmpegCommand.commandString,
+    videoWidth: videoWidth,
+    videoHeight: videoHeight,
+    backgroundColor: backgroundColor,
+    usePadding: usePadding,
+    stretchImageToFit: stretchImageToFit,
+    paddingColor: paddingColor,
+    useBlurBackground: useBlurBackground,
+    alwaysUniqueFilenames: alwaysUniqueFilenames
+  });
+};
   
 
   const handleFilesMetadata = (filesMetadata) => {
@@ -987,6 +1002,9 @@ function Project() {
   const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
   const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
 
+    const setSelectedRows = React.useCallback((rows) => {
+    console.log("!!!!Selected rows in display order:", rows);
+  }, []);
 
   return (
     <div className={styles.projectContainer}>
@@ -1012,6 +1030,7 @@ function Project() {
         setAudioFiles={setAudioFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSelectedRowsChange={setSelectedAudioRowsCallback}
       />
 
       <h2>Image Files</h2>
@@ -1025,6 +1044,7 @@ function Project() {
         setImageFiles={setImageFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSelectedRowsChange={setSelectedImageRowsCallback}
       />
 
       <div className={styles.renderOptionsSection}>
