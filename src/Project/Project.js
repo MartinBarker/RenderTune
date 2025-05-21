@@ -727,7 +727,10 @@ function Project() {
 
 const handleRender = () => {
   const selectedAudio = selectedAudioRows;
-  const selectedImages = selectedImageRows;
+  const selectedImages = selectedImageRows.map((image) => {
+    const updatedImage = imageFiles.find((img) => img.id === image.id);
+    return updatedImage || image; // Ensure the latest state of the image is used
+  });
 
   if (selectedAudio.length === 0 || selectedImages.length === 0) {
     alert('Please select at least one audio and one image file.');
