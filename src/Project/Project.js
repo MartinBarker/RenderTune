@@ -1010,17 +1010,21 @@ const handleRender = () => {
     <div className={styles.projectContainer}>
       <div className={styles.header}>
         <h1 className={styles.projectTitle}>New Project</h1>
-        <button className={styles.refreshButton} onClick={clearComponent}>
-          Clear
-        </button>
+        
+        <button className={styles.deleteLocalStorageButton} onClick={clearComponent}>
+          Clear Project
+        </button> 
+
+        {/* 
         <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
           Delete Local Storage
-        </button>
+        </button> 
+        */}
+      
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
 
-      <h2>Audio Files</h2>
       <Table
         data={audioFiles}
         rowSelection={audioRowSelection}
@@ -1033,7 +1037,6 @@ const handleRender = () => {
         onSelectedRowsChange={setSelectedAudioRowsCallback}
       />
 
-      <h2>Image Files</h2>
       <Table
         data={imageFiles}
         rowSelection={imageRowSelection}
