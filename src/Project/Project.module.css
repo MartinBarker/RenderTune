@@ -67,17 +67,16 @@
 }
 
 .renderOptionsSection {
-  width: 100%;
-  max-width: 800px;
+  width: 100%; /* Make it take up the full width */
+  max-width: 90%; /* Remove the max-width constraint */
   margin: 0 auto; /* Center the box horizontally */
   margin-top: 20px;
-  padding: 1rem;
+  padding: 20px; /* Ensure padding is visible on all sides */
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  
 }
 
 .renderOptionsTitle {
@@ -112,6 +111,7 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0; /* Prevents flex items from overflowing */
+  align-items: flex-start; /* Align items consistently */
 }
 
 .renderOptionLabel {
@@ -176,6 +176,9 @@
   box-sizing: border-box;
   transition: border-color 0.2s;
   color: #333;
+  margin-top: 0; /* Ensure consistent alignment */
+  align-self: stretch; /* Ensure inputs stretch to match their container */
+  box-sizing: border-box;
 }
 
 .renderOptionInput:focus {
@@ -197,8 +200,9 @@
   background-color: white;
   cursor: pointer;
   box-sizing: border-box;
-  margin-top: 0.5rem; /* Add margin to separate from input */
-  color: #333;
+  margin-top: 0; /* Ensure consistent alignment */
+  align-self: stretch; /* Ensure inputs stretch to match their container */
+  box-sizing: border-box;
 }
 
 .renderOptionColor {
@@ -327,16 +331,16 @@
 }
 
 .rendersSection {
-  width: 100%;
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 1rem;
-  background: white;
+  width: 100%; /* Make it take up the full width */
+  max-width: 90%; /* Match render options box */
+  margin: 0 auto; /* Center the box horizontally */
+  margin-top: 20px; /* Match spacing */
+  padding: 20px; /* Ensure padding is visible on all sides */
+  background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: left; /* Align text to the left */
-  margin-left: 0; /* Align to the left of the screen */
-  padding-top: 0.5rem; /* Decrease padding above text */
+  display: flex;
+  flex-direction: column;
 }
 
 .renderItem {

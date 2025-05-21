@@ -1258,8 +1258,6 @@ const handleRender = () => {
         </div>
       )}
 
-      <div className={styles.rendersSection}>
-        <h2>Renders List</h2>
         <Table
           data={renders.map(render => {
             const parts = render.outputFilename.split(pathSeparator);
@@ -1279,24 +1277,8 @@ const handleRender = () => {
           ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
           removeRender={removeRender}
         />
-        {/*
-        {renders.map(render => (
-          <div key={render.id} className={styles.renderItem}>
-            <div>Render ID: {render.id}</div>
-            <div>PID: {render.pid}</div>
-            <div>Progress: {render.progress}%</div>
-            <div>
-              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
-              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
-              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
-              <button onClick={() => handleAction('start', render.id)}>Start</button>
-              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
-              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-        */}
-      </div>
+
+
     </div>
   );
 }
