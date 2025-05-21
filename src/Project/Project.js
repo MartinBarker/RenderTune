@@ -516,6 +516,26 @@ function Project() {
     return options;
   };
 
+  useEffect(() => {
+    const options = generateOutputFilenameOptions();
+    if (selectedAudioRows.length > 1) {
+      // Default to sanitized folder name if more than one audio row is selected
+      const folderName = getUniqueFolderNames(selectedAudioRows)[0];
+      if (folderName && options.includes(folderName)) {
+        setOutputFilename(folderName);
+      }
+    } else if (selectedAudioRows.length === 1) {
+      // Default to sanitized filename of the selected audio row
+      const audioFilename = selectedAudioRows[0].filename.split('.').slice(0, -1).join('.');
+      if (audioFilename && options.includes(audioFilename)) {
+        setOutputFilename(audioFilename);
+      }
+    } else {
+      // Default to "output-video" if no audio rows are selected
+      setOutputFilename("output-video");
+    }
+  }, [selectedAudioRows, audioFiles, imageFiles]);
+
   const audioColumns = [
     { accessorKey: 'filename', header: 'File Name' },
     { accessorKey: 'duration', header: 'Duration', cell: ({ row }) => formatDuration(row.original.duration) },
@@ -1014,13 +1034,6 @@ const handleRender = () => {
         <button className={styles.deleteLocalStorageButton} onClick={clearComponent}>
           Clear Project
         </button> 
-
-        {/* 
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
-        </button> 
-        */}
-      
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
@@ -1051,13 +1064,16 @@ const handleRender = () => {
       />
 
       <div className={styles.renderOptionsSection}>
-        <h2 className={styles.renderOptionsTitle}>Render Options</h2>
-        <button
-          className={styles.resetButton}
-          onClick={resetToDefault}
-        >
-          Reset to Default
-        </button>
+        <div className={styles.renderOptionsHeader}>
+          <h2 className={styles.renderOptionsTitle}>Render Options</h2>
+          {/* <button
+            className={styles.resetButton}
+            onClick={resetToDefault}
+          >
+            Reset to Default
+          </button> */}
+        </div>
+        <hr className={styles.renderOptionsSeparator} />
         <div className={styles.renderOptionsGrid}>
 
           <div className={styles.renderOptionGroup}>
@@ -1141,21 +1157,31 @@ const handleRender = () => {
             <div className={styles.resolutionBox}>
               <select
                 id="imageSelection"
-                value={selectedImageIndex}
+                value={imageFiles.length > 0 ? selectedImageIndex : ""}
                 onChange={handleImageSelectionChange}
                 className={styles.renderOptionSelect}
               >
-                {imageFiles.map((image, index) => (
-                  <option key={index} value={index}>
-                    {image.filename}
+                {imageFiles.length > 0 ? (
+                  imageFiles.map((image, index) => (
+                    <option key={index} value={index}>
+                      {image.filename}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    No image(s) selected
                   </option>
-                ))}
+                )}
               </select>
+              {imageFiles.length === 0 && (
+                <span className={styles.noImageText}>No image(s) selected</span>
+              )}
               <select
                 id="resolutionSelection"
                 value={selectedResolution}
                 onChange={handleResolutionChange}
                 className={styles.renderOptionSelect}
+                disabled={imageFiles.length === 0}
               >
                 {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
                   <option key={index} value={resolution}>
