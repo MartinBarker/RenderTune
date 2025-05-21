@@ -114,9 +114,23 @@ function Row({
       prev.map((audio) => {
         if (audio.id === rowId) {
           const updatedAudio = { ...audio, [field]: formattedValue };
-          if (field === 'length') {
-            updatedAudio.startTime = isOverAnHour ? '00:00:00' : '00:00';
+
+          if (field === 'startTime' && audio.length && audio.endTime) {
+            const [startHours, startMinutes, startSeconds] = isOverAnHour ? formattedValue.split(':').map(Number) : [0, ...formattedValue.split(':').map(Number)];
+            const lengthInSeconds = audio.length.split(':').reduce((acc, time) => 60 * acc + Number(time), 0);
+            const newEndTimeInSeconds = startHours * 3600 + startMinutes * 60 + startSeconds + lengthInSeconds;
+
+            const endHours = Math.floor(newEndTimeInSeconds / 3600);
+            const endMinutes = Math.floor((newEndTimeInSeconds % 3600) / 60);
+            const endSeconds = newEndTimeInSeconds % 60;
+
+            updatedAudio.endTime = isOverAnHour
+              ? `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`
+              : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
+
+            updatedAudio.length = audio.length; // Keep length unchanged.
           }
+
           return updatedAudio;
         }
         return audio;
@@ -377,11 +391,11 @@ function Row({
                   value={row.original.length || ''}
                   onChange={(e) => {
                     const newLength = formatTimeInput(e.target.value, isOverAnHour);
-                    const newEndTime = calculateEndTime(isOverAnHour ? '00:00:00' : '00:00', newLength, isOverAnHour);
+                    const newEndTime = calculateEndTime(row.original.startTime || (isOverAnHour ? '00:00:00' : '00:00'), newLength, isOverAnHour);
                     setAudioFiles((prev) =>
                       prev.map((audio) =>
                         audio.id === row.original.id
-                          ? { ...audio, length: newLength, endTime: newEndTime, startTime: isOverAnHour ? '00:00:00' : '00:00' }
+                          ? { ...audio, length: newLength, endTime: newEndTime }
                           : audio
                       )
                     );
