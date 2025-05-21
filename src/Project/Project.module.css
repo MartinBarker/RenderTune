@@ -67,44 +67,57 @@
 }
 
 .renderOptionsSection {
-  width: 100%;
-  max-width: 800px;
-  margin: 1rem auto;
-  padding: 1rem;
-  background: white;
+  width: 100%; /* Make it take up the full width */
+  max-width: 90%; /* Remove the max-width constraint */
+  margin: 0 auto; /* Center the box horizontally */
+  margin-top: 20px;
+  padding: 20px; /* Ensure padding is visible on all sides */
+  background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: left; /* Align text to the left */
-  margin-left: 0; /* Align to the left of the screen */
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align items to the left */
-  padding-top: 0.5rem; /* Decrease padding above text */
 }
 
 .renderOptionsTitle {
   font-size: 1.5rem;
   color: black; /* Ensure text is black */
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #eee;
-  margin-top: 0; /* Decrease padding above text */
+  margin: 0; /* Remove extra margins */
+  line-height: 3rem; /* Align text vertically within the header */
+}
+
+.renderOptionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Vertically center items */
+  height: 3rem; /* Ensure consistent height for alignment */
+}
+
+.renderOptionsSeparator {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 0 0 1rem 0;
 }
 
 /* Adjust grid for better responsiveness */
 .renderOptionsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  width: 100%;
-  align-items: start; /* Ensure all items align at the top */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 }
 
 .renderOptionGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 10px;
   min-width: 0; /* Prevents flex items from overflowing */
+  align-items: flex-start; /* Align items consistently */
+}
+
+.renderOptionLabel {
+  font-weight: bold;
+  font-size: 14px;
+  color: black; /* Ensure text is black */
 }
 
 /* Make inputs more responsive */
@@ -126,10 +139,12 @@
   cursor: default;
   width: 100%;
   box-sizing: border-box;
+  color: #333;
 }
 
 .folderButton {
-  padding: 0.75rem;
+  margin-left: 10px;
+  padding: 8px;
   background-color: #007bff;
   color: white;
   border: none;
@@ -137,7 +152,6 @@
   cursor: pointer;
   transition: background-color 0.2s;
   white-space: nowrap;
-  margin-left: 10px; /* Add margin to separate from input */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,12 +169,16 @@
 
 .renderOptionInput {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  color: #333;
+  margin-top: 0; /* Ensure consistent alignment */
+  align-self: stretch; /* Ensure inputs stretch to match their container */
+  box-sizing: border-box;
 }
 
 .renderOptionInput:focus {
@@ -175,14 +193,16 @@
 
 .renderOptionSelect {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
   background-color: white;
   cursor: pointer;
   box-sizing: border-box;
-  margin-top: 0.5rem; /* Add margin to separate from input */
+  margin-top: 0; /* Ensure consistent alignment */
+  align-self: stretch; /* Ensure inputs stretch to match their container */
+  box-sizing: border-box;
 }
 
 .renderOptionColor {
@@ -203,6 +223,7 @@
   cursor: pointer;
   user-select: none;
   padding: 0.5rem 0;
+  color: #333;
 }
 
 .renderOptionCheckbox {
@@ -309,45 +330,17 @@
   }
 }
 
-.renderOptionLabel {
-  color: black; /* Ensure text is black */
-}
-
-.renderOptionCheckboxLabel {
-  color: #333;
-}
-
-.renderOptionsTitle {
-  color: black; /* Ensure text is black */
-}
-
-.projectTitle {
-  color: #333;
-}
-
-.renderOptionInput {
-  color: #333;
-}
-
-.renderOptionSelect {
-  color: #333;
-}
-
-.folderInput {
-  color: #333;
-}
-
 .rendersSection {
-  width: 100%;
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 1rem;
-  background: white;
+  width: 100%; /* Make it take up the full width */
+  max-width: 90%; /* Match render options box */
+  margin: 0 auto; /* Center the box horizontally */
+  margin-top: 20px; /* Match spacing */
+  padding: 20px; /* Ensure padding is visible on all sides */
+  background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: left; /* Align text to the left */
-  margin-left: 0; /* Align to the left of the screen */
-  padding-top: 0.5rem; /* Decrease padding above text */
+  display: flex;
+  flex-direction: column;
 }
 
 .renderItem {
@@ -504,8 +497,11 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-top: 0.5rem; /* Adjust margin to align nicely */
-  align-self: flex-start; /* Align button to the left */
+  transition: background-color 0.3s ease;
+  height: 2.5rem; /* Match button height to align with text */
+  display: flex;
+  align-items: center; /* Vertically center button text */
+  justify-content: center;
 }
 
 .resetButton:hover {
@@ -680,4 +676,11 @@
   background-color: #6c757d !important; /* Grey color when disabled */
   cursor: not-allowed !important;
   opacity: 0.6;
+}
+
+.noImageText {
+  font-size: 14px;
+  color: #666;
+  margin-top: 0.5rem;
+  display: block;
 }

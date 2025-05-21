@@ -39,6 +39,19 @@ function Project() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [showFullErrorLog, setShowFullErrorLog] = useState(false);
 
+  const [selectedAudioRows, setSelectedAudioRows] = useState([]);
+  const [selectedImageRows, setSelectedImageRows] = useState([]);
+
+  const setSelectedAudioRowsCallback = React.useCallback((rows) => {
+    //console.log("!!!!Selected rows in display order (Audio):", rows);
+    setSelectedAudioRows(rows);
+  }, []);
+
+  const setSelectedImageRowsCallback = React.useCallback((rows) => {
+    //console.log("!!!!Selected rows in display order (Image):", rows);
+    setSelectedImageRows(rows);
+  }, []);
+
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   };
@@ -503,6 +516,26 @@ function Project() {
     return options;
   };
 
+  useEffect(() => {
+    const options = generateOutputFilenameOptions();
+    if (selectedAudioRows.length > 1) {
+      // Default to sanitized folder name if more than one audio row is selected
+      const folderName = getUniqueFolderNames(selectedAudioRows)[0];
+      if (folderName && options.includes(folderName)) {
+        setOutputFilename(folderName);
+      }
+    } else if (selectedAudioRows.length === 1) {
+      // Default to sanitized filename of the selected audio row
+      const audioFilename = selectedAudioRows[0].filename.split('.').slice(0, -1).join('.');
+      if (audioFilename && options.includes(audioFilename)) {
+        setOutputFilename(audioFilename);
+      }
+    } else {
+      // Default to "output-video" if no audio rows are selected
+      setOutputFilename("output-video");
+    }
+  }, [selectedAudioRows, audioFiles, imageFiles]);
+
   const audioColumns = [
     { accessorKey: 'filename', header: 'File Name' },
     { accessorKey: 'duration', header: 'Duration', cell: ({ row }) => formatDuration(row.original.duration) },
@@ -692,137 +725,142 @@ function Project() {
     isSelected: !!imageRowSelection[file.id]
   })), [imageFiles, imageRowSelection]);
 
-  const handleRender = () => {
-    const renderId = generateUniqueId();
-    const selectedAudio = audioFiles.filter((file) => audioRowSelection[file.id]);
-    const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
-  
-    if (selectedAudio.length === 0 || selectedImages.length === 0) {
-      alert('Please select at least one audio and one image file.');
-      return;
+const handleRender = () => {
+  const selectedAudio = selectedAudioRows;
+  const selectedImages = selectedImageRows.map((image) => {
+    const updatedImage = imageFiles.find((img) => img.id === image.id);
+    return updatedImage || image; // Ensure the latest state of the image is used
+  });
+
+  if (selectedAudio.length === 0 || selectedImages.length === 0) {
+    alert('Please select at least one audio and one image file.');
+    return;
+  }
+
+  console.log('Selected Audio Files:', selectedAudio);
+  console.log('Selected Image Files:', selectedImages);
+
+  let totalDuration = 0;
+  selectedAudio.forEach(audio => {
+    let lengthInSeconds = parseFloat(audio.duration);
+
+    if (audio.startTime && audio.endTime && audio.length) {
+      const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
+      const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
+      const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
+
+      const startTimeInSeconds = startMinutes * 60 + startSeconds;
+      const endTimeInSeconds = endMinutes * 60 + endSeconds;
+      lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
     }
-  
-    console.log('Selected Audio Files:', selectedAudio);
-    console.log('Selected Image Files:', selectedImages);
-  
-    let totalDuration = 0;
-    selectedAudio.forEach(audio => {
-      let lengthInSeconds = parseFloat(audio.duration);
-  
-      if (audio.startTime && audio.endTime && audio.length) {
-        const [startMinutes, startSeconds] = audio.startTime.split(':').map(Number);
-        const [endMinutes, endSeconds] = audio.endTime.split(':').map(Number);
-        const [lengthMinutes, lengthSeconds] = audio.length.split(':').map(Number);
-  
-        const startTimeInSeconds = startMinutes * 60 + startSeconds;
-        const endTimeInSeconds = endMinutes * 60 + endSeconds;
-        lengthInSeconds = lengthMinutes * 60 + lengthSeconds; // Use the length field for duration
-      }
-  
-      totalDuration += lengthInSeconds;
-      console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
+
+    totalDuration += lengthInSeconds;
+    console.log(`Audio File: ${audio.filename}, Duration: ${lengthInSeconds}, Length in Seconds: ${lengthInSeconds}`);
+  });
+
+  console.log('Total Duration:', totalDuration);
+
+  let finalOutputFilename = outputFilename;
+  if (alwaysUniqueFilenames) {
+    const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+    finalOutputFilename = `${outputFilename}_${timestamp}`;
+  }
+
+  const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
+
+  // Generate a unique render ID
+  const renderId = generateUniqueId();
+
+  const ffmpegCommand = createFFmpegCommand({
+    audioInputs: selectedAudio.map(audio => {
+      const inputOptions = [];
+      if (audio.startTime) inputOptions.push('-ss', audio.startTime);
+      if (audio.endTime) inputOptions.push('-to', audio.endTime);
+      inputOptions.push('-i', audio.filepath);
+      return {
+        ...audio,
+        inputOptions,
+        duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
+      };
+    }),
+    imageInputs: selectedImages.map(image => {
+      const [width, height] = image.dimensions.split('x').map(Number);
+      return {
+        ...image,
+        width: width, // Set to the actual image width
+        height: height, // Set to the actual image height
+        stretchImageToFit: image.stretchImageToFit,
+        paddingColor: image.paddingColor || backgroundColor,
+        useBlurBackground: image.useBlurBackground || false
+      };
+    }),
+    outputFilepath: outputFilePath,
+    width: parseInt(videoWidth),
+    height: parseInt(videoHeight),
+    paddingCheckbox: usePadding,
+    backgroundColor: backgroundColor,
+    stretchImageToFit: stretchImageToFit,
+    repeatLoop: false,
+  });
+
+  console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
+  console.log('send duration:', ffmpegCommand.outputDuration);
+
+  // Clean up old listeners
+  window.api.removeAllListeners('ffmpeg-output');
+  window.api.removeAllListeners('ffmpeg-error');
+  window.api.removeAllListeners('ffmpeg-progress');
+  window.api.removeAllListeners('ffmpeg-stop-response');
+
+  window.api.send('run-ffmpeg-command', {
+    renderId: renderId, // Use the generated renderId
+    cmdArgs: ffmpegCommand.cmdArgs,
+    outputDuration: ffmpegCommand.outputDuration,
+  });
+
+  window.api.receive('ffmpeg-output', (data) => {
+    console.log('FFmpeg Output:', data);
+  });
+
+  window.api.receive('ffmpeg-error', (data) => {
+    console.log('FFmpeg Error:', data);
+    setFfmpegError({
+      lastOutput: data.lastOutput,
+      fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
     });
-  
-    console.log('Total Duration:', totalDuration);
-  
-    let finalOutputFilename = outputFilename;
-    if (alwaysUniqueFilenames) {
-      const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
-      finalOutputFilename = `${outputFilename}_${timestamp}`;
+
+    updateRender(renderId, { progress: 'error' }); // Set progress to "error"
+  });
+
+  window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
+    updateRender(renderId, { pid, progress });
+  });
+
+  window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
+    updateRender(renderId, { progress: status });
+    if (status === 'Stopped') {
+      setFfmpegError(null); // Clear any existing error message
     }
-  
-    const outputFilePath = `${outputFolder}${pathSeparator}${finalOutputFilename}.${outputFormat}`;
-  
-    const ffmpegCommand = createFFmpegCommand({
-      audioInputs: selectedAudio.map(audio => {
-        const inputOptions = [];
-        if (audio.startTime) inputOptions.push('-ss', audio.startTime);
-        if (audio.endTime) inputOptions.push('-to', audio.endTime);
-        inputOptions.push('-i', audio.filepath);
-        return {
-          ...audio,
-          inputOptions,
-          duration: audio.length ? audio.length.split(':').reduce((acc, time) => (60 * acc) + +time) : audio.duration // Ensure duration is defined
-        };
-      }),
-      imageInputs: selectedImages.map(image => {
-        const [width, height] = image.dimensions.split('x').map(Number);
-        return {
-          ...image,
-          width: width, // Set to the actual image width
-          height: height, // Set to the actual image height
-          stretchImageToFit: image.stretchImageToFit,
-          paddingColor: image.paddingColor || backgroundColor,
-          useBlurBackground: image.useBlurBackground || false
-        };
-      }),
-      outputFilepath: outputFilePath,
-      width: parseInt(videoWidth),
-      height: parseInt(videoHeight),
-      paddingCheckbox: usePadding,
-      backgroundColor: backgroundColor,
-      stretchImageToFit: stretchImageToFit,
-      repeatLoop: false,
-    });
-  
-    console.log('FFmpeg Command:', ffmpegCommand.cmdArgs.join(" "));
-    console.log('send duration:', ffmpegCommand.outputDuration);
-  
-    // Clean up old listeners
-    window.api.removeAllListeners('ffmpeg-output');
-    window.api.removeAllListeners('ffmpeg-error');
-    window.api.removeAllListeners('ffmpeg-progress');
-    window.api.removeAllListeners('ffmpeg-stop-response');
-  
-    window.api.send('run-ffmpeg-command', {
-      renderId: renderId,
-      cmdArgs: ffmpegCommand.cmdArgs,
-      outputDuration: ffmpegCommand.outputDuration,
-    });
-  
-    window.api.receive('ffmpeg-output', (data) => {
-    });
-  
-    window.api.receive('ffmpeg-error', (data) => {
-      console.log('FFmpeg Error:', data);
-      setFfmpegError({
-        lastOutput: data.lastOutput,
-        fullErrorLog: data.fullErrorLog // Ensure fullErrorLog is set
-      });
-  
-      updateRender(renderId, { progress: 'error' }); // Set progress to "error"
-    });
-  
-    window.api.receive('ffmpeg-progress', ({ renderId, pid, progress }) => {
-      updateRender(renderId, { pid, progress });
-    });
-  
-    window.api.receive('ffmpeg-stop-response', ({ renderId, status }) => {
-      updateRender(renderId, { progress: status });
-      if (status === 'Stopped') {
-        setFfmpegError(null); // Clear any existing error message
-      }
-    });
-  
-    addRender({
-      id: renderId,
-      pid: null,
-      progress: 'Starting...', // Set initial progress to "Starting..."
-      outputFolder: outputFolder, // Use the correct output folder
-      outputFilepath: outputFilePath, // Save the output file path
-      outputFilename: finalOutputFilename, // Use the correct output filename
-      ffmpegCommand: ffmpegCommand.commandString,
-      videoWidth: videoWidth,
-      videoHeight: videoHeight,
-      backgroundColor: backgroundColor,
-      usePadding: usePadding,
-      stretchImageToFit: stretchImageToFit,
-      paddingColor: paddingColor,
-      useBlurBackground: useBlurBackground,
-      alwaysUniqueFilenames: alwaysUniqueFilenames
-    });
-  
-  };
+  });
+
+  addRender({
+    id: renderId,
+    pid: null,
+    progress: 'Starting...', // Set initial progress to "Starting..."
+    outputFolder: outputFolder, // Use the correct output folder
+    outputFilepath: outputFilePath, // Save the output file path
+    outputFilename: finalOutputFilename, // Use the correct output filename
+    ffmpegCommand: ffmpegCommand.commandString,
+    videoWidth: videoWidth,
+    videoHeight: videoHeight,
+    backgroundColor: backgroundColor,
+    usePadding: usePadding,
+    stretchImageToFit: stretchImageToFit,
+    paddingColor: paddingColor,
+    useBlurBackground: useBlurBackground,
+    alwaysUniqueFilenames: alwaysUniqueFilenames
+  });
+};
   
 
   const handleFilesMetadata = (filesMetadata) => {
@@ -987,22 +1025,22 @@ function Project() {
   const selectedImages = imageFiles.filter((file) => imageRowSelection[file.id]);
   const isHorizontal = windowWidth > 600; // Adjust this breakpoint as needed.
 
+    const setSelectedRows = React.useCallback((rows) => {
+    //console.log("!!!!Selected rows in display order:", rows);
+  }, []);
 
   return (
     <div className={styles.projectContainer}>
       <div className={styles.header}>
         <h1 className={styles.projectTitle}>New Project</h1>
-        <button className={styles.refreshButton} onClick={clearComponent}>
-          Clear
-        </button>
-        <button className={styles.deleteLocalStorageButton} onClick={deleteLocalStorage}>
-          Delete Local Storage
-        </button>
+        
+        <button className={styles.deleteLocalStorageButton} onClick={clearComponent}>
+          Clear Project
+        </button> 
       </div>
 
       <FileUploader onFilesMetadata={handleFilesMetadata} />
 
-      <h2>Audio Files</h2>
       <Table
         data={audioFiles}
         rowSelection={audioRowSelection}
@@ -1012,9 +1050,9 @@ function Project() {
         setAudioFiles={setAudioFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSelectedRowsChange={setSelectedAudioRowsCallback}
       />
 
-      <h2>Image Files</h2>
       <Table
         data={imageFiles}
         rowSelection={imageRowSelection}
@@ -1025,16 +1063,20 @@ function Project() {
         setImageFiles={setImageFiles}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
+        onSelectedRowsChange={setSelectedImageRowsCallback}
       />
 
       <div className={styles.renderOptionsSection}>
-        <h2 className={styles.renderOptionsTitle}>Render Options</h2>
-        <button
-          className={styles.resetButton}
-          onClick={resetToDefault}
-        >
-          Reset to Default
-        </button>
+        <div className={styles.renderOptionsHeader}>
+          <h2 className={styles.renderOptionsTitle}>Render Options</h2>
+          {/* <button
+            className={styles.resetButton}
+            onClick={resetToDefault}
+          >
+            Reset to Default
+          </button> */}
+        </div>
+        <hr className={styles.renderOptionsSeparator} />
         <div className={styles.renderOptionsGrid}>
 
           <div className={styles.renderOptionGroup}>
@@ -1118,21 +1160,31 @@ function Project() {
             <div className={styles.resolutionBox}>
               <select
                 id="imageSelection"
-                value={selectedImageIndex}
+                value={imageFiles.length > 0 ? selectedImageIndex : ""}
                 onChange={handleImageSelectionChange}
                 className={styles.renderOptionSelect}
               >
-                {imageFiles.map((image, index) => (
-                  <option key={index} value={index}>
-                    {image.filename}
+                {imageFiles.length > 0 ? (
+                  imageFiles.map((image, index) => (
+                    <option key={index} value={index}>
+                      {image.filename}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    No image(s) selected
                   </option>
-                ))}
+                )}
               </select>
+              {imageFiles.length === 0 && (
+                <span className={styles.noImageText}>No image(s) selected</span>
+              )}
               <select
                 id="resolutionSelection"
                 value={selectedResolution}
                 onChange={handleResolutionChange}
                 className={styles.renderOptionSelect}
+                disabled={imageFiles.length === 0}
               >
                 {resolutionOptions[selectedImageIndex]?.map((resolution, index) => (
                   <option key={index} value={resolution}>
@@ -1187,28 +1239,6 @@ function Project() {
           </div>
         </div>
 
-
-          {/* Image Timeline */}
-          <div className={styles.renderOptionGroup}>
-
-            <div id="imageTimelineBox">
-              <h3 className={styles.blackText}>Image Timeline</h3>
-              <DndContext id="imageTimelineContent" collisionDetection={closestCenter} onDragEnd={handleImageReorder}>
-                <SortableContext items={selectedImages.map((file) => file.id)} strategy={horizontalListSortingStrategy}>
-                  <div className={`${styles.imageTimeline}`}>
-                    {selectedImages.length === 0 ? (
-                      <p>No images selected</p>
-                    ) : (
-                      selectedImages.map((file) => (
-                        <SortableImage key={file.id} file={file} setImageFiles={setImageFiles} />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-          </div>
-
         <button
           className={styles.renderButton}
           onClick={handleRender}
@@ -1231,8 +1261,6 @@ function Project() {
         </div>
       )}
 
-      <div className={styles.rendersSection}>
-        <h2>Renders List</h2>
         <Table
           data={renders.map(render => {
             const parts = render.outputFilename.split(pathSeparator);
@@ -1252,24 +1280,8 @@ function Project() {
           ffmpegCommand={renders.map(render => render.ffmpegCommand).join('\n')}
           removeRender={removeRender}
         />
-        {/*
-        {renders.map(render => (
-          <div key={render.id} className={styles.renderItem}>
-            <div>Render ID: {render.id}</div>
-            <div>PID: {render.pid}</div>
-            <div>Progress: {render.progress}%</div>
-            <div>
-              <button onClick={() => handleOpenFolder(render.outputFolder)}>Open Folder</button>
-              <button onClick={() => handleAction('pause', render.id)}>Pause</button>
-              <button onClick={() => handleAction('stop', render.id)}>Stop</button>
-              <button onClick={() => handleAction('start', render.id)}>Start</button>
-              <button onClick={() => handleAction('restart', render.id)}>Restart</button>
-              <button onClick={() => handleAction('delete', render.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-        */}
-      </div>
+
+
     </div>
   );
 }

@@ -114,9 +114,23 @@ function Row({
       prev.map((audio) => {
         if (audio.id === rowId) {
           const updatedAudio = { ...audio, [field]: formattedValue };
-          if (field === 'length') {
-            updatedAudio.startTime = isOverAnHour ? '00:00:00' : '00:00';
+
+          if (field === 'startTime' && audio.length && audio.endTime) {
+            const [startHours, startMinutes, startSeconds] = isOverAnHour ? formattedValue.split(':').map(Number) : [0, ...formattedValue.split(':').map(Number)];
+            const lengthInSeconds = audio.length.split(':').reduce((acc, time) => 60 * acc + Number(time), 0);
+            const newEndTimeInSeconds = startHours * 3600 + startMinutes * 60 + startSeconds + lengthInSeconds;
+
+            const endHours = Math.floor(newEndTimeInSeconds / 3600);
+            const endMinutes = Math.floor((newEndTimeInSeconds % 3600) / 60);
+            const endSeconds = newEndTimeInSeconds % 60;
+
+            updatedAudio.endTime = isOverAnHour
+              ? `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`
+              : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
+
+            updatedAudio.length = audio.length; // Keep length unchanged.
           }
+
           return updatedAudio;
         }
         return audio;
@@ -159,13 +173,14 @@ function Row({
     if (isImageTable) {
       const savedPalette = localStorage.getItem(`color-palette-${row.original.filepath}`);
       if (savedPalette) {
+        console.log(`[Table.js] Loaded color palette from localStorage for ${row.original.filepath}:`, JSON.parse(savedPalette));
         setColorPalette(JSON.parse(savedPalette));
       } else {
-        //console.log('Requesting color palette for:', row.original.filepath);
+        console.log(`[Table.js] No palette in localStorage for ${row.original.filepath}, requesting from main process...`);
         window.api.send('get-color-palette', row.original.filepath);
         const responseChannel = `color-palette-response-${row.original.filepath}`;
         window.api.receive(responseChannel, (colors) => {
-          //console.log('Received color palette:', colors);
+          console.log(`[Table.js] Received color palette from main process for ${row.original.filepath}:`, colors);
           setColorPalette((prevPalette) => {
             const newPalette = {
               Vibrant: colors.Vibrant || prevPalette.Vibrant,
@@ -175,6 +190,7 @@ function Row({
               DarkMuted: colors.DarkMuted || prevPalette.DarkMuted,
               LightMuted: colors.LightMuted || prevPalette.LightMuted
             };
+            console.log(`[Table.js] Setting new color palette for ${row.original.filepath}:`, newPalette);
             localStorage.setItem(`color-palette-${row.original.filepath}`, JSON.stringify(newPalette));
             return newPalette;
           });
@@ -375,11 +391,11 @@ function Row({
                   value={row.original.length || ''}
                   onChange={(e) => {
                     const newLength = formatTimeInput(e.target.value, isOverAnHour);
-                    const newEndTime = calculateEndTime(isOverAnHour ? '00:00:00' : '00:00', newLength, isOverAnHour);
+                    const newEndTime = calculateEndTime(row.original.startTime || (isOverAnHour ? '00:00:00' : '00:00'), newLength, isOverAnHour);
                     setAudioFiles((prev) =>
                       prev.map((audio) =>
                         audio.id === row.original.id
-                          ? { ...audio, length: newLength, endTime: newEndTime, startTime: isOverAnHour ? '00:00:00' : '00:00' }
+                          ? { ...audio, length: newLength, endTime: newEndTime }
                           : audio
                       )
                     );
@@ -467,7 +483,22 @@ function Row({
   );
 }
 
-function Table({ data, setData, columns, rowSelection, setRowSelection, isImageTable, isRenderTable, setImageFiles, setAudioFiles, ffmpegCommand, removeRender, globalFilter, setGlobalFilter }) {
+function Table({ 
+  data, 
+  setData, 
+  columns, 
+  rowSelection, 
+  setRowSelection, 
+  isImageTable, 
+  isRenderTable, 
+  setImageFiles, 
+  setAudioFiles, 
+  ffmpegCommand, 
+  removeRender, 
+  globalFilter, 
+  setGlobalFilter,
+  onSelectedRowsChange
+}) {
   const [sorting, setSorting] = useState([]);
   const [expandedRows, setExpandedRows] = useState(() => {
     const savedExpandedRows = localStorage.getItem('expandedRows');
@@ -475,6 +506,20 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
   });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [errors, setErrors] = useState({});
+  const [sortStatus, setSortStatus] = useState({ column: null, direction: 'manual' });
+
+  useEffect(() => {
+    if (sortStatus.column) {
+      console.log(`Column "${sortStatus.column}" is sorted ${sortStatus.direction}`);
+    }
+  }, [sortStatus]);
+
+  useEffect(() => {
+    const selectedFiles = data
+      .filter((row) => rowSelection[row.id]) // Filter selected rows
+      .sort((a, b) => data.findIndex((row) => row.id === a.id) - data.findIndex((row) => row.id === b.id)); // Ensure order matches table row order
+    //console.log("Selected files:", selectedFiles);
+  }, [rowSelection, data]); // Trigger whenever rowSelection or data changes
 
   const generateUniqueId = () => {
     return `id-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -546,6 +591,12 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     });
   };
 
+  const [originalOrder, setOriginalOrder] = useState(data.map(row => row.id));
+
+  useEffect(() => {
+    setOriginalOrder(data.map(row => row.id));
+  }, [data]);
+
   const tableColumns = React.useMemo(() => {
     const baseColumns = [
       {
@@ -583,25 +634,52 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
         header: "Drag",
         cell: () => null,
       },
-      ...columns.map((column) => ({
-        ...column,
-        header: column.id === 'openFolder' ? column.header : () => (
-          <div
-            className={styles.sortableHeader}
-            onClick={() => {
-              const isSorted = sorting.find((sort) => sort.id === column.accessorKey);
-              const direction = isSorted ? (isSorted.desc ? 'asc' : 'desc') : 'asc';
-              setSorting([{ id: column.accessorKey, desc: direction === 'desc' }]);
-            }}
-          >
-            {column.header || ""}
-            <span className={styles.sortIcon}>
-              {sorting.find((sort) => sort.id === column.accessorKey)?.desc ? "🔽" : "🔼"
-              }
-            </span>
-          </div>
-        ),
-      })),
+      ...columns.map((column) => {
+        // For File Name column, set sortingFn to 'alphanumeric'
+        if (column.accessorKey === 'filename') {
+          return {
+            ...column,
+            enableSorting: true,
+            sortingFn: 'alphanumeric',
+            header: function Header(ctx) {
+              const col = ctx.column;
+              return (
+                <div
+                  className={styles.sortableHeader}
+                  onClick={col.getToggleSortingHandler()}
+                  style={{ cursor: col.getCanSort() ? 'pointer' : 'default' }}
+                >
+                  {typeof column.header === 'function' ? column.header(ctx) : column.header}
+                  <span className={styles.sortIcon}>
+                    {col.getIsSorted() === 'asc' ? "🔼" :
+                      col.getIsSorted() === 'desc' ? "🔽" : ""}
+                  </span>
+                </div>
+              );
+            }
+          };
+        }
+        // For all other columns, keep as before
+        return {
+          ...column,
+          header: column.id === 'openFolder' ? column.header : (ctx) => {
+            const col = ctx.column;
+            return (
+              <div
+                className={styles.sortableHeader}
+                onClick={col.getToggleSortingHandler()}
+                style={{ cursor: col.getCanSort() ? 'pointer' : 'default' }}
+              >
+                {typeof column.header === 'function' ? column.header(ctx) : column.header}
+                <span className={styles.sortIcon}>
+                  {col.getIsSorted() === 'asc' ? "🔼" :
+                    col.getIsSorted() === 'desc' ? "🔽" : ""}
+                </span>
+              </div>
+            );
+          }
+        };
+      }),
     ];
 
     if (!isRenderTable) {
@@ -680,20 +758,48 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     },
   });
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
+  useEffect(() => {
+    // pull the rows *after* sort/filter but *before* pagination
+    const rows = table.getPrePaginationRowModel().rows;
 
-    if (active && over && active.id !== over.id) {
-      const oldIndex = data.findIndex((item) => item.id === active.id);
-      const newIndex = data.findIndex((item) => item.id === over.id);
+    // keep only the selected ones, in exactly the order they're rendered
+    const selectedFiles = rows
+      .filter((r) => r.getIsSelected())
+      .map((r) => r.original);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newData = arrayMove([...data], oldIndex, newIndex);
-        setData(newData);
-        localStorage.setItem("audioFiles", JSON.stringify(newData));
-      }
-    }
-  };
+    //console.log("Selected files in display order:", selectedFiles);
+    onSelectedRowsChange?.(selectedFiles);
+  }, [
+    rowSelection,
+    table.getState().sorting, // re-run when sorting changes
+    table.getState().globalFilter, // re-run when filter changes
+  ]);
+
+const handleDragEnd = (event) => {
+  const { active, over } = event;
+  if (!active || !over || active.id === over.id) return;
+
+  // 1) pull the rows *after* sort/filter but *before* pagination
+  const rows = table.getRowModel().rows;
+
+  // 2) make a plain array of your original row objects
+  const sortedData = rows.map(r => r.original);
+
+  // 3) find indexes *in the sorted array*  
+  const oldIndex = rows.findIndex(r => r.id === active.id);
+  const newIndex = rows.findIndex(r => r.id === over.id);
+
+  // 4) move them
+  const newData = arrayMove(sortedData, oldIndex, newIndex);
+
+  // 5) write it back
+  setData(newData);
+  localStorage.setItem("audioFiles", JSON.stringify(newData));
+
+  // 6) clear the sort so you now render in this "manually‐sorted‐plus‐one‐override" mode
+  setSorting([]);
+};
+
 
   const parseDuration = (duration) => {
     if (typeof duration !== 'string') {
@@ -724,18 +830,42 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
     return '00:00';
   }, [rowSelection, data, isImageTable, isRenderTable]);
 
+  const getSelectedRows = () => {
+    // If table instance is not available yet, return empty array
+    if (!tableInstanceRef.current) return [];
+    
+    // Get the current display order from the table instance
+    // This accounts for any active sorting, filtering, and pagination
+    const rowModel = tableInstanceRef.current.getRowModel();
+    const currentDisplayedRows = rowModel.rows;
+    
+    // Filter for only the selected rows while maintaining their current display order
+    const selectedRowsInDisplayOrder = currentDisplayedRows
+      .filter(row => rowSelection[row.id])
+      .map(row => row.original);
+    
+    return selectedRowsInDisplayOrder;
+  };
+
   return (
     <div>
-      <input
-        type="text"
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        placeholder="Search..."
-        className={styles.search}
-      />
-      <button onClick={clearTable} className={styles.clearButton}>
-        Clear Table
-      </button>
+      <div className={styles.tableHeader}>
+        <div className={styles.tableTitle}>
+          {isImageTable ? "Image Files" : isRenderTable ? "Renders List" : "Audio Files"}
+        </div>
+        <div className={styles.controls}>
+          <input
+            type="text"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="Search..."
+            className={styles.search}
+          />
+          <button onClick={clearTable} className={styles.clearButton}>
+            Clear Table
+          </button>
+        </div>
+      </div>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext
           items={data.map((row) => row.id)}
@@ -778,59 +908,59 @@ function Table({ data, setData, columns, rowSelection, setRowSelection, isImageT
             </tbody>
           </table>
         </SortableContext>
-        <div className={styles.pagination}>
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </button>
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+        <div className={styles.paginationContainer}>
+          <span className={styles.rowsSelected}>
+            {Object.keys(rowSelection).length} of {data.length} rows selected
           </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </button>
-          <span>
-            | Go to page: 
-            <input
-              type="number"
-              min="1"
-              max={table.getPageCount()}
-              defaultValue={table.getState().pagination.pageIndex + 1}
+          <div className={styles.pagination}>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </button>
+            <span>
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </span>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </button>
+            <span>
+              | Go to page: 
+              <input
+                type="number"
+                min="1"
+                max={table.getPageCount()}
+                defaultValue={table.getState().pagination.pageIndex + 1}
+                onChange={(e) => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                  table.setPageIndex(page);
+                }}
+                className={styles.pageInput}
+              />
+            </span>
+            <select
+              value={table.getState().pagination.pageSize}
               onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
+                const value = e.target.value;
+                table.setPageSize(value === 'all' ? data.length : Number(value));
               }}
-              className={styles.pageInput}
-            />
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              const value = e.target.value;
-              table.setPageSize(value === 'all' ? data.length : Number(value));
-            }}
-          >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-            <option value="all">All</option>
-          </select>
+            >
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  Show {pageSize}
+                </option>
+              ))}
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
       </DndContext>
-      <div className={styles.footer}>
-        <span>
-          {Object.keys(rowSelection).length} of {data.length} rows selected
-        </span>
-      </div>
-      {/*
+      {/* 
       {!isImageTable && !isRenderTable && (
         <div className={styles.footer}>
           <span>Total selected duration: {totalSelectedDuration}</span>

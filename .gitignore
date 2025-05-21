@@ -18,5 +18,7 @@ node_modules
 /app.log
 /ts-dist
 package-lock.json
+yarn.lock
 /build-resources
 .DS_Store
+*.log

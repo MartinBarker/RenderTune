@@ -74,9 +74,10 @@ function Home() {
   const shuffledSupporters = supporters.sort(() => Math.random() - 0.5);
 
   const changelog = [
-    "Fixed filedrop transition from home page to new project page",
-    "Added auto-update feature",
-    "Changed formatting of Home page text"
+    "Fixed error with incorrect selected row order when col sort toggle was applied.",
+    "Fixed linux filepicker issue showing square chars instead of text.",
+    "Various style/ui improvements to utilize space better.",
+    "Improved default output filename behavior to not just default to 'output-filename'."
   ];
 
   const feedbackLinks = [

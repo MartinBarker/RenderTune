@@ -1,0 +1,24 @@
+{
+  "app": {
+    "name": "RenderTune",
+    "description": "Combine audio and image files to create video files"
+  },
+  "general": {
+    "error": "Error",
+    "success": "Success"
+  },
+  "buttons": {
+    "render": "Render",
+    "reset": "Reset to Default",
+    "clear": "Clear",
+    "close": "Close"
+  },
+  "options": {
+    "outputFolder": "Output Folder",
+    "outputFilename": "Output Filename",
+    "outputFormat": "Output Format",
+    "resolution": "Resolution",
+    "width": "Width (px)",
+    "height": "Height (px)"
+  }
+}
