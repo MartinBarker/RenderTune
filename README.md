@@ -1,10 +1,10 @@
 <p align="center"><img src="./buildAssets/header.png" title="Auto-Editor" width="700"></p> 
 
 <h1>RenderTune is a free open-source program for mac/win/linux to combine audio + image file(s) into video files that can be uploaded to YouTube.</h1>
-<img src="./buildAssets/RenderTune-screenshot-small.png" style="float:left" alt="screenshot">
+<img src="./buildAssets/screenshot1.png" style="float:left" alt="screenshot">
 
-## Tutorial Video (Click To Watch):
-<a target="_blank" href="https://www.youtube.com/watch?v=LVnacPxquT4"><img target="_blank" src="https://i.imgur.com/Hr2ThFG.png" width="400" height="400" style="float:left" alt="RenderTune Tutorial Video" /></a>
+<!-- ## Tutorial Video (Click To Watch):
+<a target="_blank" href="https://www.youtube.com/watch?v=LVnacPxquT4"><img target="_blank" src="https://i.imgur.com/Hr2ThFG.png" width="400" height="400" style="float:left" alt="RenderTune Tutorial Video" /></a> -->
 
 ## Download
 RenderTune is available for free on the Mac Apple Store, Windows Store, and Linux Snap Store. Click any of the below badges to view the store page.
@@ -21,27 +21,15 @@ If you want to download RenderTune without using the above stores, you can downl
 - [Linux AppImage: RenderTune-#.#.#.AppImage](https://github.com/martinbarker/rendertune/releases/latest)
 - [More releases](https://github.com/martinbarker/rendertune/releases/latest)
 
-
 ## Features:
-- Use the Tracklist Table to reorder your songs by sorting the columns or dragging each song manually.
-    <img src="./buildAssets/RenderTune-table.gif" style="float:left" alt="screenshot" />
-- Concatenate multiple audio files to play one after another in a single outputted video file.  
-    <img src="./buildAssets/RenderTune-screenshot-concat.PNG" >
-- Batch render multiple videos at once and customize options for each video.
-    <img src="./buildAssets/RenderTune-screenshot-batch.PNG" style="float:left" alt="screenshot">
-- Video Render Options:
-        <img src="./buildAssets/RenderTune-screenshot-options.PNG" style="float:left" alt="screenshot">
-    - Image: Change which image to render your video with.
-    - Padding: Add white or black padding to the outputted video frame.
-        <img src="./buildAssets/RenderTune-screenshot-padding.png" style="float:left" alt="screenshot">
-    - Resolution: Change outputted video resolution.
-    - Output Dir: Change outputted video location.
-
-- Use the "Renders" popup to track the progress of your video renders.
-    <img src="./buildAssets/RenderTune-screenshot-renders.png" style="float:left" alt="screenshot">
+- Fully ffmpeg backend video rendering tool.
+- Use the Audio/Image Files Table to reorder your files by sorting the columns or dragging each row manually.
+- Concatenate multiple audio files to play one after another in a single outputted video file.
+- Customize image slideshow order and background (stretch, hex color padding, or blur background image).
+- Set output video render options such as resolution, filename, filepath, and more.
+- Start, pause, stop, and resume video renders in realtime.
 - Supported audio formats: mp3, flac, wav, m4a, oog, wma, aiff. Supported image formats: png, jpeg, jpg, webp.
-- Outputted video format: mp4. 
-
+- Outputted video format: mp4, mkv
 
 ## How to setup and run RenderTune locally:
 
