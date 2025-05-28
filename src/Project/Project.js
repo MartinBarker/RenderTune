@@ -726,7 +726,21 @@ function Project() {
   })), [imageFiles, imageRowSelection]);
 
 const handleRender = () => {
-  const selectedAudio = selectedAudioRows;
+  // Instead of directly using selectedAudioRows, we'll merge them with the current audioFiles state
+  const selectedAudio = selectedAudioRows.map(selectedRow => {
+    // Find the corresponding audio file with the complete, up-to-date information
+    const completeAudioFile = audioFiles.find(file => file.id === selectedRow.id);
+    
+    // Use the complete file if found, otherwise use the selected row
+    return completeAudioFile || {
+      ...selectedRow,
+      // Ensure these properties always exist with default values if missing
+      startTime: selectedRow.startTime || '00:00',
+      endTime: selectedRow.endTime || '',
+      length: selectedRow.length || ''
+    };
+  });
+
   const selectedImages = selectedImageRows.map((image) => {
     const updatedImage = imageFiles.find((img) => img.id === image.id);
     return updatedImage || image; // Ensure the latest state of the image is used
