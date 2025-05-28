@@ -58,6 +58,12 @@ jobs:
       - name: Build React app
         run: yarn build-react
 
+      # Build locales and icon-gen
+      - name: Build locales and icon-gen
+        run: |
+          yarn build-locales
+          yarn icon-gen
+
       # Clear Electron Builder cache
       - name: Clear electron-builder cache
         if: startsWith(matrix.os, 'ubuntu')
