@@ -61,7 +61,7 @@ jobs:
       # Build locales and icon-gen
       - name: Build locales and icon-gen
         run: |
-          yarn build-locales
+          yarn copy-locales
           yarn icon-gen
 
       # Clear Electron Builder cache
