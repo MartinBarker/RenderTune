@@ -110,32 +110,87 @@ function Row({
 
   const handleTimeInputChange = (e, field, rowId, isOverAnHour) => {
     const formattedValue = formatTimeInput(e.target.value, isOverAnHour);
-    setAudioFiles((prev) =>
-      prev.map((audio) => {
+    
+    setAudioFiles((prev) => {
+      // Create a new array with the updated audio file
+      const updatedAudioFiles = prev.map((audio) => {
         if (audio.id === rowId) {
           const updatedAudio = { ...audio, [field]: formattedValue };
 
-          if (field === 'startTime' && audio.length && audio.endTime) {
-            const [startHours, startMinutes, startSeconds] = isOverAnHour ? formattedValue.split(':').map(Number) : [0, ...formattedValue.split(':').map(Number)];
-            const lengthInSeconds = audio.length.split(':').reduce((acc, time) => 60 * acc + Number(time), 0);
-            const newEndTimeInSeconds = startHours * 3600 + startMinutes * 60 + startSeconds + lengthInSeconds;
-
-            const endHours = Math.floor(newEndTimeInSeconds / 3600);
-            const endMinutes = Math.floor((newEndTimeInSeconds % 3600) / 60);
-            const endSeconds = newEndTimeInSeconds % 60;
-
+          // If we're updating startTime and we have length info, calculate a new endTime
+          if (field === 'startTime' && audio.length) {
+            // Parse start time properly based on format
+            const startTimeParts = isOverAnHour ? formattedValue.split(':').map(Number) : [0, ...formattedValue.split(':').map(Number)];
+            const startHours = startTimeParts[0] || 0;
+            const startMinutes = startTimeParts.length >= 2 ? startTimeParts[startTimeParts.length - 2] : 0;
+            const startSeconds = startTimeParts.length >= 1 ? startTimeParts[startTimeParts.length - 1] : 0;
+            
+            // Parse length
+            const lengthParts = audio.length.split(':').map(Number);
+            const lengthHours = isOverAnHour && lengthParts.length === 3 ? lengthParts[0] : 0;
+            const lengthMinutes = isOverAnHour && lengthParts.length === 3 ? lengthParts[1] : lengthParts[0];
+            const lengthSeconds = isOverAnHour && lengthParts.length === 3 ? lengthParts[2] : lengthParts[1];
+            
+            // Calculate total seconds
+            const startTotalSeconds = (startHours * 3600) + (startMinutes * 60) + startSeconds;
+            const lengthTotalSeconds = (lengthHours * 3600) + (lengthMinutes * 60) + lengthSeconds;
+            const endTotalSeconds = startTotalSeconds + lengthTotalSeconds;
+            
+            // Format end time
+            const endHours = Math.floor(endTotalSeconds / 3600);
+            const endMinutes = Math.floor((endTotalSeconds % 3600) / 60);
+            const endSeconds = Math.floor(endTotalSeconds % 60);
+            
             updatedAudio.endTime = isOverAnHour
               ? `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`
               : `${endMinutes.toString().padStart(2, '0')}:${endSeconds.toString().padStart(2, '0')}`;
-
-            updatedAudio.length = audio.length; // Keep length unchanged.
+            
+            // Ensure startTime is properly saved in the format we expect
+            updatedAudio.startTime = formattedValue;
+          }
+          
+          // If updating endTime, ensure the length is adjusted accordingly
+          if (field === 'endTime' && audio.startTime) {
+            // Similar calculation but in reverse to determine length
+            const startTimeParts = isOverAnHour ? audio.startTime.split(':').map(Number) : [0, ...audio.startTime.split(':').map(Number)];
+            const startHours = startTimeParts[0] || 0;
+            const startMinutes = startTimeParts.length >= 2 ? startTimeParts[startTimeParts.length - 2] : 0;
+            const startSeconds = startTimeParts.length >= 1 ? startTimeParts[startTimeParts.length - 1] : 0;
+            
+            const endTimeParts = isOverAnHour ? formattedValue.split(':').map(Number) : [0, ...formattedValue.split(':').map(Number)];
+            const endHours = endTimeParts[0] || 0;
+            const endMinutes = endTimeParts.length >= 2 ? endTimeParts[endTimeParts.length - 2] : 0;
+            const endSeconds = endTimeParts.length >= 1 ? endTimeParts[endTimeParts.length - 1] : 0;
+            
+            const startTotalSeconds = (startHours * 3600) + (startMinutes * 60) + startSeconds;
+            const endTotalSeconds = (endHours * 3600) + (endMinutes * 60) + endSeconds;
+            const lengthTotalSeconds = endTotalSeconds - startTotalSeconds;
+            
+            if (lengthTotalSeconds > 0) {
+              const lengthHours = Math.floor(lengthTotalSeconds / 3600);
+              const lengthMinutes = Math.floor((lengthTotalSeconds % 3600) / 60);
+              const lengthSeconds = Math.floor(lengthTotalSeconds % 60);
+              
+              updatedAudio.length = isOverAnHour
+                ? `${lengthHours.toString().padStart(2, '0')}:${lengthMinutes.toString().padStart(2, '0')}:${lengthSeconds.toString().padStart(2, '0')}`
+                : `${lengthMinutes.toString().padStart(2, '0')}:${lengthSeconds.toString().padStart(2, '0')}`;
+            }
           }
 
           return updatedAudio;
         }
         return audio;
-      })
-    );
+      });
+      
+      // Save to localStorage immediately to persist changes
+      try {
+        localStorage.setItem("audioFiles", JSON.stringify(updatedAudioFiles));
+      } catch (error) {
+        console.error('Error saving audioFiles to localStorage:', error);
+      }
+      
+      return updatedAudioFiles;
+    });
   };
 
   const calculateEndTime = (startTime, length, isOverAnHour) => {
